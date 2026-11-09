@@ -740,3 +740,22 @@ button.calendar-bar{min-height:0;padding:0 2px}
   .campaign-slide-info small,.campaign-slide-date{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.campaign-rail{scroll-behavior:auto}}
+
+.budget-disclosure{margin:9px 0 8px}
+.budget-disclosure>summary{
+  width:100%;min-height:42px;justify-content:flex-start;gap:8px;
+  padding:5px 8px 5px 10px;background:var(--glass);
+  border-color:color-mix(in srgb,var(--theme) 32%,var(--line));
+}
+.budget-disclosure>summary:hover{border-color:var(--accent)}
+.budget-disclosure-label{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+.budget-disclosure-amount{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:29px;padding:3px 10px;border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--theme) 45%,var(--line));
+  background:color-mix(in srgb,var(--theme) 16%,var(--panel));
+  font-size:13px;line-height:1.15;font-weight:680;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+.budget-disclosure-chevron{flex:none;margin-left:auto;color:var(--muted);transform:rotate(-90deg)}
+.budget-disclosure[open]>summary .budget-disclosure-chevron{transform:none}
+.budget-disclosure>.card-budget{margin:6px 0 0}

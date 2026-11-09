@@ -150,14 +150,21 @@ function Card({p,artwork,edit,copy,remove}:{p:Project;artwork?:string;edit:(patc
     {dateError&&<small className="danger" role="alert">{dateError}</small>}
     <div className="fields"><label>级别<select aria-label="级别" value={p.tier} onChange={e=>edit({tier:e.target.value as Tier})}><option value="S">S 级</option><option value="A">A 级</option></select></label>
     <label>状态<select aria-label="状态" value={p.status} onChange={e=>edit({status:e.target.value as Project['status']})}>{options(STATUSES)}</select></label></div>
-    <div className="card-budget">
+    <details className="budget-disclosure">
+      <summary>
+        <span className="budget-disclosure-label">总预算</span>
+        <strong className="budget-disclosure-amount">{yuan(p.budget)}</strong>
+        <ChevronDown className="budget-disclosure-chevron" size={15} aria-hidden="true"/>
+      </summary>
+      <div className="card-budget">
       <div className="budget-top"><Money label="预算总额" value={p.budget} required onChange={budget=>budget!==null&&edit({budget})}/>
       <span className={'budget-state '+(gap<0?'danger':gap===0?'success':'')}>{gap<0?'超额 '+yuan(-gap):gap===0?'已分配完成':'待分配 '+yuan(gap)}</span></div>
       <div className="split"><Money label="搭建" value={p.build} onChange={build=>edit({build})}/><Money label="体验" value={p.experience} onChange={experience=>edit({experience})}/></div>
       <Ratio segments={[...splitSegments(p.build??0,p.experience??0),{value:Math.max(0,gap),color:'var(--unassigned)'}]} label={'项目预算分配：搭建 '+yuan(p.build??0)+'，体验 '+yuan(p.experience??0)+'，'+(gap<0?'超额 ':'待分配 ')+yuan(Math.abs(gap))}/>
       <div className="split-legend"><span><i/>搭建 {split&&p.build!==null?pct(p.build,split):'—'}</span><span><i/>体验 {split&&p.experience!==null?pct(p.experience,split):'—'}</span>{gap>0&&<span className="unassigned"><i/>待分配</span>}</div>
       <ProjectSettlement project={p} onSave={settlement=>edit({settlement})}/>
-    </div>
+      </div>
+    </details>
     <div className="fields"><label>主导形式<select aria-label="主导形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>
       {p.primary==='全楼运营'&&<option value="全楼运营" disabled>全楼运营（历史值）</option>}
       {options(PRIMARY_FORMS.filter(v=>v!==p.secondary))}
