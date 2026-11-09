@@ -94,6 +94,20 @@ function usePane(owner:boolean) {
   },[]);
   return (requested==='projects'||requested==='resources'||(requested==='budget'&&owner)?requested:'overview') as Pane;
 }
+function useCalendarProject(pane:Pane) {
+  const [target,setTarget]=useState<string|null>(null);
+  useEffect(()=>{
+    if(pane!=='projects'||target===null)return;
+    const project=document.getElementById(target);
+    project?.scrollIntoView({block:'start'});
+    project?.focus({preventScroll:true});
+    setTarget(null);
+  },[pane,target]);
+  return (id:string)=>{
+    setTarget(id);
+    window.location.hash='projects';
+  };
+}
 function Brand() {return <span className="brand">INS<sup>®</sup></span>;}
 function Sidebar({pane,owner}:{pane:Pane;owner:boolean}) {
   const links:Pane[]=owner?['overview','budget','projects','resources']:['overview','projects','resources'];
@@ -128,7 +142,7 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
     }
     setDateError('');edit({[which]:value});
   };
-  return <article className="project" id={p.id} style={{'--theme':p.color} as CSSProperties}>
+  return <article className="project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
     <div className="project-stripe" aria-hidden="true"><span/>{p.accent&&<span style={{background:p.accent}}/>}</div>
     <div className="card-meta"><span className="dot"/><strong>{p.code}</strong><span className="tag">{quarter(p.start)}</span><div className="card-actions"><button className="icon" title="复制项目" aria-label="复制项目" onClick={copy}><Copy/></button><button className="icon" title="删除项目" aria-label="删除项目" onClick={remove}><Trash2/></button></div></div>
     <input className="project-name" aria-label="主题名称" maxLength={100} placeholder="输入项目主题" value={p.name} onChange={e=>edit({name:e.target.value})}/>
@@ -359,6 +373,7 @@ function Viewer({data,dark,toggle,logout,error}:{data:ViewerData;dark:boolean;to
   const [filter,setFilter]=useState<'all'|Tier>('all');
   const [quarterFilter,setQuarterFilter]=useState('all');
   const pane=usePane(false);
+  const jumpToProject=useCalendarProject(pane);
   const projects=data.projects.filter(p=>(filter==='all'||p.tier===filter)&&(quarterFilter==='all'||quarter(p.start)===quarterFilter));
   const {tier,build,quarters}=data.charts;
   const approx=(p:number|null)=>p===null?'暂无细分':'约 '+p+'%';
@@ -371,12 +386,12 @@ function Viewer({data,dark,toggle,logout,error}:{data:ViewerData;dark:boolean;to
       <div className="content">
         <section id="overview" className="pane" hidden={pane!=='overview'}>
           <CampaignHero viewer/>
-          <PlanOverview items={data.projects} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}}/>
+          <PlanOverview items={data.projects} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
         </section>
         {error&&<p className="banner" role="alert">{error}</p>}
         <section id="projects" className="section pane" hidden={pane!=='projects'}><div className="section-heading"><span className="eyebrow">02 / CAMPAIGN INDEX</span><h2>年度项目 <small>{projects.length} / {data.projects.length}</small></h2></div>
           <div className="filters"><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div><label><CalendarDays size={15}/><select aria-label="季度筛选" value={quarterFilter} onChange={e=>setQuarterFilter(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label></div>
-          <div className="cards">{projects.map(p=><article key={p.id} className="project viewer-project" style={{'--theme':p.color} as CSSProperties}>
+          <div className="cards">{projects.map(p=><article key={p.id} className="project viewer-project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
             <div className="project-stripe" aria-hidden="true"><span/>{p.accent&&<span style={{background:p.accent}}/>}</div>
             <div className="card-meta"><span className="dot"/><strong>{p.code}</strong><span className="tag">{quarter(p.start)}</span><span className="viewer-status">{p.status}</span></div>
             <h3>{p.name||'未命名项目'}</h3><CampaignDates start={p.start} end={p.end}/>
@@ -402,6 +417,7 @@ type Confirmation={title:string;description:string;action:()=>void};
 export default function Planner() {
   const store=usePlanner();
   const pane=usePane(true);
+  const jumpToProject=useCalendarProject(pane);
   const [tier,setTier]=useState('S'),[q,setQ]=useState('all'),[form,setForm]=useState('all');
   const [register,setRegister]=useState(false);
   const [dark,setDark]=useState(false),[notice,setNotice]=useState('');
@@ -469,7 +485,7 @@ export default function Planner() {
       <div className="content">
       <section id="overview" className="pane" hidden={pane!=='overview'}>
         <CampaignHero/>
-        <PlanOverview items={items} budget={t} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}}/>
+        <PlanOverview items={items} budget={t} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
         <div className="section-heading pane-heading"><span className="eyebrow">02 / BUDGET</span><h2>预算看板</h2><p>对比年度额度、项目付款和季度资金分布。</p></div>

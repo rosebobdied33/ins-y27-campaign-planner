@@ -547,3 +547,43 @@ button,.filters label{border-radius:9px}
   .ledger-search{flex:1;min-width:145px}
   .ledger-search input{font-size:16px}
 }
+
+.annual-month-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.annual-month{
+  min-width:0;padding:11px 10px 9px;
+  background:linear-gradient(150deg,rgb(190 150 195 / .18),var(--glass) 53%);
+}
+.annual-month header{display:flex;align-items:baseline;justify-content:space-between;gap:6px;padding:1px 3px 7px}
+.annual-month h3{font-size:19px;font-weight:650;letter-spacing:-.025em}
+.annual-month header span{font-size:11px;color:var(--muted)}
+.month-weekdays,.month-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.month-weekdays{font-size:10px;text-align:center;color:var(--muted);background:var(--tint);border-radius:6px 6px 0 0;padding:4px 0}
+.month-week{
+  grid-auto-rows:minmax(17px,auto);min-height:42px;align-content:start;
+  border-top:1px solid var(--line);padding:2px 0 3px;row-gap:2px;
+}
+.month-week:last-child{border-bottom:1px solid var(--line)}
+.month-day{grid-row:1;text-align:center;color:var(--text);font-size:11px;font-variant-numeric:tabular-nums}
+.month-day[data-weekend=true]{color:var(--muted)}
+.month-event{
+  min-width:0;width:calc(100% - 2px);min-height:17px;justify-self:center;justify-content:flex-start;
+  padding:0 3px;gap:2px;border-radius:4px;font-size:10px;line-height:1.24;overflow:hidden;
+  background:color-mix(in srgb,var(--event-color) 45%,var(--panel));color:var(--text);
+  border:1px solid color-mix(in srgb,var(--event-color) 73%,var(--line));
+}
+.month-event span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.month-event i{font-style:normal;flex:none}
+.month-event[data-status="规划中"]{border-style:dashed}
+.month-event[data-status="执行中"]{border-color:var(--accent)}
+.month-event[data-status="已完成"]{background:color-mix(in srgb,var(--event-color) 25%,var(--panel))}
+.month-event:hover,.month-event:focus-visible{background:color-mix(in srgb,var(--event-color) 65%,var(--panel));border-color:var(--accent)}
+.calendar-filters{flex-wrap:wrap}
+button.calendar-bar{min-height:0;padding:0 2px}
+.calendar-detail{width:min(410px,calc(100% - 24px))}
+.calendar-detail-head{display:flex;align-items:center;justify-content:space-between}
+.calendar-detail h3{font-size:22px}
+.calendar-detail-meta{display:flex;gap:6px;margin-bottom:14px}
+.calendar-detail .primary{width:100%}
+.project:focus{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:1050px){.annual-month-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.annual-month-grid{grid-template-columns:1fr}.month-event{min-height:21px;font-size:11px}}

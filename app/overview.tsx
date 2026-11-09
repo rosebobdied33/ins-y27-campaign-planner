@@ -1,7 +1,9 @@
 'use client';
-import {useState, type CSSProperties} from 'react';
-import {CalendarDays, Layers3, Wallet, ArrowUpRight} from 'lucide-react';
-import {percent, quarter, QUARTERS, STATUSES, yuan, type Project} from '../lib/planner';
+import {useEffect, useRef, useState, type CSSProperties} from 'react';
+import {CalendarDays, Layers3, Wallet, ArrowUpRight, X} from 'lucide-react';
+import {durationDays, percent, quarter, QUARTERS, STATUSES, yuan, type Project} from '../lib/planner';
+
+import {monthWeeks} from '../lib/calendar';
 
 type ScheduleItem = Pick<Project,'id'|'code'|'tier'|'name'|'start'|'end'|'status'|'color'>;
 type BudgetSummary = {total:number; S:number; A:number};
@@ -16,9 +18,21 @@ const months = Array.from({length:12}, (_,i)=>{
 const dayOffset=(date:number)=>(date-startOfYear)/DAY;
 const dateRange=(item:ScheduleItem)=>item.start+' 至 '+item.end;
 
-export function PlanOverview({items,budget,openQuarter}:{items:ScheduleItem[];budget?:BudgetSummary;openQuarter:(q:string)=>void}) {
+export function PlanOverview({items,budget,openQuarter,openProject}:{
+  items:ScheduleItem[];budget?:BudgetSummary;openQuarter:(q:string)=>void;openProject:(id:string)=>void;
+}) {
   const [filter,setFilter]=useState('all');
   const [status,setStatus]=useState('all');
+  const [view,setView]=useState<'calendar'|'timeline'>('calendar');
+  const [selectedId,setSelectedId]=useState<string|null>(null);
+  const dialog=useRef<HTMLDialogElement>(null);
+  const selected=items.find(p=>p.id===selectedId);
+  const showDetails=Boolean(selected);
+  useEffect(()=>{
+    const current=dialog.current;
+    if(showDetails&&!current?.open)current?.showModal();
+    if(!showDetails&&current?.open)current.close();
+  },[showDetails]);
   const ordered=[...items].sort((a,b)=>a.start.localeCompare(b.start)||a.code.localeCompare(b.code));
   const groups=QUARTERS.map(q=>ordered.filter(p=>quarter(p.start)===q&&p.start.startsWith(YEAR+'-')));
   const counts={S:items.filter(p=>p.tier==='S').length,A:items.filter(p=>p.tier==='A').length};
@@ -54,11 +68,35 @@ export function PlanOverview({items,budget,openQuarter}:{items:ScheduleItem[];bu
       </div>
     </section>
     <section className="year-section" aria-labelledby="calendar-heading">
-      <div className="section-heading calendar-heading"><div><span className="eyebrow">2027 CALENDAR</span><h2 id="calendar-heading">全年排期</h2><p>条形从开始日延伸至结束日。箭头表示排期延伸到年外。</p></div>
-        <div className="calendar-filters"><select aria-label="排期级别" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部级别</option><option value="S">S 级</option><option value="A">A 级</option></select>
-          <select aria-label="排期状态" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">全部状态</option>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></div>
+      <div className="section-heading calendar-heading"><div><span className="eyebrow">2027 CALENDAR</span><h2 id="calendar-heading">全年排期日历</h2><p>色带覆盖项目开始日至结束日，带箭头处接续到前后周或月份。</p></div>
+        <div className="calendar-filters">
+          <div className="segmented" aria-label="排期视图"><button aria-pressed={view==='calendar'} onClick={()=>setView('calendar')}>日历总表</button><button aria-pressed={view==='timeline'} onClick={()=>setView('timeline')}>横向进度</button></div>
+          <select aria-label="排期级别" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部级别</option><option value="S">S 级</option><option value="A">A 级</option></select>
+          <select aria-label="排期状态" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">全部状态</option>{STATUSES.map(s=><option key={s}>{s}</option>)}</select>
+        </div>
       </div>
-      <div className="panel calendar-panel" tabIndex={0} role="region" aria-label="全年排期，可横向滚动">
+      {view==='calendar'?<div className="annual-month-grid">
+        {months.map((month,index)=>{
+          const visible=timeline.filter(p=>Date.parse(p.start+'T00:00:00Z')<month.to&&Date.parse(p.end+'T00:00:00Z')>=month.from);
+          return <article className="panel annual-month" key={month.label}>
+            <header><h3>{month.label}</h3><span>Q{Math.floor(index/3)+1} · {visible.length} 项</span></header>
+            <div className="month-weekdays" aria-hidden="true">{['一','二','三','四','五','六','日'].map(day=><span key={day}>{day}</span>)}</div>
+            {monthWeeks(YEAR,index,visible).map((week,weekIndex)=><div className="month-week" key={weekIndex}>
+              {week.days.map((day,dayIndex)=><span className="month-day" data-weekend={dayIndex>=5} aria-hidden="true" key={dayIndex}>{day??''}</span>)}
+              {week.segments.map(({project,lane,start,end,continuesFrom,continuesTo})=><button key={project.id} className="month-event"
+                data-status={project.status}
+                style={{gridColumn:`${start} / ${end}`,gridRow:lane+2,'--event-color':project.color} as CSSProperties}
+                aria-label={`${project.name||project.code}，${dateRange(project)}，${project.status}`}
+                title={`${project.name||project.code} · ${dateRange(project)}`}
+                onClick={()=>setSelectedId(project.id)}>
+                {continuesFrom&&<i aria-hidden="true">‹</i>}
+                <span>{end-start===1?project.code:(project.name||project.code)}</span>
+                {continuesTo&&<i aria-hidden="true">›</i>}
+              </button>)}
+            </div>)}
+          </article>;
+        })}
+      </div>:<div className="panel calendar-panel" tabIndex={0} role="region" aria-label="全年横向进度，可横向滚动">
         <div className="calendar-board" style={{'--months':timelineColumns} as CSSProperties}>
           <div className="calendar-row calendar-months"><b>项目 / 进度</b><div>{months.map(m=><span key={m.label}>{m.label}</span>)}</div></div>
           {timeline.map(p=>{
@@ -68,15 +106,24 @@ export function PlanOverview({items,budget,openQuarter}:{items:ScheduleItem[];bu
             const label=`${p.name||'未命名项目'}，${dateRange(p)}，${p.status}`;
             return <div className="calendar-row" key={p.id}>
               <div className="calendar-name"><b title={p.name}>{p.name||'未命名项目'}</b><small>{p.code} · {p.status}</small></div>
-              <div className="calendar-track" role="img" aria-label={label}>
+              <div className="calendar-track">
                 <div className="calendar-grid" aria-hidden="true">{months.map(m=><span key={m.label}/>)}</div>
-                <span className="calendar-bar" title={label} data-status={p.status} style={{left:left+'%',width:width+'%','--bar-color':p.color} as CSSProperties}>{from<startOfYear?'‹':''}{to>endOfYear?'›':''}</span>
+                <button className="calendar-bar" aria-label={label} onClick={()=>setSelectedId(p.id)} title={label} data-status={p.status} style={{left:left+'%',width:width+'%','--bar-color':p.color} as CSSProperties}>{from<startOfYear?'‹':''}{to>endOfYear?'›':''}</button>
               </div>
             </div>;
           })}
           {!timeline.length&&<p className="calendar-empty">当前筛选没有落在 2027 年的排期。</p>}
         </div>
-      </div>
+      </div>}
+      <dialog ref={dialog} className="calendar-detail" onClose={()=>setSelectedId(null)} aria-label="排期详情">
+        {selected&&<>
+          <div className="calendar-detail-head"><span className="eyebrow">{selected.code} · {selected.tier} 级</span><button className="icon" aria-label="关闭排期详情" onClick={()=>dialog.current?.close()}><X/></button></div>
+          <h3>{selected.name||'未命名项目'}</h3><p>{dateRange(selected)}</p>
+          <div className="calendar-detail-meta"><span className="tag">共 {durationDays(selected.start,selected.end)} 天</span><span className="tag">{selected.status}</span></div>
+          <button className="primary" onClick={()=>{dialog.current?.close();openProject(selected.id);}}>打开项目卡片 <ArrowUpRight size={15}/></button>
+        </>}
+      </dialog>
+
     </section>
   </>;
 }
