@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react';
-import {ArrowDownToLine,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Sun,Trash2,Wallet} from 'lucide-react';
+import {ArrowDownToLine,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet} from 'lucide-react';
 import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,rows,SECONDARY,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
 import {usePlanner,type ViewerData} from '../lib/storage';
 
@@ -37,16 +37,46 @@ function Donut({segments,caption,value,label}:{segments:Segment[];caption:string
 }
 const tierSegments=(S:number,A:number):Segment[]=>[{value:S,color:'var(--tier-s)'},{value:A,color:'var(--tier-a)'}];
 const splitSegments=(build:number,experience:number):Segment[]=>[{value:build,color:'var(--build)'},{value:experience,color:'var(--experience)'}];
-function Money({label,value,onChange,required=false}:{label:string;value:number|null;onChange:(v:number|null)=>void;required?:boolean}) {
+function Money({label,value,onChange,required=false,commitOnBlur=false}:{
+  label:string;value:number|null;onChange:(v:number|null)=>void;required?:boolean;commitOnBlur?:boolean;
+}) {
   const [draft,setDraft]=useState('');
   const [editing,setEditing]=useState(false);
   const [error,setError]=useState(false);
-  return <label className="money"><span>{label}</span><span className="money-field"><b>¥</b><input aria-label={label} aria-invalid={error} inputMode="decimal"
-    value={editing?draft:value===null?'':number(value)} placeholder="—"
-    onFocus={e=>{setDraft(e.currentTarget.value);setEditing(true);}}
-    onChange={e=>{const raw=e.target.value;setDraft(raw);try{const v=parseMoney(raw);if(v===null&&required){setError(true);return;}onChange(v);setError(false);}catch{setError(true);}}}
-    onBlur={()=>{setEditing(false);setError(false);}}
-    onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/></span>{error&&<small className="danger">请输入有效金额，最多两位小数</small>}</label>;
+
+  function read(raw:string) {
+    const amount=parseMoney(raw);
+    if(amount===null&&required)throw new Error('金额不能为空');
+    return amount;
+  }
+
+  return <label className="money">
+    <span>{label}</span>
+    <span className="money-field"><b>¥</b><input aria-label={label} aria-invalid={error} inputMode="decimal"
+      value={editing?draft:value===null?'':number(value)} placeholder="—"
+      onFocus={e=>{setDraft(e.currentTarget.value);setEditing(true);setError(false);}}
+      onChange={e=>{
+        const raw=e.target.value;
+        setDraft(raw);
+        try{
+          const amount=read(raw);
+          if(!commitOnBlur)onChange(amount);
+          setError(false);
+        }catch{setError(true);}
+      }}
+      onBlur={e=>{
+        setEditing(false);
+        if(!commitOnBlur){setError(false);return;}
+        try{
+          const amount=read(e.currentTarget.value);
+          if(amount!==value)onChange(amount);
+          setError(false);
+        }catch{setError(true);}
+      }}
+      onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}
+    /></span>
+    {error&&<small className="danger">{commitOnBlur&&!editing?'金额未更新，请重新输入':'请输入有效金额，最多两位小数'}</small>}
+  </label>;
 }
 type Pane='overview'|'budget'|'projects'|'resources';
 const PANE_INFO={
@@ -126,15 +156,12 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
 }
 function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;onEdit:(id:string,spent:number|null)=>void}) {
   const [series,setSeries]=useState<'plan'|'paid'>('plan');
-  const [filter,setFilter]=useState('all');
   const [selectedQuarter,setSelectedQuarter]=useState<string|null>(null);
   const totals=spending(items), plan=summary(items,baseline);
   const values=series==='plan'?plan.quarters:totals.quarters;
   const total=series==='plan'?plan.total:totals.paid;
   const peak=Math.max(...values);
   const peakLabels=QUARTERS.filter((_,i)=>peak>0&&values[i]===peak).join('、');
-  const visible=items.filter(p=>(!selectedQuarter||quarter(p.start)===selectedQuarter) &&
-    (filter==='all'||(filter==='paid'&&(p.spent??0)>0)||(filter==='pending'&&p.budget>(p.spent??0))||(filter==='unrecorded'&&p.spent==null)));
   const coverage=totals.paid+totals.pending;
   const allocated=plan.build+plan.experience;
   const splitTotal=allocated+plan.unallocated;
@@ -210,22 +237,88 @@ function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;
       </div>
     </div>
 
-    <article className="panel payment-ledger">
-      <div className="calendar-heading"><div><h3>项目支出明细</h3><p>填写累计实际支出，图表和项目卡片会一起更新。</p></div>
-        <div className="ledger-filters">{selectedQuarter&&<button className="budget-pill" onClick={()=>setSelectedQuarter(null)} aria-label="清除季度筛选">{selectedQuarter} ×</button>}
-        <select aria-label="支出明细筛选" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部项目</option><option value="paid">已有支出</option><option value="pending">仍有待支出</option><option value="unrecorded">未录入</option></select></div>
-      </div>
-      <div className="ledger-scroll"><table><thead><tr><th>项目</th><th>规划预算</th><th>实际已支出</th><th>待支出</th></tr></thead><tbody>
-        {visible.map(p=>{
-          const balance=p.budget-(p.spent??0);
-          return <tr key={p.id}><th scope="row"><span>{p.code} · {quarter(p.start)}</span><b>{p.name||'未命名项目'}</b></th><td>{yuan(p.budget)}</td>
-          <td><Money label={p.name+' 实际已支出'} value={p.spent??null} onChange={spent=>onEdit(p.id,spent)}/></td>
-          <td className={balance<0?'danger':''}>{balance<0?'超支 ':''}{yuan(Math.abs(balance))}{p.spent==null?<small>未录入实际支出</small>:<Ratio segments={[{value:Math.min(p.spent,p.budget),color:'var(--budget-teal)'},{value:Math.max(-balance,0),color:'var(--budget-coral)'}]} scale={Math.max(p.budget,p.spent)} label={'支付进度 '+pct(p.spent,p.budget)}/>}</td></tr>;
-        })}
-      </tbody></table>{!visible.length&&<p className="calendar-empty">当前筛选没有项目。</p>}</div>
-    </article>
+    <PaymentLedger items={items} selectedQuarter={selectedQuarter} clearQuarter={()=>setSelectedQuarter(null)} onEdit={onEdit}/>
   </>;
 }
+
+const PAYMENT_STATUS = {
+  unrecorded:'未录入', unpaid:'待付款', partial:'部分支付', settled:'已付清', over:'超支', noPayment:'无需付款',
+} as const;
+
+function paymentStatus(project:Project):keyof typeof PAYMENT_STATUS {
+  if(project.spent==null)return 'unrecorded';
+  if(project.spent>project.budget)return 'over';
+  if(project.budget===0)return 'noPayment';
+  if(project.spent===0)return 'unpaid';
+  return project.spent===project.budget?'settled':'partial';
+}
+
+function PaymentLedger({items,selectedQuarter,clearQuarter,onEdit}:{
+  items:Project[];selectedQuarter:string|null;clearQuarter:()=>void;onEdit:(id:string,spent:number|null)=>void;
+}) {
+  const [filter,setFilter]=useState('all');
+  const [query,setQuery]=useState('');
+  const needle=query.trim().toLocaleLowerCase();
+  const candidates=items.filter(project=>(!selectedQuarter||quarter(project.start)===selectedQuarter)
+    && (!needle||(project.code+' '+project.name).toLocaleLowerCase().includes(needle)));
+  const visible=candidates.filter(project=>filter==='all'||paymentStatus(project)===filter);
+  const subtotal=spending(visible);
+  const planned=visible.reduce((total,project)=>total+project.budget,0);
+
+  return <article className="panel payment-ledger">
+    <div className="ledger-heading">
+      <div><span className="eyebrow">PROJECT LEDGER</span><h3>项目支出明细</h3><p>填累计实付金额，回车或离开输入框即可保存。</p></div>
+      <span className="ledger-count" aria-live="polite">显示 {visible.length} / {items.length} 项</span>
+    </div>
+    <div className="ledger-tools">
+      <label className="ledger-search"><Search size={15} aria-hidden="true"/><input aria-label="搜索支出项目" placeholder="搜项目名称或编号" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+      <select aria-label="付款状态筛选" value={filter} onChange={e=>setFilter(e.target.value)}>
+        <option value="all">全部付款状态</option>
+        {Object.entries(PAYMENT_STATUS).map(([key,label])=><option key={key} value={key}>{label}</option>)}
+      </select>
+      {selectedQuarter&&<button className="budget-pill" onClick={clearQuarter} aria-label="清除季度筛选">{selectedQuarter} ×</button>}
+    </div>
+
+    {visible.length>0?<>
+      <div className="ledger-totals" aria-label="当前明细小计">
+        <span>当前小计</span><span>预算 <b>{yuan(planned)}</b></span>
+        <span>实付 <b>{subtotal.recorded?yuan(subtotal.paid):'—'}</b></span>
+        <span>待付 <b>{yuan(subtotal.pending)}</b></span>
+        {subtotal.over>0&&<span className="danger">超支 <b>{yuan(subtotal.over)}</b></span>}
+      </div>
+      <div className="ledger-scroll">
+        <table role="table" aria-label="项目支出明细">
+          <thead><tr><th scope="col">项目</th><th scope="col">规划预算</th><th scope="col">实际已支出</th><th scope="col">待支出 / 超支</th><th scope="col">付款进度</th></tr></thead>
+          <tbody>{visible.map(project=>{
+            const name=project.name||'未命名项目';
+            const paid=project.spent??0;
+            const balance=project.budget-paid;
+            const status=paymentStatus(project);
+            return <tr key={project.id}>
+              <th scope="row" className="ledger-project">
+                <div><i style={{background:project.color}} aria-hidden="true"/><b>{name}</b></div>
+                <small>{project.code} · {quarter(project.start)}</small>
+              </th>
+              <td data-label="规划预算">{yuan(project.budget)}</td>
+              <td data-label="实际已支出"><Money label={project.code+' '+name+' 实际已支出'} value={project.spent??null} commitOnBlur onChange={spent=>onEdit(project.id,spent)}/></td>
+              <td data-label="待支出 / 超支" className={balance<0?'danger':''}>{balance<0?'超支 ':''}{yuan(Math.abs(balance))}</td>
+              <td className="ledger-progress">
+                <div><span className="payment-tag" data-payment-status={status}>{PAYMENT_STATUS[status]}</span>
+                  {project.spent!=null&&project.budget>0&&<b>{pct(paid,project.budget)}</b>}
+                </div>
+                <Ratio segments={[
+                  {value:Math.min(paid,project.budget),color:'var(--budget-teal)'},
+                  {value:Math.max(-balance,0),color:'var(--budget-coral)'},
+                ]} scale={Math.max(project.budget,paid)} label={name+' '+PAYMENT_STATUS[status]}/>
+              </td>
+            </tr>;
+          })}</tbody>
+        </table>
+      </div>
+    </>:<div className="ledger-empty"><p>当前条件下没有项目。</p><button onClick={()=>{setQuery('');setFilter('all');clearQuarter();}}>清除筛选</button></div>}
+  </article>;
+}
+
 function Annual({items,hidden}:{items:Project[];hidden:boolean}) {
   const t=summary(items), used=t.build+t.experience;
   const types=FORM_FILTERS.map((name,i)=>{
