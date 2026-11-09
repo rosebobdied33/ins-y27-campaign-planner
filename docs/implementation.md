@@ -1,0 +1,2 @@
+# Architecture
+The browser loads a static Next.js app. Supabase returns either the owner model or a sanitized viewer projection. The viewer projection uses a field allowlist, coarse proportions, and a normalized quarter comparison. Authentication and role checks happen before the server returns any plan. The stylesheet follows the Campaign OS draft with readable type, translucent project cards, and responsive charts.
