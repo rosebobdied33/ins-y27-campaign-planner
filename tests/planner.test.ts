@@ -1,7 +1,7 @@
 import {seed} from './fixtures/example';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allocation, summary, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
+import { allocation, summary, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
 
 test('seed has the exact annual structure and preserves unfilled amounts', () => {
   const items = seed(), totals = summary(items,145000);
@@ -34,4 +34,13 @@ test('backup is lossless and rejects duplicates, invalid dates and repeated form
   ]) assert.throws(() => readBackup(backup(invalid)));
   assert.equal(nextCode(items, 'S'), 'S03');
   assert.match(csv([{...items[0], name:'=2+2'}]), /"'=2\+2"/);
+});
+
+test('campaign duration counts both endpoints across months, leap days and years', () => {
+  assert.equal(durationDays('2027-01-22','2027-03-01'), 39);
+  assert.equal(durationDays('2027-11-26','2028-01-17'), 53);
+  assert.equal(durationDays('2028-02-28','2028-03-01'), 3);
+  assert.equal(durationDays('2027-05-20','2027-05-20'), 1);
+  assert.equal(durationDays('2027-05-21','2027-05-20'), null);
+  assert.match(csv([{...seed()[0], start:'2027-01-22', end:'2027-03-01'}]), /"2027-03-01","39"/);
 });

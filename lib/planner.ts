@@ -18,6 +18,10 @@ const project = z.object({
 export type Project = z.infer<typeof project>;
 const projects = z.array(project).max(300).refine(p => new Set(p.map(x=>x.code)).size === p.length && new Set(p.map(x=>x.id)).size === p.length);
 export const quarter = (start:string) => QUARTERS[Math.floor((Number(start.slice(5,7))-1)/3)];
+export function durationDays(start:string,end:string):number|null {
+  if (!date.safeParse(start).success || !date.safeParse(end).success || end<start) return null;
+  return (Date.parse(end+'T00:00:00Z')-Date.parse(start+'T00:00:00Z'))/86_400_000+1;
+}
 export const allocation = (p:Project) => p.budget - (p.build ?? 0) - (p.experience ?? 0);
 export function summary(items:Project[],baseline=0) {
   const out = {S:0,A:0,total:0,build:0,experience:0,unallocated:0,over:0,remaining:baseline,quarters:[0,0,0,0]};
@@ -54,8 +58,8 @@ export const nextCode = (items:Project[], tier:Tier) => {
 export const backup = (items:unknown) => JSON.stringify({version:1,year:2027,projects:items},null,2);
 export const readBackup = (data:string) => z.object({version:z.literal(1),year:z.literal(2027),projects}).parse(JSON.parse(data)).projects;
 export const validateProjects = (value:unknown) => projects.parse(value);
-export const HEADERS = ['编号','级别','主题名称','季度','开始日期','结束日期','状态','预算（元）','搭建（元）','体验（元）','待分配 / 超额（元）','主导形式','叠加形式','备注'];
-export const rows = (items:Project[]) => items.map(p => [p.code,p.tier,p.name,quarter(p.start),p.start,p.end,p.status,p.budget/100,p.build===null?null:p.build/100,p.experience===null?null:p.experience/100,allocation(p)/100,p.primary,p.secondary,p.notes]);
+export const HEADERS = ['编号','级别','主题名称','季度','开始日期','结束日期','周期（天）','状态','预算（元）','搭建（元）','体验（元）','待分配 / 超额（元）','主导形式','叠加形式','备注'];
+export const rows = (items:Project[]) => items.map(p => [p.code,p.tier,p.name,quarter(p.start),p.start,p.end,durationDays(p.start,p.end),p.status,p.budget/100,p.build===null?null:p.build/100,p.experience===null?null:p.experience/100,allocation(p)/100,p.primary,p.secondary,p.notes]);
 export const csv = (items:Project[]) => '\uFEFF'+[HEADERS,...rows(items)].map(row => row.map(v => {
   const s = String(v ?? '');
   return '"'+(typeof v==='string' && (/^\s*[=+\-@]/.test(s)||/^[\t\r\n]/.test(s)) ? "'"+s : s).replaceAll('"','""')+'"';
