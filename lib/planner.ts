@@ -2,8 +2,11 @@ import { z } from 'zod';
 
 export const FORMS = ['待定','空间搭建','场景营造','艺术装置','互动体验','沉浸演艺','市集快闪','事件营销','IP联动','全楼运营'] as const;
 export const SECONDARY = ['不叠加', ...FORMS.slice(1)] as const;
-export const PRIMARY_FORMS = [...FORMS.filter(form=>form!=='全楼运营'), '其他'] as const;
-export const FORM_FILTERS = [...FORMS, '其他'] as const;
+const PRIMARY_CATEGORIES = [
+  '氛围搭建','主体装置','设定场景','娱乐互动','沉浸演艺','商务联动','简易布置',
+] as const;
+export const PRIMARY_FORMS = ['待定', ...PRIMARY_CATEGORIES, '其他'] as const;
+export const FORM_FILTERS = [...new Set([...PRIMARY_FORMS, ...FORMS])];
 export const STATUSES = ['规划中','已确认','执行中','已完成'] as const;
 export const COLORS = ['#e49a60','#75aa81','#a186d4','#688ed2','#c377a1','#9d537b','#55a390','#cf747b'];
 export const QUARTERS = ['Q1','Q2','Q3','Q4'] as const;

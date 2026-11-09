@@ -172,7 +172,7 @@ function Card({p,artwork,edit,copy,remove}:{p:Project;artwork?:string;edit:(patc
       </div>
     </details>
     <div className="fields"><label>主导形式<select aria-label="主导形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>
-      {p.primary==='全楼运营'&&<option value="全楼运营" disabled>全楼运营（历史值）</option>}
+      {!PRIMARY_FORMS.some(value=>value===p.primary)&&<option value={p.primary} disabled>{p.primary}（历史值）</option>}
       {options(PRIMARY_FORMS.filter(v=>v!==p.secondary))}
     </select></label>
     <label>叠加形式<select aria-label="叠加形式" value={p.secondary} onChange={e=>edit({secondary:e.target.value as Project['secondary']})}>{options(SECONDARY.filter(v=>v!==p.primary))}</select></label></div>
@@ -561,7 +561,7 @@ export default function Planner() {
         }}/>
         <div className="filters"><div className="segmented" aria-label="级别筛选">{[['S','S 级'],['A','A 级'],['all','全部']].map(([value,label])=><button key={value} aria-pressed={tier===value} onClick={()=>setTier(value)}>{label}</button>)}</div>
           <label><CalendarDays size={15}/><select aria-label="季度筛选" value={q} onChange={e=>setQ(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label>
-          <label><select aria-label="活动形式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">全部形式</option>{options(FORM_FILTERS)}</select></label></div>
+          <label><select aria-label="活动形式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">全部形式</option>{options(FORM_FILTERS.filter(value=>PRIMARY_FORMS.some(primary=>primary===value)||items.some(p=>p.primary===value||p.secondary===value)))}</select></label></div>
         {notice&&<p className="notice" role="status">{notice}<button className="icon" onClick={()=>setNotice('')} aria-label="关闭提示">×</button></p>}
         <div className="cards">{shown.map(p=><Card key={p.id} p={p} artwork={artwork[p.id]} edit={patch=>edit(p.id,patch)} copy={()=>add(p)} remove={()=>ask({title:'删除 '+p.code+'？',description:'将从年度计划移除「'+p.name+'」，预算会随之更新。',action:()=>store.change(items.filter(x=>x.id!==p.id))})}/>)}</div>
         {!shown.length&&<div className="empty panel">当前筛选下没有项目。<button onClick={()=>{setTier('all');setQ('all');setForm('all');}}>清除筛选</button></div>}

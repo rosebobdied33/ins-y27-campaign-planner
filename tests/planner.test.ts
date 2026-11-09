@@ -63,7 +63,9 @@ test('custom primary forms survive backup and legacy forms remain readable', () 
   const items = readBackup(backup([custom,legacy]));
   assert.equal(primaryFormLabel(items[0]), '社区联动');
   assert.equal(primaryFormLabel(items[1]), '全楼运营');
-  assert.ok(!PRIMARY_FORMS.some(form => String(form)==='全楼运营'));
+  const expected = ['待定','氛围搭建','主体装置','设定场景','娱乐互动','沉浸演艺','商务联动','简易布置','其他'];
+  assert.deepEqual([...PRIMARY_FORMS], expected);
+  for(const primary of expected)assert.equal(readBackup(backup([{...first,primary}]))[0].primary,primary);
   assert.deepEqual(filterProjects(items,'all','all','其他'), [items[0]]);
   assert.match(csv(items), /社区联动/);
 });
