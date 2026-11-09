@@ -42,7 +42,7 @@ export function PlanOverview({items,budget,openQuarter}:{items:ScheduleItem[];bu
       <div className="quarter-map">
         {groups.map((group,i)=>{
           const q=QUARTERS[i], s=group.filter(p=>p.tier==='S').length;
-          return <article className="panel quarter-tile" key={q}>
+          return <article className="panel quarter-tile" key={q} data-quarter={q}>
             <button className="quarter-open" onClick={()=>openQuarter(q)} aria-label={`查看 ${q} 的项目`}>
               <span><strong>{q}</strong><small>{3*i+1}–{3*i+3} 月</small></span><ArrowUpRight size={16}/>
             </button>

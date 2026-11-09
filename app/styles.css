@@ -404,3 +404,37 @@ button,.filters label{border-radius:9px}
   .hero{min-height:150px;background-image:linear-gradient(100deg,#160f17 5%,rgb(29 17 28 / .94) 42%,rgb(45 25 40 / .42) 100%),repeating-linear-gradient(0deg,transparent 0 2px,rgb(252 214 230 / .16) 3px,transparent 4px 8px),linear-gradient(94deg,#3c2937,#c47f9a)}
   .quarter-tile{padding:10px}
 }
+
+.hero h1 .hero-script{
+  position:relative;isolation:isolate;display:inline-block;
+  font-family:"Didot","Bodoni 72","Baskerville",Georgia,serif;
+  font-size:clamp(33px,4.5vw,66px);font-weight:400;font-style:normal;
+  line-height:1.08;letter-spacing:-.068em;color:#f8d3e3;text-wrap:nowrap;
+}
+.hero-flourish{
+  position:absolute;inset:-26% -9% auto;width:118%;height:150%;z-index:-1;
+  fill:none;stroke:#eab0ca;stroke-width:.7;opacity:.62;overflow:visible;pointer-events:none
+}
+.hero h1{gap:6px 24px}
+.quarter-tile{
+  --quarter-light:rgb(238 172 199 / .34);
+  --quarter-edge:rgb(181 119 155 / .29);
+  background:linear-gradient(145deg,var(--quarter-light),var(--glass) 69%,transparent 112%);
+  border-color:var(--quarter-edge);
+  box-shadow:inset 0 0 0 3px rgb(255 255 255 / .16),inset 0 0 0 4px var(--quarter-edge);
+}
+.quarter-tile[data-quarter="Q2"]{--quarter-light:rgb(177 163 218 / .29);--quarter-edge:rgb(135 115 183 / .27)}
+.quarter-tile[data-quarter="Q3"]{--quarter-light:rgb(243 182 161 / .30);--quarter-edge:rgb(177 125 119 / .27)}
+.quarter-tile[data-quarter="Q4"]{--quarter-light:rgb(173 193 213 / .31);--quarter-edge:rgb(118 142 174 / .28)}
+.quarter-tile .quarter-open{
+  border-color:var(--quarter-edge);
+  background:linear-gradient(110deg,var(--quarter-light),color-mix(in srgb,var(--glass) 56%,transparent));
+}
+.quarter-tile li{border-top-color:var(--quarter-edge)}
+.primary-detail{display:grid;gap:3px;color:var(--muted);font-size:12px;margin-top:8px}
+.primary-detail input{min-height:36px;color:var(--text)}
+@media(max-width:580px){
+  .hero h1 .hero-script{font-size:clamp(24px,7.25vw,43px)}
+  .hero-flourish{inset:-20% -5% auto;width:110%;height:140%;opacity:.5}
+  .primary-detail input{font-size:16px}
+}

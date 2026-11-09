@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react';
 import {ArrowDownToLine,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Sun,Trash2,Wallet} from 'lucide-react';
-import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORMS,HEADERS,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,rows,SECONDARY,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
+import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,rows,SECONDARY,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
 import {usePlanner,type ViewerData} from '../lib/storage';
 
 import {PlanOverview} from './overview';
@@ -78,7 +78,11 @@ function Sidebar({pane,owner}:{pane:Pane;owner:boolean}) {
 }
 function CampaignHero({viewer=false}:{viewer?:boolean}) {
   return <div className="hero"><div><div className="eyebrow">INS STUDIO / ANNUAL PLANNING</div>
-    <h1><span>INS LAND</span><em>Campaign Planner</em></h1><p>2027 年度活动规划{viewer?' · 浏览模式':'与预算工作台'}</p>
+    <h1><span>INS LAND</span><em className="hero-script">Campaign Planner
+      <svg className="hero-flourish" viewBox="0 0 520 104" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M128 57C89 34 35 3 11 22C-14 43 34 78 84 62C125 49 150 21 192 28C220 33 205 60 178 72C116 100 16 77 4 93"/>
+        <path d="M292 61C333 48 370 13 395 18C429 24 387 60 358 76C319 97 374 106 421 92C464 79 501 46 514 57C526 69 480 98 441 87"/>
+      </svg></em></h1><p>2027 年度活动规划{viewer?' · 浏览模式':'与预算工作台'}</p>
   </div><span className="year">2027</span></div>;
 }
 function CampaignDates({start,end}:{start:string;end:string}) {
@@ -111,8 +115,12 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
       <div className="split-legend"><span><i/>搭建 {split&&p.build!==null?pct(p.build,split):'—'}</span><span><i/>体验 {split&&p.experience!==null?pct(p.experience,split):'—'}</span>{gap>0&&<span className="unassigned"><i/>待分配</span>}</div>
       <div className="card-payment"><Money label="实际已支出" value={p.spent??null} onChange={spent=>edit({spent})}/><small>{(p.spent??0)>p.budget?'超支 '+yuan((p.spent??0)-p.budget):'待支出 '+yuan(p.budget-(p.spent??0))}</small></div>
     </div>
-    <div className="fields"><label>主导形式<select aria-label="主导形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>{options(FORMS.filter(v=>v!==p.secondary))}</select></label>
+    <div className="fields"><label>主导形式<select aria-label="主导形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>
+      {p.primary==='全楼运营'&&<option value="全楼运营" disabled>全楼运营（历史值）</option>}
+      {options(PRIMARY_FORMS.filter(v=>v!==p.secondary))}
+    </select></label>
     <label>叠加形式<select aria-label="叠加形式" value={p.secondary} onChange={e=>edit({secondary:e.target.value as Project['secondary']})}>{options(SECONDARY.filter(v=>v!==p.primary))}</select></label></div>
+    {p.primary==='其他'&&<label className="primary-detail">自定义主导形式<input aria-label="自定义主导形式" maxLength={80} placeholder="输入活动形式" value={p.primaryDetail??''} onChange={e=>edit({primaryDetail:e.target.value})}/></label>}
     <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
   </article>;
 }
@@ -159,7 +167,7 @@ function SpendingBoard({items,onEdit}:{items:Project[];onEdit:(id:string,spent:n
 }
 function Annual({items,hidden}:{items:Project[];hidden:boolean}) {
   const t=summary(items), used=t.build+t.experience;
-  const types=FORMS.map((name,i)=>{
+  const types=FORM_FILTERS.map((name,i)=>{
     const group=items.filter(p=>p.primary===name);
     return {name,count:group.length,value:group.reduce((s,p)=>s+p.budget,0),color:COLORS[i%COLORS.length]};
   }).filter(g=>g.count);
@@ -218,7 +226,7 @@ function Viewer({data,dark,toggle,logout,error}:{data:ViewerData;dark:boolean;to
             <div className="project-stripe" aria-hidden="true"><span/>{p.accent&&<span style={{background:p.accent}}/>}</div>
             <div className="card-meta"><span className="dot"/><strong>{p.code}</strong><span className="tag">{quarter(p.start)}</span><span className="viewer-status">{p.status}</span></div>
             <h3>{p.name||'未命名项目'}</h3><CampaignDates start={p.start} end={p.end}/>
-            <p className="viewer-forms">{p.primary}{p.secondary!=='不叠加'&&' · '+p.secondary}</p>
+            <p className="viewer-forms">{primaryFormLabel(p)}{p.secondary!=='不叠加'&&' · '+p.secondary}</p>
             <div className="viewer-budget"><span>预算 <b>****</b></span><span>搭建 <b>****</b></span><span>体验 <b>****</b></span></div>
           </article>)}</div>
           {!projects.length&&<p className="panel">这个级别暂无项目。</p>}
@@ -228,7 +236,7 @@ function Viewer({data,dark,toggle,logout,error}:{data:ViewerData;dark:boolean;to
             <article className="panel"><h3>级别预算结构</h3><div className="chart-pair"><Donut segments={tier===null?[]:tierSegments(tier,100-tier)} value={tier===null?'—':'约 '+tier+'%'} caption="S 级占比" label={'S 级 '+approx(tier)}/><div className="chart-list"><div><span>S 级</span><b>{approx(tier)}</b></div><div><span>A 级</span><b>{approx(tier===null?null:100-tier)}</b></div></div></div></article>
             <article className="panel"><h3>季度资源规模</h3>{QUARTERS.map((q,i)=><div className="track" key={q}><div><strong>{q}</strong></div><Ratio segments={[{value:quarters[i]??0,color:'var(--tier-s)'}]} scale={100} label={q+' 相对规模'}/></div>)}</article>
             <article className="panel"><h3>搭建 / 体验结构</h3><div className="chart-pair"><Donut segments={build===null?[]:splitSegments(build,100-build)} value={build===null?'—':'约 '+build+'%'} caption="搭建占比" label={'搭建 '+approx(build)}/><div className="chart-list"><div><span>搭建</span><b>{approx(build)}</b></div><div><span>体验</span><b>{approx(build===null?null:100-build)}</b></div></div></div></article>
-            <article className="panel"><h3>活动形式分布</h3>{FORMS.map(name=>[name,data.projects.filter(p=>p.primary===name).length] as const).filter(([,count])=>count>0).map(([name,count])=><div className="track" key={name}><div><span>{name}</span><b>{count} 项</b></div><Ratio segments={[{value:count,color:'var(--tier-a)'}]} scale={data.projects.length} label={name+' '+count+' 项'}/></div>)}</article>
+            <article className="panel"><h3>活动形式分布</h3>{FORM_FILTERS.map(name=>[name,data.projects.filter(p=>p.primary===name).length] as const).filter(([,count])=>count>0).map(([name,count])=><div className="track" key={name}><div><span>{name}</span><b>{count} 项</b></div><Ratio segments={[{value:count,color:'var(--tier-a)'}]} scale={data.projects.length} label={name+' '+count+' 项'}/></div>)}</article>
           </div>
         </section>
         <footer><LockKeyhole size={14}/> 规划只读 · 费用隐藏<span>INS LAND / 2027</span></footer>
@@ -358,7 +366,7 @@ export default function Planner() {
         }}/>
         <div className="filters"><div className="segmented" aria-label="级别筛选">{[['S','S 级'],['A','A 级'],['all','全部']].map(([value,label])=><button key={value} aria-pressed={tier===value} onClick={()=>setTier(value)}>{label}</button>)}</div>
           <label><CalendarDays size={15}/><select aria-label="季度筛选" value={q} onChange={e=>setQ(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label>
-          <label><select aria-label="活动形式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">全部形式</option>{options(FORMS)}</select></label></div>
+          <label><select aria-label="活动形式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">全部形式</option>{options(FORM_FILTERS)}</select></label></div>
         {notice&&<p className="notice" role="status">{notice}<button className="icon" onClick={()=>setNotice('')} aria-label="关闭提示">×</button></p>}
         <div className="cards">{shown.map(p=><Card key={p.id} p={p} edit={patch=>edit(p.id,patch)} copy={()=>add(p)} remove={()=>ask({title:'删除 '+p.code+'？',description:'将从年度计划移除「'+p.name+'」，预算会随之更新。',action:()=>store.change(items.filter(x=>x.id!==p.id))})}/>)}</div>
         {!shown.length&&<div className="empty panel">当前筛选下没有项目。<button onClick={()=>{setTier('all');setQ('all');setForm('all');}}>清除筛选</button></div>}

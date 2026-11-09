@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 export const FORMS = ['待定','空间搭建','场景营造','艺术装置','互动体验','沉浸演艺','市集快闪','事件营销','IP联动','全楼运营'] as const;
 export const SECONDARY = ['不叠加', ...FORMS.slice(1)] as const;
+export const PRIMARY_FORMS = [...FORMS.filter(form=>form!=='全楼运营'), '其他'] as const;
+export const FORM_FILTERS = [...FORMS, '其他'] as const;
 export const STATUSES = ['规划中','已确认','执行中','已完成'] as const;
 export const COLORS = ['#e49a60','#75aa81','#a186d4','#688ed2','#c377a1','#9d537b','#55a390','#cf747b'];
 export const QUARTERS = ['Q1','Q2','Q3','Q4'] as const;
@@ -12,7 +14,7 @@ const project = z.object({
   id:z.string().min(1).max(80), code:z.string().regex(/^[SA]\d{2,4}$/),
   tier:z.enum(['S','A']), name:z.string().max(100), start:date, end:date,
   budget:money, spent:money.nullable().optional(), build:money.nullable(), experience:money.nullable(),
-  primary:z.enum(FORMS), secondary:z.enum(SECONDARY), status:z.enum(STATUSES),
+  primary:z.enum(FORM_FILTERS), primaryDetail:z.string().max(80).optional(), secondary:z.enum(SECONDARY), status:z.enum(STATUSES),
   notes:z.string().max(1000), color:z.string().regex(/^#[a-fA-F0-9]{6}$/), accent:z.string().regex(/^#[a-fA-F0-9]{6}$/).optional()
 }).refine(p => p.start <= p.end && p.primary !== p.secondary && p.code.startsWith(p.tier));
 export type Project = z.infer<typeof project>;
@@ -73,8 +75,11 @@ export const nextCode = (items:Project[], tier:Tier) => {
 export const backup = (items:unknown) => JSON.stringify({version:1,year:2027,projects:items},null,2);
 export const readBackup = (data:string) => z.object({version:z.literal(1),year:z.literal(2027),projects}).parse(JSON.parse(data)).projects;
 export const validateProjects = (value:unknown) => projects.parse(value);
+export function primaryFormLabel(project:{primary:Project['primary'];primaryDetail?:string|null}):string {
+  return project.primary==='其他' ? project.primaryDetail?.trim() || '其他' : project.primary;
+}
 export const HEADERS = ['编号','级别','主题名称','季度','开始日期','结束日期','周期（天）','状态','预算（元）','搭建（元）','体验（元）','待分配 / 超额（元）','主导形式','叠加形式','备注','实际已支出（元）','待支出（元）'];
-export const rows = (items:Project[]) => items.map(p => [p.code,p.tier,p.name,quarter(p.start),p.start,p.end,durationDays(p.start,p.end),p.status,p.budget/100,p.build===null?null:p.build/100,p.experience===null?null:p.experience/100,allocation(p)/100,p.primary,p.secondary,p.notes,p.spent==null?null:p.spent/100,Math.max(0,p.budget-(p.spent??0))/100]);
+export const rows = (items:Project[]) => items.map(p => [p.code,p.tier,p.name,quarter(p.start),p.start,p.end,durationDays(p.start,p.end),p.status,p.budget/100,p.build===null?null:p.build/100,p.experience===null?null:p.experience/100,allocation(p)/100,primaryFormLabel(p),p.secondary,p.notes,p.spent==null?null:p.spent/100,Math.max(0,p.budget-(p.spent??0))/100]);
 export const csv = (items:Project[]) => '\uFEFF'+[HEADERS,...rows(items)].map(row => row.map(v => {
   const s = String(v ?? '');
   return '"'+(typeof v==='string' && (/^\s*[=+\-@]/.test(s)||/^[\t\r\n]/.test(s)) ? "'"+s : s).replaceAll('"','""')+'"';

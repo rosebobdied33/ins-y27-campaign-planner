@@ -1,7 +1,7 @@
 import {seed} from './fixtures/example';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allocation, summary, spending, validateProjects, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
+import { allocation, summary, PRIMARY_FORMS, primaryFormLabel, filterProjects, spending, validateProjects, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
 
 test('seed has the exact annual structure and preserves unfilled amounts', () => {
   const items = seed(), totals = summary(items,145000);
@@ -54,4 +54,16 @@ test('spending keeps missing entries separate and calculates pending and overspe
   });
   assert.equal(readBackup(backup(items))[0].spent, 50000);
   assert.equal(items[2].spent, undefined);
+});
+
+test('custom primary forms survive backup and legacy forms remain readable', () => {
+  const [first, second] = seed();
+  const custom = {...first, primary:'其他', primaryDetail:'社区联动'};
+  const legacy = {...second, primary:'全楼运营'};
+  const items = readBackup(backup([custom,legacy]));
+  assert.equal(primaryFormLabel(items[0]), '社区联动');
+  assert.equal(primaryFormLabel(items[1]), '全楼运营');
+  assert.ok(!PRIMARY_FORMS.some(form => String(form)==='全楼运营'));
+  assert.deepEqual(filterProjects(items,'all','all','其他'), [items[0]]);
+  assert.match(csv(items), /社区联动/);
 });
