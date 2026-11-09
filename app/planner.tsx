@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react';
-import {ArrowDownToLine,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet} from 'lucide-react';
+import {ArrowDownToLine,ArrowUpRight,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet} from 'lucide-react';
 import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,rows,SECONDARY,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
 import {usePlanner,type ViewerData} from '../lib/storage';
 
@@ -94,7 +94,7 @@ function usePane(owner:boolean) {
   },[]);
   return (requested==='projects'||requested==='resources'||(requested==='budget'&&owner)?requested:'overview') as Pane;
 }
-function useCalendarProject(pane:Pane) {
+function useProjectJump(pane:Pane) {
   const [target,setTarget]=useState<string|null>(null);
   useEffect(()=>{
     if(pane!=='projects'||target===null)return;
@@ -157,7 +157,7 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
       <div className="split"><Money label="搭建" value={p.build} onChange={build=>edit({build})}/><Money label="体验" value={p.experience} onChange={experience=>edit({experience})}/></div>
       <Ratio segments={[...splitSegments(p.build??0,p.experience??0),{value:Math.max(0,gap),color:'var(--unassigned)'}]} label={'项目预算分配：搭建 '+yuan(p.build??0)+'，体验 '+yuan(p.experience??0)+'，'+(gap<0?'超额 ':'待分配 ')+yuan(Math.abs(gap))}/>
       <div className="split-legend"><span><i/>搭建 {split&&p.build!==null?pct(p.build,split):'—'}</span><span><i/>体验 {split&&p.experience!==null?pct(p.experience,split):'—'}</span>{gap>0&&<span className="unassigned"><i/>待分配</span>}</div>
-      <div className="card-payment"><Money label="实际已支出" value={p.spent??null} onChange={spent=>edit({spent})}/><small>{(p.spent??0)>p.budget?'超支 '+yuan((p.spent??0)-p.budget):'待支出 '+yuan(p.budget-(p.spent??0))}</small></div>
+      <div className="card-payment"><Money label="实际已支出" value={p.spent??null} commitOnBlur onChange={spent=>edit({spent})}/><small>{(p.spent??0)>p.budget?'超支 '+yuan((p.spent??0)-p.budget):'待支出 '+yuan(p.budget-(p.spent??0))}</small></div>
     </div>
     <div className="fields"><label>主导形式<select aria-label="主导形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>
       {p.primary==='全楼运营'&&<option value="全楼运营" disabled>全楼运营（历史值）</option>}
@@ -168,7 +168,10 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
     <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
   </article>;
 }
-function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;onEdit:(id:string,spent:number|null)=>void}) {
+function BudgetTitle({english,chinese}:{english:string;chinese:string}) {
+  return <h3 className="budget-title">{english}<span lang="zh-CN">{chinese}</span></h3>;
+}
+function SpendingBoard({items,baseline,openProject}:{items:Project[];baseline:number;openProject:(id:string)=>void}) {
   const [series,setSeries]=useState<'plan'|'paid'>('plan');
   const [selectedQuarter,setSelectedQuarter]=useState<string|null>(null);
   const totals=spending(items), plan=summary(items,baseline);
@@ -185,7 +188,7 @@ function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;
     <div className="budget-tiles">
       <article className="panel budget-feature">
         <div className="budget-feature-copy">
-          <span className="eyebrow"><Wallet size={14}/> 年度预算基准</span>
+          <BudgetTitle english="Annual Baseline" chinese="年度预算基准"/>
           <strong className="budget-number">{yuan(baseline)}</strong>
           <p>已规划 <b>{yuan(plan.total)}</b> · {items.length} 项</p>
           <span className={'budget-pill '+(plan.remaining<0?'danger':'')}>{plan.remaining<0?'超出基准':'基准余量'} {yuan(Math.abs(plan.remaining))}</span>
@@ -197,12 +200,12 @@ function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;
         ]} value={pct(plan.total,baseline)} caption="规划率" label={'年度预算规划率 '+pct(plan.total,baseline)}/>
       </article>
       <article className="panel budget-snapshot budget-paid">
-        <span>实际已支出</span><strong className="budget-number">{paidLabel}</strong>
+        <BudgetTitle english="Paid" chinese="实际已支出"/><strong className="budget-number">{paidLabel}</strong>
         <Ratio segments={[{value:totals.paid,color:'var(--budget-teal)'}]} scale={coverage} label={'已支出占已支出与待支出合计 '+pct(totals.paid,coverage)}/>
         <p>{totals.recorded?`${totals.withPayment} 项已有付款`:'待登记付款'}{totals.over>0&&<b className="danger"> · 超支 {yuan(totals.over)}</b>}</p>
       </article>
       <article className="panel budget-snapshot budget-pending">
-        <span>待支出</span><strong className="budget-number">{yuan(totals.pending)}</strong>
+        <BudgetTitle english="Pending" chinese="待支出"/><strong className="budget-number">{yuan(totals.pending)}</strong>
         <Ratio segments={[{value:totals.pending,color:'var(--budget-gold)'}]} scale={coverage} label={'待支出占已支出与待支出合计 '+pct(totals.pending,coverage)}/>
         <p>{totals.withBalance} 项待付 · {items.length-totals.recorded} 项未录入实际支出</p>
       </article>
@@ -210,7 +213,7 @@ function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;
 
     <div className="budget-modules">
       <article className="panel budget-quarter">
-        <div className="calendar-heading"><div><span className="eyebrow">QUARTER MIX</span><h3>季度预算占比</h3></div>
+        <div className="calendar-heading"><div><BudgetTitle english="Quarter Mix" chinese="季度预算占比"/></div>
           <div className="segmented" aria-label="季度金额口径"><button aria-pressed={series==='plan'} onClick={()=>setSeries('plan')}>规划预算</button><button aria-pressed={series==='paid'} onClick={()=>setSeries('paid')}>实际支出</button></div>
         </div>
         <div className="budget-peak"><span className="budget-pill">{peakLabels?peakLabels+' 最高':'暂无金额'}</span>{peakLabels&&<strong>{yuan(peak)} · {pct(peak,total)}</strong>}</div>
@@ -228,7 +231,7 @@ function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;
 
       <div className="budget-structure">
         <article className="panel budget-tier">
-          <span className="eyebrow">CAMPAIGN TIERS</span><h3>S / A 预算结构</h3>
+          <BudgetTitle english="Campaign Tiers" chinese="S / A 预算结构"/>
           <div className="chart-pair">
             <Donut segments={tierSegments(plan.S,plan.A)} value={plan.total?pct(plan.S,plan.total):'—'} caption="S 级占比" label={'S 级 '+pct(plan.S,plan.total)+'，A 级 '+pct(plan.A,plan.total)}/>
             <div className="chart-list">
@@ -238,7 +241,7 @@ function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;
           </div>
         </article>
         <article className="panel budget-allocation">
-          <span className="eyebrow">ALLOCATION</span><h3>费用分配结构</h3>
+          <BudgetTitle english="Allocation" chinese="费用分配结构"/>
           <Ratio segments={[...splitSegments(plan.build,plan.experience),{value:plan.unallocated,color:'var(--unassigned)'}]} scale={splitTotal}
             label={`搭建 ${yuan(plan.build)}，体验 ${yuan(plan.experience)}，待分配 ${yuan(plan.unallocated)}`}/>
           <div className="chart-list">
@@ -251,7 +254,7 @@ function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;
       </div>
     </div>
 
-    <PaymentLedger items={items} selectedQuarter={selectedQuarter} clearQuarter={()=>setSelectedQuarter(null)} onEdit={onEdit}/>
+    <PaymentLedger items={items} selectedQuarter={selectedQuarter} clearQuarter={()=>setSelectedQuarter(null)} openProject={openProject}/>
   </>;
 }
 
@@ -267,8 +270,8 @@ function paymentStatus(project:Project):keyof typeof PAYMENT_STATUS {
   return project.spent===project.budget?'settled':'partial';
 }
 
-function PaymentLedger({items,selectedQuarter,clearQuarter,onEdit}:{
-  items:Project[];selectedQuarter:string|null;clearQuarter:()=>void;onEdit:(id:string,spent:number|null)=>void;
+function PaymentLedger({items,selectedQuarter,clearQuarter,openProject}:{
+  items:Project[];selectedQuarter:string|null;clearQuarter:()=>void;openProject:(id:string)=>void;
 }) {
   const [filter,setFilter]=useState('all');
   const [query,setQuery]=useState('');
@@ -281,7 +284,7 @@ function PaymentLedger({items,selectedQuarter,clearQuarter,onEdit}:{
 
   return <article className="panel payment-ledger">
     <div className="ledger-heading">
-      <div><span className="eyebrow">PROJECT LEDGER</span><h3>项目支出明细</h3><p>填累计实付金额，回车或离开输入框即可保存。</p></div>
+      <div><BudgetTitle english="Project Spend" chinese="项目支出明细"/><p>色块表示已付占本项目预算的比例。实付金额在项目规划中填写。</p></div>
       <span className="ledger-count" aria-live="polite">显示 {visible.length} / {items.length} 项</span>
     </div>
     <div className="ledger-tools">
@@ -300,34 +303,37 @@ function PaymentLedger({items,selectedQuarter,clearQuarter,onEdit}:{
         <span>待付 <b>{yuan(subtotal.pending)}</b></span>
         {subtotal.over>0&&<span className="danger">超支 <b>{yuan(subtotal.over)}</b></span>}
       </div>
-      <div className="ledger-scroll">
-        <table role="table" aria-label="项目支出明细">
-          <thead><tr><th scope="col">项目</th><th scope="col">规划预算</th><th scope="col">实际已支出</th><th scope="col">待支出 / 超支</th><th scope="col">付款进度</th></tr></thead>
-          <tbody>{visible.map(project=>{
-            const name=project.name||'未命名项目';
-            const paid=project.spent??0;
-            const balance=project.budget-paid;
-            const status=paymentStatus(project);
-            return <tr key={project.id}>
-              <th scope="row" className="ledger-project">
-                <div><i style={{background:project.color}} aria-hidden="true"/><b>{name}</b></div>
-                <small>{project.code} · {quarter(project.start)}</small>
-              </th>
-              <td data-label="规划预算">{yuan(project.budget)}</td>
-              <td data-label="实际已支出"><Money label={project.code+' '+name+' 实际已支出'} value={project.spent??null} commitOnBlur onChange={spent=>onEdit(project.id,spent)}/></td>
-              <td data-label="待支出 / 超支" className={balance<0?'danger':''}>{balance<0?'超支 ':''}{yuan(Math.abs(balance))}</td>
-              <td className="ledger-progress">
-                <div><span className="payment-tag" data-payment-status={status}>{PAYMENT_STATUS[status]}</span>
-                  {project.spent!=null&&project.budget>0&&<b>{pct(paid,project.budget)}</b>}
-                </div>
-                <Ratio segments={[
-                  {value:Math.min(paid,project.budget),color:'var(--budget-teal)'},
-                  {value:Math.max(-balance,0),color:'var(--budget-coral)'},
-                ]} scale={Math.max(project.budget,paid)} label={name+' '+PAYMENT_STATUS[status]}/>
-              </td>
-            </tr>;
-          })}</tbody>
-        </table>
+      <div className="spend-card-grid">
+        {visible.map(project=>{
+          const name=project.name||'未命名项目';
+          const paid=project.spent??0;
+          const balance=project.budget-paid;
+          const status=paymentStatus(project);
+          const share=project.spent==null||project.budget===0?null:pct(paid,project.budget);
+          const fill=project.budget===0?(paid>0?'100%':'0%'):pct(Math.min(paid,project.budget),project.budget);
+          return <button key={project.id} className="spend-card" data-payment-status={status}
+            style={{'--project-color':project.color} as CSSProperties}
+            aria-label={`打开项目规划：${name}，${PAYMENT_STATUS[status]}，预算 ${yuan(project.budget)}`}
+            onClick={()=>openProject(project.id)}>
+            <span className="spend-card-head">
+              <small><i aria-hidden="true"/>{project.code} · {quarter(project.start)}</small>
+              <ArrowUpRight size={15} aria-hidden="true"/>
+            </span>
+            <strong className="spend-card-name">{name}</strong>
+            <span className="spend-card-body">
+              <span className="spend-gauge" role="img" aria-label={share===null?PAYMENT_STATUS[status]:'已付占项目预算 '+share}>
+                <i style={{height:fill}}/>
+                <b>{share??'—'}</b>
+              </span>
+              <span className="spend-values">
+                <span><small>预算</small><b>{yuan(project.budget)}</b></span>
+                <span><small>实付</small><b>{project.spent==null?'—':yuan(paid)}</b></span>
+                <span className={balance<0?'danger':''}><small>{balance<0?'超支':'待付'}</small><b>{yuan(Math.abs(balance))}</b></span>
+              </span>
+            </span>
+            <span className="payment-tag" data-payment-status={status}>{PAYMENT_STATUS[status]}</span>
+          </button>;
+        })}
       </div>
     </>:<div className="ledger-empty"><p>当前条件下没有项目。</p><button onClick={()=>{setQuery('');setFilter('all');clearQuarter();}}>清除筛选</button></div>}
   </article>;
@@ -373,7 +379,7 @@ function Viewer({data,dark,toggle,logout,error}:{data:ViewerData;dark:boolean;to
   const [filter,setFilter]=useState<'all'|Tier>('all');
   const [quarterFilter,setQuarterFilter]=useState('all');
   const pane=usePane(false);
-  const jumpToProject=useCalendarProject(pane);
+  const jumpToProject=useProjectJump(pane);
   const projects=data.projects.filter(p=>(filter==='all'||p.tier===filter)&&(quarterFilter==='all'||quarter(p.start)===quarterFilter));
   const {tier,build,quarters}=data.charts;
   const approx=(p:number|null)=>p===null?'暂无细分':'约 '+p+'%';
@@ -417,7 +423,7 @@ type Confirmation={title:string;description:string;action:()=>void};
 export default function Planner() {
   const store=usePlanner();
   const pane=usePane(true);
-  const jumpToProject=useCalendarProject(pane);
+  const jumpToProject=useProjectJump(pane);
   const [tier,setTier]=useState('S'),[q,setQ]=useState('all'),[form,setForm]=useState('all');
   const [register,setRegister]=useState(false);
   const [dark,setDark]=useState(false),[notice,setNotice]=useState('');
@@ -488,8 +494,8 @@ export default function Planner() {
         <PlanOverview items={items} budget={t} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
-        <div className="section-heading pane-heading"><span className="eyebrow">02 / BUDGET</span><h2>预算看板</h2><p>对比年度额度、项目付款和季度资金分布。</p></div>
-        <SpendingBoard items={items} baseline={baseline} onEdit={(id,spent)=>edit(id,{spent})}/>
+        <div className="section-heading pane-heading"><h2>Budget Dashboard</h2><p>预算看板 · 年度额度与项目付款</p></div>
+        <SpendingBoard items={items} baseline={baseline} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       {store.error&&<div className="banner" role="alert">{store.error}<div className="actions">
         {store.dirty&&<button onClick={()=>void store.flush()}>重试同步</button>}

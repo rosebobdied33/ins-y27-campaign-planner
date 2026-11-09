@@ -356,13 +356,6 @@ button,.filters label{border-radius:9px}
 .phase-budget .peak-label{color:var(--accent);font-weight:650;padding:8px 0 5px}
 .phase-row{display:grid;grid-template-columns:27px minmax(30px,1fr) 55px minmax(88px,auto);align-items:center;gap:8px;padding:6px 0;font-size:12px;font-variant-numeric:tabular-nums}
 .phase-row span,.phase-row b{text-align:right}
-.ledger-scroll{overflow-x:auto;margin-top:8px}
-.payment-ledger table{border-collapse:collapse;text-align:left;width:100%;min-width:500px;font-size:13px;font-variant-numeric:tabular-nums}
-.payment-ledger th,.payment-ledger td{border-top:1px solid var(--line);padding:7px 8px}
-.payment-ledger thead th{color:var(--muted);font-weight:600}
-.payment-ledger tbody th span,.payment-ledger td small{display:block;color:var(--muted);font-size:11px;font-weight:400}
-.payment-ledger .money>span:first-child{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.payment-ledger .money{max-width:150px}
 @media(max-width:930px){.quarter-map{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:580px){
   .year-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -371,7 +364,6 @@ button,.filters label{border-radius:9px}
   .quarter-map{gap:8px}
   .quarter-tile{padding:8px}
   .calendar-row{grid-template-columns:113px minmax(0,1fr)}
-  .payment-ledger .money-field input{font-size:16px}
 }
 
 /* Brushed rose masthead and inset quarter frames. */
@@ -494,9 +486,6 @@ button,.filters label{border-radius:9px}
 .budget-allocation{background:linear-gradient(145deg,rgb(128 169 196 / .23),var(--glass) 70%)}
 .budget-allocation .ratio{margin:8px 0}
 .budget-structure .chart-list b{font-variant-numeric:tabular-nums}
-.ledger-filters{display:flex;align-items:center;gap:6px}
-.ledger-filters select{width:auto}
-.ledger-scroll td .ratio{max-width:130px;margin-top:5px;height:4px}
 @media(max-width:1100px){.budget-tiles{grid-template-columns:1fr 1fr}.budget-feature{grid-column:1/-1}}
 @media(max-width:810px){.budget-modules{grid-template-columns:1fr}.budget-structure{grid-template-columns:1fr 1fr}}
 @media(max-width:490px){.budget-structure{grid-template-columns:1fr}.budget-snapshot{padding:12px}.budget-snapshot p{font-size:11px}}
@@ -513,17 +502,6 @@ button,.filters label{border-radius:9px}
 .ledger-totals{margin:10px 0 6px;padding:7px 9px;background:var(--tint);border-radius:8px;color:var(--muted);font-size:12px;column-gap:15px}
 .ledger-totals b{color:var(--text);font-variant-numeric:tabular-nums}
 .ledger-totals .danger b{color:var(--danger)}
-.payment-ledger table{min-width:620px}
-.payment-ledger thead{background:var(--soft)}
-.payment-ledger tbody tr:nth-child(even){background:color-mix(in srgb,var(--soft) 52%,transparent)}
-.payment-ledger tbody tr:focus-within{background:var(--tint)}
-.payment-ledger th,.payment-ledger td{padding:9px 8px}
-.ledger-project div{display:flex;align-items:center;gap:6px}
-.ledger-project i{width:7px;height:7px;flex:none;border-radius:50%}
-.ledger-project small{display:block;font-size:11px;margin-left:13px}
-.ledger-progress{width:145px}
-.ledger-progress>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.ledger-progress>div>b{font-size:11px}
 .payment-tag{display:inline-block;border:1px solid var(--line);border-radius:7px;padding:2px 6px;color:var(--muted);background:var(--soft);white-space:nowrap;font-size:11px}
 .payment-tag[data-payment-status="partial"],.payment-tag[data-payment-status="settled"]{background:color-mix(in srgb,var(--budget-teal) 17%,var(--panel));color:var(--success)}
 .payment-tag[data-payment-status="unpaid"]{background:color-mix(in srgb,var(--budget-gold) 17%,var(--panel));color:var(--text)}
@@ -531,19 +509,9 @@ button,.filters label{border-radius:9px}
 .ledger-empty{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:14px 0 2px}
 @media(max-width:650px){
   .payment-ledger{padding:12px}
-  .payment-ledger table{min-width:0}
-  .payment-ledger thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
-  .payment-ledger table,.payment-ledger tbody{display:block}
-  .payment-ledger tbody tr{
-    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
-    padding:9px;margin:0 0 8px;border:1px solid var(--line);border-radius:11px;
-  }
-  .payment-ledger th,.payment-ledger td{border:0;padding:0;min-width:0;overflow-wrap:anywhere}
-  .payment-ledger th.ledger-project{grid-column:1/-1}
   .payment-ledger td:nth-child(3){grid-row:3;grid-column:1}
   .payment-ledger td.ledger-progress{grid-row:3;grid-column:2;width:auto;align-self:end}
   .payment-ledger td[data-label]::before{content:attr(data-label);display:block;color:var(--muted);font-size:10px;margin-bottom:3px}
-  .ledger-scroll td .ratio{max-width:none}
   .ledger-search{flex:1;min-width:145px}
   .ledger-search input{font-size:16px}
 }
@@ -587,3 +555,67 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .project:focus{outline:2px solid var(--accent);outline-offset:3px}
 @media(max-width:1050px){.annual-month-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.annual-month-grid{grid-template-columns:1fr}.month-event{min-height:21px;font-size:11px}}
+
+#budget{--budget-teal:#527f7b;--budget-gold:#a68062}
+#budget .pane-heading h2{font-size:clamp(28px,4.2vw,46px);font-weight:640;letter-spacing:-.05em}
+#budget .pane-heading p,.budget-hint,.payment-ledger .ledger-heading p,.ledger-count,.spend-values small{color:var(--muted)}
+.budget-title{display:grid;gap:2px;font-size:18px;font-weight:640;line-height:1.2;letter-spacing:-.025em}
+.budget-title span{font-size:12px;font-weight:450;letter-spacing:.01em;color:var(--muted)}
+.budget-tiles{grid-template-columns:minmax(0,2.1fr) minmax(0,1fr);grid-template-rows:repeat(2,minmax(0,1fr));gap:11px}
+.budget-feature{
+  grid-column:1;grid-row:1/3;
+  grid-template-columns:minmax(0,1fr) clamp(96px,16vw,210px);
+  gap:clamp(10px,2vw,30px);min-height:246px;padding:clamp(16px,2.55vw,36px);
+  background:linear-gradient(128deg,#2e2239,#513654 67%,#694765)
+}
+.budget-feature .budget-title{font-size:clamp(16px,2.1vw,26px)}
+.budget-feature .budget-title span,.budget-feature p,.budget-feature .donut small{color:#d3c0d2}
+.budget-feature .budget-number{font-size:clamp(30px,4.7vw,70px);margin:7px 0 10px}
+.budget-feature .donut b{font-size:clamp(17px,2.7vw,31px)}
+.budget-snapshot{padding:12px 15px;gap:5px}
+.budget-snapshot .budget-title{font-size:16px}
+.budget-snapshot .budget-number{font-size:clamp(20px,2.3vw,34px)}
+.budget-snapshot .ratio,.budget-allocation .ratio{height:7px}
+.budget-paid{background:linear-gradient(143deg,rgb(122 167 157 / .19),var(--glass) 74%)}
+.budget-pending{background:linear-gradient(143deg,rgb(218 171 144 / .18),var(--glass) 74%)}
+.budget-modules{gap:11px}
+.budget-structure{gap:11px}
+.budget-quarter .budget-title,.budget-structure .budget-title{margin:0 0 7px}
+.budget-column[data-quarter="Q1"]{--col-top:#d4b2c7;--col-bottom:#966283}
+.budget-column[data-quarter="Q2"]{--col-top:#bfb2d4;--col-bottom:#7f689e}
+.budget-column[data-quarter="Q3"]{--col-top:#e0b9a7;--col-bottom:#a57868}
+.budget-column[data-quarter="Q4"]{--col-top:#a9c9c3;--col-bottom:#5e8581}
+.budget-column small,.budget-quarter .budget-hint{font-size:11px}
+.payment-ledger{background:var(--glass)}
+.ledger-heading .budget-title{margin:0 0 5px}
+.ledger-count{background:transparent}
+.ledger-totals{background:color-mix(in srgb,var(--tint) 55%,transparent);margin-bottom:12px}
+.spend-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr));gap:10px}
+.spend-card{
+  display:grid;justify-content:stretch;justify-items:start;align-content:start;gap:7px;
+  min-width:0;padding:12px;text-align:left;white-space:normal;color:var(--text);border-radius:12px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--project-color) 15%,var(--panel)),var(--panel) 62%)
+}
+.spend-card:hover{border-color:var(--accent);background:linear-gradient(145deg,color-mix(in srgb,var(--project-color) 24%,var(--panel)),var(--panel) 65%)}
+.spend-card-head{display:flex;align-items:center;justify-content:space-between;width:100%;color:var(--muted)}
+.spend-card-head small{display:flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.035em}
+.spend-card-head i{width:6px;height:6px;border-radius:50%;background:var(--project-color)}
+.spend-card-name{font-size:15px;font-weight:650;overflow-wrap:anywhere}
+.spend-card-body{display:grid;grid-template-columns:62px minmax(0,1fr);align-items:stretch;width:100%;gap:11px;margin:1px 0}
+.spend-gauge{
+  isolation:isolate;position:relative;display:grid;place-items:center;
+  border-radius:8px;min-height:84px;overflow:hidden;
+  background:repeating-linear-gradient(to top,transparent 0 calc(25% - 1px),var(--line) calc(25% - 1px) 25%),var(--soft)
+}
+.spend-gauge i{position:absolute;inset:auto 0 0;z-index:-1;background:linear-gradient(to top,#79a49e,#abc9c3)}
+.spend-card[data-payment-status="over"] .spend-gauge i{background:linear-gradient(to top,#c78489,#ecc0c1)}
+.spend-gauge b{font-size:12px;background:var(--panel);border-radius:4px;padding:1px 4px;font-variant-numeric:tabular-nums}
+.spend-values{display:grid;gap:3px;align-content:center;font-variant-numeric:tabular-nums}
+.spend-values>span{display:flex;justify-content:space-between;gap:5px;align-items:baseline;flex-wrap:wrap}
+.spend-values small{font-size:11px;font-weight:450}
+.spend-values b{font-size:12px;overflow-wrap:anywhere}
+@media(max-width:700px){
+  .budget-tiles{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto auto}
+  .budget-feature{grid-column:1/-1;grid-row:1;min-height:180px}
+}
+@media(max-width:490px){.spend-card-grid{grid-template-columns:1fr}.budget-snapshot{padding:10px}.budget-snapshot .budget-number{font-size:clamp(15px,4vw,21px)}}
