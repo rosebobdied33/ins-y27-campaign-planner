@@ -67,3 +67,16 @@ test('custom primary forms survive backup and legacy forms remain readable', () 
   assert.deepEqual(filterProjects(items,'all','all','其他'), [items[0]]);
   assert.match(csv(items), /社区联动/);
 });
+
+test('dated payments add to legacy totals and survive backup and export', () => {
+  const project={...seed()[0],spent:1000,payments:[
+    {id:'payment-1',title:'搭建首款',date:'2027-02-01',amount:2500},
+    {id:'payment-2',title:'搭建尾款',date:'2027-03-01',amount:1500},
+  ]};
+  const [restored]=readBackup(backup([project]));
+  assert.equal(restored.payments?.length,2);
+  assert.equal(spending([restored]).paid,5000);
+  assert.equal(spending([restored]).pending,project.budget-5000);
+  assert.equal(spending([{...restored,spent:null}]).paid,4000);
+  assert.match(csv([restored]), /"50","400"/);
+});

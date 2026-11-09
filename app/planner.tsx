@@ -1,10 +1,11 @@
 'use client';
 import {useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react';
 import {ArrowDownToLine,ArrowUpRight,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet} from 'lucide-react';
-import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,rows,SECONDARY,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
+import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,recordedSpend,rows,SECONDARY,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
 import {usePlanner,type ViewerData} from '../lib/storage';
 
 import {PlanOverview} from './overview';
+import {ProjectPayments} from './project-payments';
 
 const pct=(v:number,t:number)=>percent(v,t).toFixed(1)+'%';
 const options=(values:readonly string[])=>values.map(x=><option key={x}>{x}</option>);
@@ -157,7 +158,8 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
       <div className="split"><Money label="搭建" value={p.build} onChange={build=>edit({build})}/><Money label="体验" value={p.experience} onChange={experience=>edit({experience})}/></div>
       <Ratio segments={[...splitSegments(p.build??0,p.experience??0),{value:Math.max(0,gap),color:'var(--unassigned)'}]} label={'项目预算分配：搭建 '+yuan(p.build??0)+'，体验 '+yuan(p.experience??0)+'，'+(gap<0?'超额 ':'待分配 ')+yuan(Math.abs(gap))}/>
       <div className="split-legend"><span><i/>搭建 {split&&p.build!==null?pct(p.build,split):'—'}</span><span><i/>体验 {split&&p.experience!==null?pct(p.experience,split):'—'}</span>{gap>0&&<span className="unassigned"><i/>待分配</span>}</div>
-      <div className="card-payment"><Money label="实际已支出" value={p.spent??null} commitOnBlur onChange={spent=>edit({spent})}/><small>{(p.spent??0)>p.budget?'超支 '+yuan((p.spent??0)-p.budget):'待支出 '+yuan(p.budget-(p.spent??0))}</small></div>
+      <ProjectPayments project={p} onChange={payments=>edit({payments})}/>
+      {p.spent!=null&&<div className="card-payment"><Money label="原累计实付（未拆分）" value={p.spent} commitOnBlur onChange={spent=>edit({spent})}/><small>迁移旧账时可清空</small></div>}
     </div>
     <div className="fields"><label>主导形式<select aria-label="主导形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>
       {p.primary==='全楼运营'&&<option value="全楼运营" disabled>全楼运营（历史值）</option>}
@@ -202,7 +204,7 @@ function SpendingBoard({items,baseline,openProject}:{items:Project[];baseline:nu
       <article className="panel budget-snapshot budget-paid">
         <BudgetTitle english="Paid" chinese="实际已支出"/><strong className="budget-number">{paidLabel}</strong>
         <Ratio segments={[{value:totals.paid,color:'var(--budget-teal)'}]} scale={coverage} label={'已支出占已支出与待支出合计 '+pct(totals.paid,coverage)}/>
-        <p>{totals.recorded?`${totals.withPayment} 项已有付款`:'待登记付款'}{totals.over>0&&<b className="danger"> · 超支 {yuan(totals.over)}</b>}</p>
+        <p>{totals.recorded?`${totals.withPayment} 项已有付款`:'暂无付款记录'}{totals.over>0&&<b className="danger"> · 超支 {yuan(totals.over)}</b>}</p>
       </article>
       <article className="panel budget-snapshot budget-pending">
         <BudgetTitle english="Pending" chinese="待支出"/><strong className="budget-number">{yuan(totals.pending)}</strong>
@@ -263,29 +265,46 @@ const PAYMENT_STATUS = {
 } as const;
 
 function paymentStatus(project:Project):keyof typeof PAYMENT_STATUS {
-  if(project.spent==null)return 'unrecorded';
-  if(project.spent>project.budget)return 'over';
+  const paid=recordedSpend(project);
+  if(paid===null)return 'unrecorded';
+  if(paid>project.budget)return 'over';
   if(project.budget===0)return 'noPayment';
-  if(project.spent===0)return 'unpaid';
-  return project.spent===project.budget?'settled':'partial';
+  if(paid===0)return 'unpaid';
+  return paid===project.budget?'settled':'partial';
 }
 
 function PaymentLedger({items,selectedQuarter,clearQuarter,openProject}:{
   items:Project[];selectedQuarter:string|null;clearQuarter:()=>void;openProject:(id:string)=>void;
 }) {
+  const [view,setView]=useState<'project'|'time'>('project');
   const [filter,setFilter]=useState('all');
   const [query,setQuery]=useState('');
+  const [selectedId,setSelectedId]=useState<string|null>(null);
+  const [year,setYear]=useState('2027');
+  const [month,setMonth]=useState<string|null>(null);
   const needle=query.trim().toLocaleLowerCase();
-  const candidates=items.filter(project=>(!selectedQuarter||quarter(project.start)===selectedQuarter)
-    && (!needle||(project.code+' '+project.name).toLocaleLowerCase().includes(needle)));
-  const visible=candidates.filter(project=>filter==='all'||paymentStatus(project)===filter);
+  const visible=items.filter(project=>(!selectedQuarter||quarter(project.start)===selectedQuarter)
+    &&(!needle||(project.code+' '+project.name).toLocaleLowerCase().includes(needle))
+    &&(filter==='all'||paymentStatus(project)===filter));
   const subtotal=spending(visible);
   const planned=visible.reduce((total,project)=>total+project.budget,0);
+  const projectScale=Math.max(0,...visible.map(project=>Math.max(project.budget,recordedSpend(project)??0)));
+  const selected=visible.find(project=>project.id===selectedId)??visible.find(project=>recordedSpend(project)!==null)??visible[0];
+  const dated=visible.flatMap(project=>(project.payments??[]).map(payment=>({project,payment})))
+    .sort((a,b)=>b.payment.date.localeCompare(a.payment.date));
+  const years=[...new Set(['2027',...dated.map(entry=>entry.payment.date.slice(0,4))])].sort();
+  const activeYear=years.includes(year)?year:'2027';
+  const months=Array.from({length:12},(_,i)=>String(i+1).padStart(2,'0'));
+  const inYear=dated.filter(({payment})=>payment.date.startsWith(activeYear+'-'));
+  const monthly=months.map(m=>inYear.reduce((sum,{payment})=>sum+(payment.date.slice(5,7)===m?payment.amount:0),0));
+  const monthScale=Math.max(...monthly);
+  const listed=month?inYear.filter(({payment})=>payment.date.slice(5,7)===month):inYear;
+  const undated=visible.reduce((sum,project)=>sum+(project.spent??0),0);
 
   return <article className="panel payment-ledger">
     <div className="ledger-heading">
-      <div><BudgetTitle english="Project Spend" chinese="项目支出明细"/><p>色块表示已付占本项目预算的比例。实付金额在项目规划中填写。</p></div>
-      <span className="ledger-count" aria-live="polite">显示 {visible.length} / {items.length} 项</span>
+      <div><BudgetTitle english="Spend Explorer" chinese="项目支出明细"/><p>在项目规划登记付款，这里随记录更新。</p></div>
+      <div className="segmented" aria-label="支出查看方式"><button aria-pressed={view==='project'} onClick={()=>setView('project')}>按项目</button><button aria-pressed={view==='time'} onClick={()=>setView('time')}>按付款时间</button></div>
     </div>
     <div className="ledger-tools">
       <label className="ledger-search"><Search size={15} aria-hidden="true"/><input aria-label="搜索支出项目" placeholder="搜项目名称或编号" value={query} onChange={e=>setQuery(e.target.value)}/></label>
@@ -294,48 +313,49 @@ function PaymentLedger({items,selectedQuarter,clearQuarter,openProject}:{
         {Object.entries(PAYMENT_STATUS).map(([key,label])=><option key={key} value={key}>{label}</option>)}
       </select>
       {selectedQuarter&&<button className="budget-pill" onClick={clearQuarter} aria-label="清除季度筛选">{selectedQuarter} ×</button>}
+      <span className="ledger-count" aria-live="polite">{visible.length} / {items.length} 项</span>
     </div>
-
-    {visible.length>0?<>
-      <div className="ledger-totals" aria-label="当前明细小计">
-        <span>当前小计</span><span>预算 <b>{yuan(planned)}</b></span>
-        <span>实付 <b>{subtotal.recorded?yuan(subtotal.paid):'—'}</b></span>
-        <span>待付 <b>{yuan(subtotal.pending)}</b></span>
-        {subtotal.over>0&&<span className="danger">超支 <b>{yuan(subtotal.over)}</b></span>}
-      </div>
-      <div className="spend-card-grid">
-        {visible.map(project=>{
-          const name=project.name||'未命名项目';
-          const paid=project.spent??0;
-          const balance=project.budget-paid;
-          const status=paymentStatus(project);
-          const share=project.spent==null||project.budget===0?null:pct(paid,project.budget);
-          const fill=project.budget===0?(paid>0?'100%':'0%'):pct(Math.min(paid,project.budget),project.budget);
-          return <button key={project.id} className="spend-card" data-payment-status={status}
-            style={{'--project-color':project.color} as CSSProperties}
-            aria-label={`打开项目规划：${name}，${PAYMENT_STATUS[status]}，预算 ${yuan(project.budget)}`}
-            onClick={()=>openProject(project.id)}>
-            <span className="spend-card-head">
-              <small><i aria-hidden="true"/>{project.code} · {quarter(project.start)}</small>
-              <ArrowUpRight size={15} aria-hidden="true"/>
-            </span>
-            <strong className="spend-card-name">{name}</strong>
-            <span className="spend-card-body">
-              <span className="spend-gauge" role="img" aria-label={share===null?PAYMENT_STATUS[status]:'已付占项目预算 '+share}>
-                <i style={{height:fill}}/>
-                <b>{share??'—'}</b>
+    {visible.length>0?<div className="spend-explorer">
+      {view==='project'?<>
+        <div className="spend-compare">
+          <div className="spend-legend"><span><i/>预算</span><span><i/>已付</span><span><i/>超支</span></div>
+          {visible.map(project=>{
+            const actual=recordedSpend(project);
+            const paid=actual??0;
+            return <button className="spend-compare-row" key={project.id} aria-pressed={selected.id===project.id} onClick={()=>setSelectedId(project.id)}>
+              <span><strong>{project.name||'未命名项目'}</strong><small>{project.code} · {quarter(project.start)}</small></span>
+              <span className="spend-compare-track" aria-hidden="true">
+                <i style={{width:pct(project.budget,projectScale)}}/>
+                <i style={{width:pct(Math.min(paid,project.budget),projectScale)}}/>
+                {paid>project.budget&&<i style={{left:pct(project.budget,projectScale),width:pct(paid-project.budget,projectScale)}}/>}
               </span>
-              <span className="spend-values">
-                <span><small>预算</small><b>{yuan(project.budget)}</b></span>
-                <span><small>实付</small><b>{project.spent==null?'—':yuan(paid)}</b></span>
-                <span className={balance<0?'danger':''}><small>{balance<0?'超支':'待付'}</small><b>{yuan(Math.abs(balance))}</b></span>
-              </span>
-            </span>
-            <span className="payment-tag" data-payment-status={status}>{PAYMENT_STATUS[status]}</span>
-          </button>;
-        })}
-      </div>
-    </>:<div className="ledger-empty"><p>当前条件下没有项目。</p><button onClick={()=>{setQuery('');setFilter('all');clearQuarter();}}>清除筛选</button></div>}
+              <span><b>{actual===null?'—':yuan(actual)}</b><small>{yuan(project.budget)}</small></span>
+            </button>;
+          })}
+          <p className="budget-hint">各项目共用金额刻度。点选项目查看付款记录。</p>
+        </div>
+        <div className="spend-detail">
+          <h4>{selected.name||'未命名项目'}</h4>
+          <p>已付 {recordedSpend(selected)===null?'—':yuan(recordedSpend(selected)??0)} · 预算 {yuan(selected.budget)}</p>
+          {(selected.payments??[]).length>0&&<ul>{[...(selected.payments??[])].sort((a,b)=>b.date.localeCompare(a.date)).map(payment=><li key={payment.id}><span>{payment.title}<small>{payment.date}</small></span><b>{yuan(payment.amount)}</b></li>)}</ul>}
+          {selected.spent!=null&&<p className="spend-undated">旧累计金额 · {yuan(selected.spent)} · 未拆分</p>}
+          {recordedSpend(selected)===null&&<p className="spend-undated">暂无付款记录</p>}
+          <button onClick={()=>openProject(selected.id)}>打开项目规划 <ArrowUpRight size={14}/></button>
+        </div>
+      </>:<div className="spend-time">
+        <div className="calendar-heading"><div><h4>付款月份</h4><p>按实际付款日期汇总</p></div><select aria-label="付款年份" value={activeYear} onChange={e=>{setYear(e.target.value);setMonth(null);}}>{years.map(y=><option key={y}>{y}</option>)}</select></div>
+        <div className="spend-months">{months.map((m,i)=><button className="spend-month" key={m} aria-pressed={month===m} aria-label={`${activeYear} 年 ${i+1} 月，${yuan(monthly[i])}`} title={yuan(monthly[i])} onClick={()=>setMonth(month===m?null:m)}>
+          <span><i style={{height:pct(monthly[i],monthScale)}}/></span><small>{i+1}月</small>
+        </button>)}</div>
+        <div className="calendar-heading"><h4>{month?Number(month)+' 月付款':'全年付款'} · {yuan(listed.reduce((sum,{payment})=>sum+payment.amount,0))}</h4>{month&&<button onClick={()=>setMonth(null)}>查看全年</button>}</div>
+        {listed.length>0?<ul>{listed.map(({project,payment})=><li key={project.id+':'+payment.id}><span>{payment.title}<small>{payment.date} · {project.name||project.code}</small></span><b>{yuan(payment.amount)}</b></li>)}</ul>:<p className="spend-undated">该期间暂无按日期登记的付款。</p>}
+        {undated>0&&<p className="spend-undated">未标日期的旧累计金额 {yuan(undated)}，计入实付总额，未归入月份。</p>}
+      </div>}
+    </div>:<div className="ledger-empty"><p>当前条件下没有项目。</p><button onClick={()=>{setQuery('');setFilter('all');clearQuarter();}}>清除筛选</button></div>}
+    {visible.length>0&&<div className="ledger-totals" aria-label="当前明细小计"><span>当前项目小计</span><span>预算 <b>{yuan(planned)}</b></span>
+      <span>实付 <b>{subtotal.recorded?yuan(subtotal.paid):'—'}</b></span><span>待付 <b>{yuan(subtotal.pending)}</b></span>
+      {subtotal.over>0&&<span className="danger">超支 <b>{yuan(subtotal.over)}</b></span>}
+    </div>}
   </article>;
 }
 
@@ -449,7 +469,7 @@ export default function Planner() {
     if(items.length>=300){setNotice('已达 300 项上限。');return;}
     const chosen=source?.tier??(tier==='A'?'A':'S'), code=nextCode(items,chosen);
     const p:Project={build:null,experience:null,notes:'',primary:'待定',secondary:'不叠加',status:'规划中',name:'新建 Campaign',start:'2027-01-01',end:'2027-01-01',budget:0,color:COLORS[items.length%COLORS.length],
-      ...(source?{...source,name:source.name.slice(0,95)+'（副本）'}:{}),id:crypto.randomUUID(),code,tier:chosen,spent:null};
+      ...(source?{...source,name:source.name.slice(0,95)+'（副本）'}:{}),id:crypto.randomUUID(),code,tier:chosen,spent:null,payments:[]};
     store.change([p,...items]);setTier(chosen);setQ('all');setForm('all');setNotice(source?'已复制 '+p.code:'已新增 '+p.code);
     requestAnimationFrame(()=>document.getElementById(p.id)?.scrollIntoView({block:'nearest'}));
   };
@@ -494,7 +514,7 @@ export default function Planner() {
         <PlanOverview items={items} budget={t} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
-        <div className="section-heading pane-heading"><h2>Budget Dashboard</h2><p>预算看板 · 年度额度与项目付款</p></div>
+        <div className="section-heading pane-heading"><h2 className="budget-title">Budget Dashboard<span lang="zh-CN">预算看板</span></h2></div>
         <SpendingBoard items={items} baseline={baseline} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       {store.error&&<div className="banner" role="alert">{store.error}<div className="actions">
