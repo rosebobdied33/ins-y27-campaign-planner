@@ -19,6 +19,27 @@ async function rpc<T>(action:string,payload:Record<string,unknown>={}) {
   if(data.error)throw new AccessError(data.error,data.code);
   return data as T;
 }
+export function useCampaignArtwork(role:Snapshot['role']|undefined) {
+  const [images,setImages]=useState<Record<string,string>>({});
+  useEffect(()=>{
+    if(!role){setImages({});return;}
+    const token=sessionStorage.getItem(SESSION);
+    if(!token)return;
+    let cancelled=false;
+    async function fetchArtwork(projectId:string) {
+      try{
+        const data=await rpc<{image:string|null}>('artwork',{token,projectId});
+        if(data.image&&!cancelled)setImages(previous=>({...previous,[projectId]:'data:image/webp;base64,'+data.image!.replace(/\s/g,'')}));
+      }catch{ /* Project metadata remains browsable if an image request fails. */ }
+    }
+    const ids=['S01','S02','S03','S04','S05','S06','S07'];
+    void (async()=>{
+      for(let i=0;i<ids.length&&!cancelled;i+=2)await Promise.all(ids.slice(i,i+2).map(fetchArtwork));
+    })();
+    return ()=>{cancelled=true;};
+  },[role]);
+  return images;
+}
 export function usePlanner() {
   const [snapshot,setSnapshot]=useState<Snapshot|null>(null);
   const [loading,setLoading]=useState(true);

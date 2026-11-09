@@ -690,3 +690,53 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .project-settlement form>p{font-size:11px;color:var(--muted);margin:3px 0 6px}
 .project-settlement form .primary{margin-top:8px;width:100%}
 .settlement-date{display:grid;gap:3px;font-size:11px;color:var(--muted);margin-top:7px}
+
+.campaign-gallery{
+  position:relative;min-width:0;margin:14px 0 22px;padding:clamp(12px,2vw,22px);
+  border:1px solid color-mix(in srgb,var(--line) 75%,var(--glass-edge));border-radius:17px;
+  background:linear-gradient(125deg,color-mix(in srgb,var(--tint) 66%,var(--panel)),var(--glass) 72%);
+}
+.campaign-gallery-header{display:flex;justify-content:space-between;align-items:end;gap:9px;margin-bottom:12px}
+.campaign-gallery-header p{color:var(--muted);font-size:11px;letter-spacing:.11em;margin:0 0 3px}
+.campaign-gallery-header h2{font-family:"Songti SC","Noto Serif CJK SC","STSong",serif;font-size:clamp(23px,3vw,38px);line-height:1.18;letter-spacing:.045em}
+.campaign-gallery-controls{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.campaign-gallery-controls>span{font-size:11px;font-variant-numeric:tabular-nums;color:var(--muted);margin-right:4px}
+.campaign-gallery-controls button{width:34px;min-height:34px;padding:4px;border-radius:50%}
+.campaign-rail{
+  display:flex;gap:12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding:2px 2px 8px;
+}
+.campaign-slide{
+  flex:0 0 min(67%,770px);display:flex;flex-direction:column;align-items:stretch;
+  justify-content:flex-start;gap:0;min-width:0;padding:0;overflow:hidden;
+  border-radius:12px;border-color:var(--line);background:var(--panel);text-align:left;white-space:normal;
+  scroll-snap-align:start;
+}
+.campaign-slide:hover{border-color:var(--accent);background:var(--panel)}
+.campaign-slide:focus-visible{outline-offset:-3px}
+.campaign-artwork,.project-artwork{
+  aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--poster-color,var(--theme)) 28%,var(--panel)),var(--soft));
+}
+.campaign-artwork img,.project-artwork img{display:block;width:100%;height:100%;object-fit:contain}
+.campaign-artwork-placeholder{font-size:clamp(26px,4vw,62px);font-family:serif;color:var(--muted)}
+.campaign-slide-info{
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:9px;padding:10px 12px;
+  background:linear-gradient(120deg,color-mix(in srgb,var(--poster-color) 18%,var(--panel)),var(--panel) 73%);
+}
+.campaign-slide-info h3{font-size:clamp(15px,2vw,23px);line-height:1.2;margin:2px 0;overflow-wrap:anywhere}
+.campaign-slide-info small{display:block;color:var(--muted);font-size:11px;font-weight:450}
+.campaign-slide-date{font-size:11px;text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+.campaign-slide-info svg{color:var(--accent)}
+.campaign-gallery-index{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.campaign-gallery-index button{min-height:28px;padding:3px 8px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.campaign-gallery-index button[aria-pressed=true]{background:var(--accent);color:var(--panel);border-color:var(--accent)}
+.project-artwork{margin:0 0 10px;border-radius:9px;border:1px solid color-mix(in srgb,var(--theme) 36%,var(--line))}
+@media(max-width:720px){.campaign-slide{flex-basis:82%}}
+@media(max-width:460px){
+  .campaign-slide{flex-basis:91%}
+  .campaign-gallery-controls button{width:29px;min-height:29px}
+  .campaign-slide-info{padding:8px;gap:5px}
+  .campaign-slide-info small,.campaign-slide-date{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){.campaign-rail{scroll-behavior:auto}}
