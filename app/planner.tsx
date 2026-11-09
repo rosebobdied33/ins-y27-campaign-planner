@@ -1,8 +1,10 @@
 'use client';
 import {useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react';
 import {ArrowDownToLine,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Sun,Trash2,Wallet} from 'lucide-react';
-import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORMS,HEADERS,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,rows,SECONDARY,STATUSES,summary,yuan,type Project,type Tier} from '../lib/planner';
+import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORMS,HEADERS,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,rows,SECONDARY,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
 import {usePlanner,type ViewerData} from '../lib/storage';
+
+import {PlanOverview} from './overview';
 
 const pct=(v:number,t:number)=>percent(v,t).toFixed(1)+'%';
 const options=(values:readonly string[])=>values.map(x=><option key={x}>{x}</option>);
@@ -107,11 +109,53 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
       <div className="split"><Money label="搭建" value={p.build} onChange={build=>edit({build})}/><Money label="体验" value={p.experience} onChange={experience=>edit({experience})}/></div>
       <Ratio segments={[...splitSegments(p.build??0,p.experience??0),{value:Math.max(0,gap),color:'var(--unassigned)'}]} label={'项目预算分配：搭建 '+yuan(p.build??0)+'，体验 '+yuan(p.experience??0)+'，'+(gap<0?'超额 ':'待分配 ')+yuan(Math.abs(gap))}/>
       <div className="split-legend"><span><i/>搭建 {split&&p.build!==null?pct(p.build,split):'—'}</span><span><i/>体验 {split&&p.experience!==null?pct(p.experience,split):'—'}</span>{gap>0&&<span className="unassigned"><i/>待分配</span>}</div>
+      <div className="card-payment"><Money label="实际已支出" value={p.spent??null} onChange={spent=>edit({spent})}/><small>{(p.spent??0)>p.budget?'超支 '+yuan((p.spent??0)-p.budget):'待支出 '+yuan(p.budget-(p.spent??0))}</small></div>
     </div>
     <div className="fields"><label>主导形式<select aria-label="主导形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>{options(FORMS.filter(v=>v!==p.secondary))}</select></label>
     <label>叠加形式<select aria-label="叠加形式" value={p.secondary} onChange={e=>edit({secondary:e.target.value as Project['secondary']})}>{options(SECONDARY.filter(v=>v!==p.primary))}</select></label></div>
     <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
   </article>;
+}
+function SpendingBoard({items,onEdit}:{items:Project[];onEdit:(id:string,spent:number|null)=>void}) {
+  const [series,setSeries]=useState<'plan'|'paid'>('plan');
+  const [filter,setFilter]=useState('all');
+  const totals=spending(items), plan=summary(items);
+  const values=series==='plan'?plan.quarters:totals.quarters;
+  const total=series==='plan'?plan.total:totals.paid;
+  const peak=Math.max(...values);
+  const peakLabels=QUARTERS.filter((_,i)=>peak>0&&values[i]===peak).join('、');
+  const visible=items.filter(p=>filter==='all'||(filter==='paid'&&(p.spent??0)>0)||(filter==='pending'&&p.budget>(p.spent??0))||(filter==='unrecorded'&&p.spent==null));
+
+  return <div className="year-section">
+    <div className="section-heading"><span className="eyebrow">SPEND TRACKER</span><h2>支出进度</h2><p>按项目登记实际付款。待支出为每项预算减去已支出，未录入的项目按计划额计入待支出。</p></div>
+    <div className="year-summary spend-metrics">
+      <article className="panel year-metric"><span>实际已支出</span><strong>{totals.recorded?yuan(totals.paid):'—'}</strong><p>{totals.withPayment} 项已有付款</p></article>
+      <article className="panel year-metric"><span>待支出</span><strong>{yuan(totals.pending)}</strong><p>{totals.withBalance} 项仍有待支出</p></article>
+      <article className="panel year-metric"><span>支出录入进度</span><strong>{totals.recorded}<small> / {items.length} 项</small></strong><p>未录入 {items.length-totals.recorded} 项{totals.over>0&&<b className="danger"> · 超预算 {yuan(totals.over)}</b>}</p></article>
+    </div>
+    <article className="panel phase-budget">
+      <div className="calendar-heading"><div><h3>全年预算占比</h3><p>按项目开始季度归集。实际支出也按项目归属统计。</p></div>
+      <div className="segmented" aria-label="季度金额口径"><button aria-pressed={series==='plan'} onClick={()=>setSeries('plan')}>规划预算</button><button aria-pressed={series==='paid'} onClick={()=>setSeries('paid')}>实际支出</button></div></div>
+      {peakLabels?<p className="peak-label">{peakLabels} {series==='plan'?'规划预算最高':'已登记支出最高'} · {yuan(peak)} · {pct(peak,total)}</p>:<p className="peak-label">{series==='plan'?'暂无规划预算':'暂无已登记的付款金额'}</p>}
+      <div className="phase-rows">{QUARTERS.map((q,i)=><div key={q} className="phase-row"><strong>{q}</strong>
+        <Ratio segments={[{value:values[i],color:values[i]===peak&&peak>0?'var(--tier-s)':'var(--tier-a)'}]} scale={total} label={q+' 占全年 '+pct(values[i],total)}/>
+        <span>{pct(values[i],total)}</span><b>{yuan(values[i])}</b>
+      </div>)}</div>
+    </article>
+    <article className="panel payment-ledger">
+      <div className="calendar-heading"><div><h3>项目支出明细</h3><p>填写累计实际支出，图表和项目卡片会一起更新。</p></div>
+        <select aria-label="支出明细筛选" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部项目</option><option value="paid">已有支出</option><option value="pending">仍有待支出</option><option value="unrecorded">未录入</option></select>
+      </div>
+      <div className="ledger-scroll"><table><thead><tr><th>项目</th><th>规划预算</th><th>实际已支出</th><th>待支出</th></tr></thead><tbody>
+        {visible.map(p=>{
+          const balance=p.budget-(p.spent??0);
+          return <tr key={p.id}><th scope="row"><span>{p.code} · {quarter(p.start)}</span><b>{p.name||'未命名项目'}</b></th><td>{yuan(p.budget)}</td>
+          <td><Money label={p.name+' 实际已支出'} value={p.spent??null} onChange={spent=>onEdit(p.id,spent)}/></td>
+          <td className={balance<0?'danger':''}>{balance<0?'超支 ':''}{yuan(Math.abs(balance))}{p.spent==null&&<small>未录入实际支出</small>}</td></tr>;
+        })}
+      </tbody></table>{!visible.length&&<p className="calendar-empty">当前筛选没有项目。</p>}</div>
+    </article>
+  </div>;
 }
 function Annual({items,hidden}:{items:Project[];hidden:boolean}) {
   const t=summary(items), used=t.build+t.experience;
@@ -151,8 +195,9 @@ function Annual({items,hidden}:{items:Project[];hidden:boolean}) {
 }
 function Viewer({data,dark,toggle,logout,error}:{data:ViewerData;dark:boolean;toggle:()=>void;logout:()=>void;error:string}) {
   const [filter,setFilter]=useState<'all'|Tier>('all');
+  const [quarterFilter,setQuarterFilter]=useState('all');
   const pane=usePane(false);
-  const projects=data.projects.filter(p=>filter==='all'||p.tier===filter);
+  const projects=data.projects.filter(p=>(filter==='all'||p.tier===filter)&&(quarterFilter==='all'||quarter(p.start)===quarterFilter));
   const {tier,build,quarters}=data.charts;
   const approx=(p:number|null)=>p===null?'暂无细分':'约 '+p+'%';
   return <div className="shell viewer">
@@ -164,11 +209,11 @@ function Viewer({data,dark,toggle,logout,error}:{data:ViewerData;dark:boolean;to
       <div className="content">
         <section id="overview" className="pane" hidden={pane!=='overview'}>
           <CampaignHero viewer/>
-          <div className="panel viewer-summary"><div><h2>年度规划</h2><p>共 {data.projects.length} 个项目 · 金额仅管理者可见</p></div><span className="locked-value"><LockKeyhole size={15}/>年度预算 <b>****</b></span></div>
+          <PlanOverview items={data.projects} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}}/>
         </section>
         {error&&<p className="banner" role="alert">{error}</p>}
         <section id="projects" className="section pane" hidden={pane!=='projects'}><div className="section-heading"><span className="eyebrow">02 / CAMPAIGN INDEX</span><h2>年度项目 <small>{projects.length} / {data.projects.length}</small></h2></div>
-          <div className="filters"><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div></div>
+          <div className="filters"><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div><label><CalendarDays size={15}/><select aria-label="季度筛选" value={quarterFilter} onChange={e=>setQuarterFilter(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label></div>
           <div className="cards">{projects.map(p=><article key={p.id} className="project viewer-project" style={{'--theme':p.color} as CSSProperties}>
             <div className="project-stripe" aria-hidden="true"><span/>{p.accent&&<span style={{background:p.accent}}/>}</div>
             <div className="card-meta"><span className="dot"/><strong>{p.code}</strong><span className="tag">{quarter(p.start)}</span><span className="viewer-status">{p.status}</span></div>
@@ -220,7 +265,7 @@ export default function Planner() {
     if(items.length>=300){setNotice('已达 300 项上限。');return;}
     const chosen=source?.tier??(tier==='A'?'A':'S'), code=nextCode(items,chosen);
     const p:Project={build:null,experience:null,notes:'',primary:'待定',secondary:'不叠加',status:'规划中',name:'新建 Campaign',start:'2027-01-01',end:'2027-01-01',budget:0,color:COLORS[items.length%COLORS.length],
-      ...(source?{...source,name:source.name.slice(0,95)+'（副本）'}:{}),id:crypto.randomUUID(),code,tier:chosen};
+      ...(source?{...source,name:source.name.slice(0,95)+'（副本）'}:{}),id:crypto.randomUUID(),code,tier:chosen,spent:null};
     store.change([p,...items]);setTier(chosen);setQ('all');setForm('all');setNotice(source?'已复制 '+p.code:'已新增 '+p.code);
     requestAnimationFrame(()=>document.getElementById(p.id)?.scrollIntoView({block:'nearest'}));
   };
@@ -231,7 +276,7 @@ export default function Planner() {
       const book=new ExcelJS.Workbook(),sheet=book.addWorksheet('2027 Campaign');
       sheet.addRow(HEADERS);rows(items).forEach(row=>sheet.addRow(row));
       sheet.getRow(1).font={bold:true};sheet.views=[{state:'frozen',ySplit:1}];
-      sheet.columns.forEach((col,i)=>{col.width=i===2?25:i===14?36:18;if(i>=8&&i<=11)col.numFmt='"¥"#,##0.00';});
+      sheet.columns.forEach((col,i)=>{col.width=i===2?25:i===14?36:18;if((i>=8&&i<=11)||i>=15)col.numFmt='"¥"#,##0.00';});
       const bytes=await book.xlsx.writeBuffer();
       download(new Uint8Array(bytes),'INS-Y27-Campaign.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }catch{setNotice('Excel 导出失败，请重试或导出 CSV。');}finally{setExcelBusy(false);}
@@ -262,11 +307,7 @@ export default function Planner() {
       <div className="content">
       <section id="overview" className="pane" hidden={pane!=='overview'}>
         <CampaignHero/>
-        <div className="overview-links">
-          <a className="panel" href="#projects"><CalendarDays size={19}/><span>年度项目</span><strong>{items.length} <small>项</small></strong><small>查看日期、周期和活动形式 ↗</small></a>
-          <a className="panel" href="#budget"><Wallet size={19}/><span>已规划预算</span><strong>{yuan(t.total)}</strong><small>查看预算分配和使用率 ↗</small></a>
-          <a className="panel" href="#resources"><BarChart3 size={19}/><span>资源分析</span><strong>4 <small>个季度</small></strong><small>比较季度与费用结构 ↗</small></a>
-        </div>
+        <PlanOverview items={items} budget={t} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
         <div className="section-heading pane-heading"><span className="eyebrow">02 / BUDGET</span><h2>预算看板</h2><p>项目预算实时汇总；搭建与体验单独核算。</p></div>
@@ -287,14 +328,15 @@ export default function Planner() {
               </div>
             </div>
             <div className="budget-chart baseline-chart">
-              <div className="chart-head"><h3>年度预算使用率</h3><strong className={t.remaining<0?'danger':''}>{pct(t.total,baseline)}</strong></div>
+              <div className="chart-head"><h3>年度预算规划率</h3><strong className={t.remaining<0?'danger':''}>{pct(t.total,baseline)}</strong></div>
               <Ratio segments={[{value:Math.min(t.total,baseline),color:'var(--tier-s)'},{value:Math.max(-t.remaining,0),color:'var(--danger)'}]}
-                scale={Math.max(t.total,baseline)} label={'年度预算使用率 '+pct(t.total,baseline)}/>
+                scale={Math.max(t.total,baseline)} label={'年度预算规划率 '+pct(t.total,baseline)}/>
               <div className="chart-head chart-foot"><span>已规划 {yuan(t.total)}</span><span>基准 {yuan(baseline)}</span></div>
             </div>
           </div>
           <div className="allocation-summary"><span>搭建与体验已细分 <b>{yuan(t.build+t.experience)}</b></span><span>项目待分配 <b>{yuan(t.unallocated)}</b></span>{t.over>0&&<span className="danger">项目超额 <b>{yuan(t.over)}</b></span>}</div>
         </div>
+        <SpendingBoard items={items} onEdit={(id,spent)=>edit(id,{spent})}/>
       </section>
       {store.error&&<div className="banner" role="alert">{store.error}<div className="actions">
         {store.dirty&&<button onClick={()=>void store.flush()}>重试同步</button>}

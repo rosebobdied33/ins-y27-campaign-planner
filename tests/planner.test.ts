@@ -1,7 +1,7 @@
 import {seed} from './fixtures/example';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allocation, summary, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
+import { allocation, summary, spending, validateProjects, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
 
 test('seed has the exact annual structure and preserves unfilled amounts', () => {
   const items = seed(), totals = summary(items,145000);
@@ -43,4 +43,15 @@ test('campaign duration counts both endpoints across months, leap days and years
   assert.equal(durationDays('2027-05-20','2027-05-20'), 1);
   assert.equal(durationDays('2027-05-21','2027-05-20'), null);
   assert.match(csv([{...seed()[0], start:'2027-01-22', end:'2027-03-01'}]), /"2027-03-01","39"/);
+});
+
+test('spending keeps missing entries separate and calculates pending and overspend per project', () => {
+  const [first,second,third] = seed();
+  const items = validateProjects([{...first,spent:50000},{...second,spent:30000},third]);
+  assert.deepEqual(spending(items), {
+    paid:80000,pending:70000,over:5000,recorded:2,withPayment:2,withBalance:2,
+    quarters:[50000,30000,0,0],
+  });
+  assert.equal(readBackup(backup(items))[0].spent, 50000);
+  assert.equal(items[2].spent, undefined);
 });
