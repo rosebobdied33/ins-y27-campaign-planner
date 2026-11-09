@@ -122,10 +122,16 @@ function Sidebar({pane,owner}:{pane:Pane;owner:boolean}) {
     <div className="side-bottom"><span>INS LAND</span><span>2027</span></div>
   </aside>;
 }
-function CampaignHero({viewer=false}:{viewer?:boolean}) {
-  return <div className="hero"><div><div className="eyebrow">INS LAND · 2027</div>
-    <h1>年度活动规划</h1><p>2027 年度活动规划{viewer?' · 浏览模式':'与预算工作台'}</p>
-  </div><span className="year">2027</span></div>;
+function CampaignHero() {
+  return <header className="campaign-hero">
+    <p className="campaign-hero-mark">INS LAND <span>2027</span></p>
+    <h1 lang="en">Campaign Planner
+      <svg className="campaign-title-flourish" viewBox="0 0 650 116" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M146 51C91 21 17 6 11 38C5 68 69 81 114 57C160 32 170 23 203 36C229 46 190 76 144 82C94 89 40 85 10 105"/>
+        <path d="M408 65C450 41 480 16 515 22C563 32 519 64 476 84C431 105 466 115 508 101C568 81 607 47 640 61C661 70 627 94 600 87"/>
+      </svg>
+    </h1>
+  </header>;
 }
 function CampaignDates({start,end}:{start:string;end:string}) {
   const days=durationDays(start,end);
@@ -421,8 +427,10 @@ function Viewer({data,artwork,dark,toggle,logout,error}:{data:ViewerData;artwork
       </header>
       <div className="content">
         <section id="overview" className="pane" hidden={pane!=='overview'}>
-          <CampaignHero viewer/>
-          <CampaignGallery projects={data.projects} artwork={artwork} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
+          <div className="campaign-masthead">
+            <CampaignHero/>
+            <CampaignGallery projects={data.projects} artwork={artwork} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
+          </div>
           <PlanOverview items={data.projects} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
         </section>
         {error&&<p className="banner" role="alert">{error}</p>}
@@ -523,8 +531,10 @@ export default function Planner() {
       <div className="actions"><span className="save" aria-live="polite"><span className="dot"/>{store.status}</span><button className="icon" aria-label={dark?'切换浅色主题':'切换深色主题'} onClick={toggle}>{dark?<Sun/>:<Moon/>}</button><span className="role-chip">管理者</span><button className="icon" aria-label="退出登录" disabled={store.dirty} onClick={()=>void store.logout()}><LogOut/></button></div></header>
       <div className="content">
       <section id="overview" className="pane" hidden={pane!=='overview'}>
-        <CampaignHero/>
-        <CampaignGallery projects={items} artwork={artwork} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
+        <div className="campaign-masthead">
+          <CampaignHero/>
+          <CampaignGallery projects={items} artwork={artwork} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
+        </div>
         <PlanOverview items={items} budget={t} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>

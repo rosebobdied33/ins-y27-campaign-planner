@@ -43,7 +43,7 @@ export function CampaignGallery({projects,artwork,openProject}:{
   if(!items.length)return null;
   return <section className="campaign-gallery" aria-labelledby="campaign-gallery-title">
     <header className="campaign-gallery-header">
-      <div><p>年度重点企划</p><h2 id="campaign-gallery-title">S 级项目展廊</h2></div>
+      <h2 id="campaign-gallery-title" lang="en">Scene Studies</h2>
       <div className="campaign-gallery-controls">
         <span aria-live="polite">{String(index+1).padStart(2,'0')} / {String(items.length).padStart(2,'0')}</span>
         <button type="button" aria-label="上一张封面" disabled={index===0} onClick={()=>go(index-1)}><ArrowLeft size={17}/></button>
