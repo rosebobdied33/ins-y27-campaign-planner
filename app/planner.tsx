@@ -124,46 +124,107 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
     <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
   </article>;
 }
-function SpendingBoard({items,onEdit}:{items:Project[];onEdit:(id:string,spent:number|null)=>void}) {
+function SpendingBoard({items,baseline,onEdit}:{items:Project[];baseline:number;onEdit:(id:string,spent:number|null)=>void}) {
   const [series,setSeries]=useState<'plan'|'paid'>('plan');
   const [filter,setFilter]=useState('all');
-  const totals=spending(items), plan=summary(items);
+  const [selectedQuarter,setSelectedQuarter]=useState<string|null>(null);
+  const totals=spending(items), plan=summary(items,baseline);
   const values=series==='plan'?plan.quarters:totals.quarters;
   const total=series==='plan'?plan.total:totals.paid;
   const peak=Math.max(...values);
   const peakLabels=QUARTERS.filter((_,i)=>peak>0&&values[i]===peak).join('、');
-  const visible=items.filter(p=>filter==='all'||(filter==='paid'&&(p.spent??0)>0)||(filter==='pending'&&p.budget>(p.spent??0))||(filter==='unrecorded'&&p.spent==null));
+  const visible=items.filter(p=>(!selectedQuarter||quarter(p.start)===selectedQuarter) &&
+    (filter==='all'||(filter==='paid'&&(p.spent??0)>0)||(filter==='pending'&&p.budget>(p.spent??0))||(filter==='unrecorded'&&p.spent==null)));
+  const coverage=totals.paid+totals.pending;
+  const allocated=plan.build+plan.experience;
+  const splitTotal=allocated+plan.unallocated;
+  const paidLabel=totals.recorded?yuan(totals.paid):'—';
 
-  return <div className="year-section">
-    <div className="section-heading"><span className="eyebrow">SPEND TRACKER</span><h2>支出进度</h2><p>按项目登记实际付款。待支出为每项预算减去已支出，未录入的项目按计划额计入待支出。</p></div>
-    <div className="year-summary spend-metrics">
-      <article className="panel year-metric"><span>实际已支出</span><strong>{totals.recorded?yuan(totals.paid):'—'}</strong><p>{totals.withPayment} 项已有付款</p></article>
-      <article className="panel year-metric"><span>待支出</span><strong>{yuan(totals.pending)}</strong><p>{totals.withBalance} 项仍有待支出</p></article>
-      <article className="panel year-metric"><span>支出录入进度</span><strong>{totals.recorded}<small> / {items.length} 项</small></strong><p>未录入 {items.length-totals.recorded} 项{totals.over>0&&<b className="danger"> · 超预算 {yuan(totals.over)}</b>}</p></article>
+  return <>
+    <div className="budget-tiles">
+      <article className="panel budget-feature">
+        <div className="budget-feature-copy">
+          <span className="eyebrow"><Wallet size={14}/> 年度预算基准</span>
+          <strong className="budget-number">{yuan(baseline)}</strong>
+          <p>已规划 <b>{yuan(plan.total)}</b> · {items.length} 项</p>
+          <span className={'budget-pill '+(plan.remaining<0?'danger':'')}>{plan.remaining<0?'超出基准':'基准余量'} {yuan(Math.abs(plan.remaining))}</span>
+        </div>
+        <Donut segments={[
+          {value:Math.min(plan.total,baseline),color:'var(--budget-lilac)'},
+          {value:Math.max(-plan.remaining,0),color:'var(--budget-coral)'},
+          {value:Math.max(plan.remaining,0),color:'var(--budget-ring-track)'},
+        ]} value={pct(plan.total,baseline)} caption="规划率" label={'年度预算规划率 '+pct(plan.total,baseline)}/>
+      </article>
+      <article className="panel budget-snapshot budget-paid">
+        <span>实际已支出</span><strong className="budget-number">{paidLabel}</strong>
+        <Ratio segments={[{value:totals.paid,color:'var(--budget-teal)'}]} scale={coverage} label={'已支出占已支出与待支出合计 '+pct(totals.paid,coverage)}/>
+        <p>{totals.recorded?`${totals.withPayment} 项已有付款`:'待登记付款'}{totals.over>0&&<b className="danger"> · 超支 {yuan(totals.over)}</b>}</p>
+      </article>
+      <article className="panel budget-snapshot budget-pending">
+        <span>待支出</span><strong className="budget-number">{yuan(totals.pending)}</strong>
+        <Ratio segments={[{value:totals.pending,color:'var(--budget-gold)'}]} scale={coverage} label={'待支出占已支出与待支出合计 '+pct(totals.pending,coverage)}/>
+        <p>{totals.withBalance} 项待付 · {items.length-totals.recorded} 项未录入实际支出</p>
+      </article>
     </div>
-    <article className="panel phase-budget">
-      <div className="calendar-heading"><div><h3>全年预算占比</h3><p>按项目开始季度归集。实际支出也按项目归属统计。</p></div>
-      <div className="segmented" aria-label="季度金额口径"><button aria-pressed={series==='plan'} onClick={()=>setSeries('plan')}>规划预算</button><button aria-pressed={series==='paid'} onClick={()=>setSeries('paid')}>实际支出</button></div></div>
-      {peakLabels?<p className="peak-label">{peakLabels} {series==='plan'?'规划预算最高':'已登记支出最高'} · {yuan(peak)} · {pct(peak,total)}</p>:<p className="peak-label">{series==='plan'?'暂无规划预算':'暂无已登记的付款金额'}</p>}
-      <div className="phase-rows">{QUARTERS.map((q,i)=><div key={q} className="phase-row"><strong>{q}</strong>
-        <Ratio segments={[{value:values[i],color:values[i]===peak&&peak>0?'var(--tier-s)':'var(--tier-a)'}]} scale={total} label={q+' 占全年 '+pct(values[i],total)}/>
-        <span>{pct(values[i],total)}</span><b>{yuan(values[i])}</b>
-      </div>)}</div>
-    </article>
+
+    <div className="budget-modules">
+      <article className="panel budget-quarter">
+        <div className="calendar-heading"><div><span className="eyebrow">QUARTER MIX</span><h3>季度预算占比</h3></div>
+          <div className="segmented" aria-label="季度金额口径"><button aria-pressed={series==='plan'} onClick={()=>setSeries('plan')}>规划预算</button><button aria-pressed={series==='paid'} onClick={()=>setSeries('paid')}>实际支出</button></div>
+        </div>
+        <div className="budget-peak"><span className="budget-pill">{peakLabels?peakLabels+' 最高':'暂无金额'}</span>{peakLabels&&<strong>{yuan(peak)} · {pct(peak,total)}</strong>}</div>
+        <div className="budget-columns" role="group" aria-label="季度占全年比例，点击筛选下方明细">
+          {QUARTERS.map((q,i)=><button key={q} className="budget-column" data-quarter={q}
+            aria-pressed={selectedQuarter===q} aria-label={`${q} ${yuan(values[i])}，占全年 ${pct(values[i],total)}，筛选明细`}
+            onClick={()=>setSelectedQuarter(selectedQuarter===q?null:q)}>
+            <span className="budget-column-value">{total?pct(values[i],total):'—'}</span>
+            <span className="budget-column-track" aria-hidden="true"><i style={{height:pct(values[i],peak)}}/></span>
+            <strong>{q}</strong><small>{yuan(values[i])}</small>
+          </button>)}
+        </div>
+        <p className="budget-hint">按项目开始季度归集 · 点柱图筛选支出明细</p>
+      </article>
+
+      <div className="budget-structure">
+        <article className="panel budget-tier">
+          <span className="eyebrow">CAMPAIGN TIERS</span><h3>S / A 预算结构</h3>
+          <div className="chart-pair">
+            <Donut segments={tierSegments(plan.S,plan.A)} value={plan.total?pct(plan.S,plan.total):'—'} caption="S 级占比" label={'S 级 '+pct(plan.S,plan.total)+'，A 级 '+pct(plan.A,plan.total)}/>
+            <div className="chart-list">
+              <div><span><i style={{background:'var(--tier-s)'}}/>S 级</span><b>{yuan(plan.S)}</b></div>
+              <div><span><i style={{background:'var(--tier-a)'}}/>A 级</span><b>{yuan(plan.A)}</b></div>
+            </div>
+          </div>
+        </article>
+        <article className="panel budget-allocation">
+          <span className="eyebrow">ALLOCATION</span><h3>费用分配结构</h3>
+          <Ratio segments={[...splitSegments(plan.build,plan.experience),{value:plan.unallocated,color:'var(--unassigned)'}]} scale={splitTotal}
+            label={`搭建 ${yuan(plan.build)}，体验 ${yuan(plan.experience)}，待分配 ${yuan(plan.unallocated)}`}/>
+          <div className="chart-list">
+            <div><span><i style={{background:'var(--build)'}}/>搭建</span><b>{yuan(plan.build)}</b></div>
+            <div><span><i style={{background:'var(--experience)'}}/>体验</span><b>{yuan(plan.experience)}</b></div>
+            <div><span><i style={{background:'var(--unassigned)'}}/>待分配</span><b>{yuan(plan.unallocated)}</b></div>
+          </div>
+          {plan.over>0&&<p className="danger">分配超额 {yuan(plan.over)}</p>}
+        </article>
+      </div>
+    </div>
+
     <article className="panel payment-ledger">
       <div className="calendar-heading"><div><h3>项目支出明细</h3><p>填写累计实际支出，图表和项目卡片会一起更新。</p></div>
-        <select aria-label="支出明细筛选" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部项目</option><option value="paid">已有支出</option><option value="pending">仍有待支出</option><option value="unrecorded">未录入</option></select>
+        <div className="ledger-filters">{selectedQuarter&&<button className="budget-pill" onClick={()=>setSelectedQuarter(null)} aria-label="清除季度筛选">{selectedQuarter} ×</button>}
+        <select aria-label="支出明细筛选" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部项目</option><option value="paid">已有支出</option><option value="pending">仍有待支出</option><option value="unrecorded">未录入</option></select></div>
       </div>
       <div className="ledger-scroll"><table><thead><tr><th>项目</th><th>规划预算</th><th>实际已支出</th><th>待支出</th></tr></thead><tbody>
         {visible.map(p=>{
           const balance=p.budget-(p.spent??0);
           return <tr key={p.id}><th scope="row"><span>{p.code} · {quarter(p.start)}</span><b>{p.name||'未命名项目'}</b></th><td>{yuan(p.budget)}</td>
           <td><Money label={p.name+' 实际已支出'} value={p.spent??null} onChange={spent=>onEdit(p.id,spent)}/></td>
-          <td className={balance<0?'danger':''}>{balance<0?'超支 ':''}{yuan(Math.abs(balance))}{p.spent==null&&<small>未录入实际支出</small>}</td></tr>;
+          <td className={balance<0?'danger':''}>{balance<0?'超支 ':''}{yuan(Math.abs(balance))}{p.spent==null?<small>未录入实际支出</small>:<Ratio segments={[{value:Math.min(p.spent,p.budget),color:'var(--budget-teal)'},{value:Math.max(-balance,0),color:'var(--budget-coral)'}]} scale={Math.max(p.budget,p.spent)} label={'支付进度 '+pct(p.spent,p.budget)}/>}</td></tr>;
         })}
       </tbody></table>{!visible.length&&<p className="calendar-empty">当前筛选没有项目。</p>}</div>
     </article>
-  </div>;
+  </>;
 }
 function Annual({items,hidden}:{items:Project[];hidden:boolean}) {
   const t=summary(items), used=t.build+t.experience;
@@ -318,33 +379,8 @@ export default function Planner() {
         <PlanOverview items={items} budget={t} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
-        <div className="section-heading pane-heading"><span className="eyebrow">02 / BUDGET</span><h2>预算看板</h2><p>项目预算实时汇总；搭建与体验单独核算。</p></div>
-        <div className="overview panel">
-          <div className="overview-head"><span><Wallet size={16}/> 年度预算总额</span><span className="eyebrow">ANNUAL BASELINE</span></div>
-          <strong className="annual-amount">{yuan(baseline)}</strong>
-          <div className="metrics">
-            <div><span>S 级预算</span><b>{yuan(t.S)}</b></div><div><span>A 级预算</span><b>{yuan(t.A)}</b></div>
-            <div><span>已分配至项目</span><b>{yuan(t.total)}</b></div><div><span>{t.remaining<0?'超出预算':'剩余预算'}</span><b className={t.remaining<0?'danger':''}>{yuan(Math.abs(t.remaining))}</b></div>
-            <div><span>年度项目数</span><b>{items.length}<small> 项</small></b></div>
-          </div>
-          <div className="budget-charts">
-            <div className="chart-pair budget-chart">
-              <Donut segments={tierSegments(t.S,t.A)} value={t.total?pct(t.S,t.total):'—'} caption="S 级占比" label={'S 级 '+pct(t.S,t.total)+'，A 级 '+pct(t.A,t.total)}/>
-              <div className="chart-list"><h3>级别预算占比</h3>
-                <div><span><i style={{background:'var(--tier-s)'}}/>S 级</span><b>{pct(t.S,t.total)}</b></div>
-                <div><span><i style={{background:'var(--tier-a)'}}/>A 级</span><b>{pct(t.A,t.total)}</b></div>
-              </div>
-            </div>
-            <div className="budget-chart baseline-chart">
-              <div className="chart-head"><h3>年度预算规划率</h3><strong className={t.remaining<0?'danger':''}>{pct(t.total,baseline)}</strong></div>
-              <Ratio segments={[{value:Math.min(t.total,baseline),color:'var(--tier-s)'},{value:Math.max(-t.remaining,0),color:'var(--danger)'}]}
-                scale={Math.max(t.total,baseline)} label={'年度预算规划率 '+pct(t.total,baseline)}/>
-              <div className="chart-head chart-foot"><span>已规划 {yuan(t.total)}</span><span>基准 {yuan(baseline)}</span></div>
-            </div>
-          </div>
-          <div className="allocation-summary"><span>搭建与体验已细分 <b>{yuan(t.build+t.experience)}</b></span><span>项目待分配 <b>{yuan(t.unallocated)}</b></span>{t.over>0&&<span className="danger">项目超额 <b>{yuan(t.over)}</b></span>}</div>
-        </div>
-        <SpendingBoard items={items} onEdit={(id,spent)=>edit(id,{spent})}/>
+        <div className="section-heading pane-heading"><span className="eyebrow">02 / BUDGET</span><h2>预算看板</h2><p>对比年度额度、项目付款和季度资金分布。</p></div>
+        <SpendingBoard items={items} baseline={baseline} onEdit={(id,spent)=>edit(id,{spent})}/>
       </section>
       {store.error&&<div className="banner" role="alert">{store.error}<div className="actions">
         {store.dirty&&<button onClick={()=>void store.flush()}>重试同步</button>}
