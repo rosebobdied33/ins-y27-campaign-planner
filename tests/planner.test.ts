@@ -1,7 +1,7 @@
 import {seed} from './fixtures/example';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allocation, summary, PRIMARY_FORMS, primaryFormLabel, filterProjects, spending, validateProjects, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
+import { allocation, summary, PRIMARY_FORMS, primaryFormLabel, filterProjects, spending, settlementMonths, validateProjects, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
 
 test('seed has the exact annual structure and preserves unfilled amounts', () => {
   const items = seed(), totals = summary(items,145000);
@@ -79,4 +79,16 @@ test('dated payments add to legacy totals and survive backup and export', () => 
   assert.equal(spending([restored]).pending,project.budget-5000);
   assert.equal(spending([{...restored,spent:null}]).paid,4000);
   assert.match(csv([restored]), /"50","400"/);
+});
+
+test('a final settlement replaces legacy actuals and belongs to the month it was closed', () => {
+  const old={...seed()[0],spent:1000,payments:[{id:'old',title:'旧记录',date:'2027-02-02',amount:2000}]};
+  const closed={...old,settlement:{build:3000,experience:0,date:'2028-01-03'}};
+  const [restored]=readBackup(backup([closed]));
+  assert.equal(spending([old]).paid,3000);
+  assert.equal(spending([restored]).paid,3000);
+  assert.equal(spending([restored]).pending,0);
+  assert.equal(settlementMonths([old,restored],'2027').reduce((a,b)=>a+b,0),0);
+  assert.equal(settlementMonths([old,restored],'2028')[0],3000);
+  assert.match(csv([restored]), /"30","0","2028-01-03"/);
 });

@@ -52,7 +52,7 @@ export function PlanOverview({items,budget,openQuarter,openProject}:{
       </article>
     </div>
     <section className="year-section" aria-labelledby="quarter-map-heading">
-      <div className="section-heading"><span className="eyebrow">QUARTER MAP</span><h2 id="quarter-map-heading">年度版图</h2><p>按项目开始日期归入季度。点季度卡片查看对应项目。</p></div>
+      <div className="section-heading"><h2 id="quarter-map-heading">年度版图</h2><p>按项目开始日期归入季度。点季度卡片查看对应项目。</p></div>
       <div className="quarter-map">
         {groups.map((group,i)=>{
           const q=QUARTERS[i], s=group.filter(p=>p.tier==='S').length;
@@ -68,7 +68,7 @@ export function PlanOverview({items,budget,openQuarter,openProject}:{
       </div>
     </section>
     <section className="year-section" aria-labelledby="calendar-heading">
-      <div className="section-heading calendar-heading"><div><span className="eyebrow">2027 CALENDAR</span><h2 id="calendar-heading">全年排期日历</h2><p>色带覆盖项目开始日至结束日，带箭头处接续到前后周或月份。</p></div>
+      <div className="section-heading calendar-heading"><div><h2 id="calendar-heading">全年排期日历</h2><p>色带覆盖项目开始日至结束日，带箭头处接续到前后周或月份。</p></div>
         <div className="calendar-filters">
           <div className="segmented" aria-label="排期视图"><button aria-pressed={view==='calendar'} onClick={()=>setView('calendar')}>日历总表</button><button aria-pressed={view==='timeline'} onClick={()=>setView('timeline')}>横向进度</button></div>
           <select aria-label="排期级别" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部级别</option><option value="S">S 级</option><option value="A">A 级</option></select>

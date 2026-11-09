@@ -17,10 +17,12 @@ const payment = z.object({
   amount:money.positive(),
 });
 export type Payment = z.infer<typeof payment>;
+const settlement = z.object({build:money,experience:money,date});
+export type Settlement = z.infer<typeof settlement>;
 const project = z.object({
   id:z.string().min(1).max(80), code:z.string().regex(/^[SA]\d{2,4}$/),
   tier:z.enum(['S','A']), name:z.string().max(100), start:date, end:date,
-  budget:money, spent:money.nullable().optional(), payments:z.array(payment).max(100).refine(rows=>new Set(rows.map(row=>row.id)).size===rows.length).optional(), build:money.nullable(), experience:money.nullable(),
+  budget:money, settlement:settlement.optional(), spent:money.nullable().optional(), payments:z.array(payment).max(100).refine(rows=>new Set(rows.map(row=>row.id)).size===rows.length).optional(), build:money.nullable(), experience:money.nullable(),
   primary:z.enum(FORM_FILTERS), primaryDetail:z.string().max(80).optional(), secondary:z.enum(SECONDARY), status:z.enum(STATUSES),
   notes:z.string().max(1000), color:z.string().regex(/^#[a-fA-F0-9]{6}$/), accent:z.string().regex(/^#[a-fA-F0-9]{6}$/).optional()
 }).refine(p => p.start <= p.end && p.primary !== p.secondary && p.code.startsWith(p.tier));
@@ -43,10 +45,19 @@ export function summary(items:Project[],baseline=0) {
   out.remaining -= out.total;
   return out;
 }
-export function recordedSpend(project:Pick<Project,'spent'|'payments'>):number|null {
+export function recordedSpend(project:Pick<Project,'spent'|'payments'|'settlement'>):number|null {
+  if(project.settlement)return project.settlement.build+project.settlement.experience;
   const payments=project.payments??[];
   if(project.spent==null&&!payments.length)return null;
   return payments.reduce((total,payment)=>total+payment.amount,project.spent??0);
+}
+export function settlementMonths(items:Project[],year:string):number[] {
+  const months=Array<number>(12).fill(0);
+  for(const {settlement} of items) {
+    if(!settlement||!settlement.date.startsWith(year+'-'))continue;
+    months[Number(settlement.date.slice(5,7))-1]+=settlement.build+settlement.experience;
+  }
+  return months;
 }
 export function spending(items:Project[]) {
   const totals = {paid:0, pending:0, over:0, recorded:0, withPayment:0, withBalance:0, quarters:[0,0,0,0]};
@@ -55,11 +66,11 @@ export function spending(items:Project[]) {
     const paid = actual ?? 0;
     const balance = project.budget - paid;
     totals.paid += paid;
-    totals.pending += Math.max(balance,0);
+    if (!project.settlement) totals.pending += Math.max(balance,0);
     totals.over += Math.max(-balance,0);
     if (actual != null) totals.recorded++;
     if (paid>0) totals.withPayment++;
-    if (balance>0) totals.withBalance++;
+    if (!project.settlement&&balance>0) totals.withBalance++;
     totals.quarters[QUARTERS.indexOf(quarter(project.start))] += paid;
   }
   return totals;
@@ -91,10 +102,10 @@ export const validateProjects = (value:unknown) => projects.parse(value);
 export function primaryFormLabel(project:{primary:Project['primary'];primaryDetail?:string|null}):string {
   return project.primary==='其他' ? project.primaryDetail?.trim() || '其他' : project.primary;
 }
-export const HEADERS = ['编号','级别','主题名称','季度','开始日期','结束日期','周期（天）','状态','预算（元）','搭建（元）','体验（元）','待分配 / 超额（元）','主导形式','叠加形式','备注','实际已支出（元）','待支出（元）'];
+export const HEADERS = ['编号','级别','主题名称','季度','开始日期','结束日期','周期（天）','状态','预算（元）','搭建（元）','体验（元）','待分配 / 超额（元）','主导形式','叠加形式','备注','实际已支出（元）','预算差额（元）','实际搭建费（元）','实际体验费（元）','结算日期'];
 export const rows = (items:Project[]) => items.map(p => {
   const actual=recordedSpend(p);
-  return [p.code,p.tier,p.name,quarter(p.start),p.start,p.end,durationDays(p.start,p.end),p.status,p.budget/100,p.build===null?null:p.build/100,p.experience===null?null:p.experience/100,allocation(p)/100,primaryFormLabel(p),p.secondary,p.notes,actual==null?null:actual/100,Math.max(0,p.budget-(actual??0))/100];
+  return [p.code,p.tier,p.name,quarter(p.start),p.start,p.end,durationDays(p.start,p.end),p.status,p.budget/100,p.build===null?null:p.build/100,p.experience===null?null:p.experience/100,allocation(p)/100,primaryFormLabel(p),p.secondary,p.notes,actual==null?null:actual/100,(p.budget-(actual??0))/100,p.settlement?p.settlement.build/100:null,p.settlement?p.settlement.experience/100:null,p.settlement?.date??null];
 });
 export const csv = (items:Project[]) => '\uFEFF'+[HEADERS,...rows(items)].map(row => row.map(v => {
   const s = String(v ?? '');
