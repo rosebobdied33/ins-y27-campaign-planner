@@ -29,3 +29,5 @@ GitHub Pages 项目站点用 `PLANNER_BASE_PATH=/ins-y27-campaign-planner pnpm b
 - `y27_private.settings`：登记浏览注册密码的 bcrypt 哈希、基准预算（分）和恢复用计划快照。
 
 所有业务调用通过 `y27_access`。后端验证角色和到期时间，数据库仅保存会话令牌的散列。浏览者看不到真实金额，浏览会话不能执行任何计划写操作。管理者的实际凭据由项目拥有者保管。
+
+登录页背景可选。执行 `supabase/006_login_backdrop.sql` 后，由管理员把登录页专用 WebP 拼图以 Base64 写入 `public.y27_login_backdrop` 的 `campaign-collage` 行。该行允许访客读取，登录后的七张封面继续走会话验证。未配置拼图时，登录页使用纯色背景。
