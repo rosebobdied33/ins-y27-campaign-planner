@@ -1,7 +1,7 @@
 import {seed} from './fixtures/example';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allocation, summary, PRIMARY_FORMS, primaryFormLabel, filterProjects, spending, settlementMonths, validateProjects, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
+import { allocation, summary, PRIMARY_FORMS, primaryFormLabel, experienceModeLabel, filterProjects, spending, settlementMonths, validateProjects, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
 
 test('seed has the exact annual structure and preserves unfilled amounts', () => {
   const items = seed(), totals = summary(items,145000);
@@ -63,11 +63,29 @@ test('custom primary forms survive backup and legacy forms remain readable', () 
   const items = readBackup(backup([custom,legacy]));
   assert.equal(primaryFormLabel(items[0]), '社区联动');
   assert.equal(primaryFormLabel(items[1]), '全楼运营');
-  const expected = ['待定','氛围搭建','主体装置','设定场景','娱乐互动','沉浸演艺','商务联动','简易布置','其他'];
+  const expected = ['待定','氛围搭建','主体装置','设定场景','娱乐互动','沉浸演艺','商务联动','简易布置','搭建改造','其他'];
   assert.deepEqual([...PRIMARY_FORMS], expected);
   for(const primary of expected)assert.equal(readBackup(backup([{...first,primary}]))[0].primary,primary);
   assert.deepEqual(filterProjects(items,'all','all','其他'), [items[0]]);
   assert.match(csv(items), /社区联动/);
+});
+
+test('experience modes preserve custom and legacy values independently of build forms', () => {
+  const [first, second, third] = seed();
+  const [custom, regular, legacy]=readBackup(backup([
+    {...first,primary:'其他',primaryDetail:'自定义搭建',secondary:'其他',secondaryDetail:'定向寻宝'},
+    {...second,primary:'搭建改造',secondary:'常规体验'},
+    {...third,secondary:'艺术装置'},
+  ]));
+  assert.equal(primaryFormLabel(custom),'自定义搭建');
+  assert.equal(experienceModeLabel(custom),'定向寻宝');
+  assert.equal(experienceModeLabel(regular),'常规体验');
+  assert.equal(experienceModeLabel(legacy),'艺术装置');
+  assert.equal(experienceModeLabel(first),'待定');
+  assert.deepEqual(filterProjects([custom,regular,legacy],'all','all','常规体验'),[regular]);
+  assert.match(csv([custom,regular]), /定向寻宝/);
+  assert.match(csv([custom,regular]), /搭建改造/);
+  assert.equal(readBackup(backup([{...first,secondary:'创新体验'}]))[0].secondary,'创新体验');
 });
 
 test('dated payments add to legacy totals and survive backup and export', () => {

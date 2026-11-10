@@ -58,7 +58,7 @@ nav a:first-child,nav a:hover{background:var(--panel);border-color:var(--line);c
 .panel,.project,.auth-card,dialog{background:var(--panel);border:1px solid var(--line);border-radius:13px}
 .panel{padding:18px}
 .overview{padding:20px 22px}
-.overview-head,.card-meta,.budget-top,.track>div:first-child,.key-value{display:flex;justify-content:space-between;align-items:center;gap:9px}
+.overview-head,.budget-top,.track>div:first-child,.key-value{display:flex;justify-content:space-between;align-items:center;gap:9px}
 .overview-head>span:first-child{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700}
 .annual-amount{display:block;font-size:clamp(31px,4.3vw,61px);line-height:1.13;letter-spacing:-.055em;margin:6px 0 16px}
 .metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:15px}
@@ -82,9 +82,6 @@ nav a:first-child,nav a:hover{background:var(--panel);border-color:var(--line);c
 .segmented button[aria-pressed=true]{background:var(--panel);border-color:var(--line);color:var(--accent)}
 .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
 .project{position:relative;padding:15px 13px 12px;min-width:0;scroll-margin:12px}
-.project-stripe{position:absolute;inset:0 0 auto;height:3px;border-radius:12px 12px 0 0;overflow:hidden;display:flex}.project-stripe span{background:var(--theme);flex:1}
-.card-meta{justify-content:flex-start;font-size:12px}
-.card-meta .tag{padding:0 7px;font-size:10px}
 .card-actions{margin-left:auto;display:flex;gap:2px}
 .project-name{font-size:22px;font-weight:750;letter-spacing:-.04em;border-color:transparent;padding:1px 3px;margin:1px 0;width:100%;background:transparent}
 .project-name:hover{border-color:var(--line)}
@@ -158,7 +155,6 @@ dialog .actions{justify-content:flex-end}
   background:color-mix(in srgb,var(--project-wash) 26%,var(--glass));
   border-radius:16px;
 }
-.project-stripe{border-radius:15px 15px 0 0}
 .project input:not(.project-name),.project select,.project textarea,.project .money-field{background:var(--field-glass)}
 .project .money-field input{background:transparent}
 .card-budget{background:var(--glass);border-color:var(--glass-edge)}
@@ -225,7 +221,6 @@ dialog .actions{justify-content:flex-end}
 .locked-value b{font-size:17px;letter-spacing:.06em}
 .viewer-status{margin-left:auto;color:var(--muted);font-size:12px}
 .viewer-project h3{margin:8px 0 3px;overflow-wrap:anywhere}
-.viewer-forms{font-size:13px;margin:10px 0;color:var(--muted)}
 .viewer-budget{padding:8px 9px;background:var(--glass);border:1px solid var(--glass-edge);border-radius:9px;font-size:12px;color:var(--muted)}
 .viewer-budget b{color:var(--text);padding-left:3px;letter-spacing:.06em}
 @media(max-width:580px){
@@ -281,7 +276,6 @@ nav a[aria-current=page]{background:var(--panel);border-color:var(--line);color:
 .overview-links strong{font-weight:680;font-size:clamp(19px,2.25vw,32px);line-height:1.2;letter-spacing:-.035em;overflow-wrap:anywhere}
 .overview-links small{font-size:12px;line-height:1.5}
 .panel,.project{border-radius:18px}
-.project-stripe{border-radius:17px 17px 0 0}
 .project .date-caption{flex-wrap:wrap;gap:4px 6px;padding-inline:2px;font-variant-numeric:tabular-nums}
 .duration{font-weight:650;font-size:11px;white-space:nowrap;margin-left:auto;color:var(--accent);background:var(--glass);border:1px solid var(--glass-edge);border-radius:99px;padding:2px 7px}
 .segmented{border-radius:11px}
@@ -732,27 +726,76 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .campaign-gallery-index{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
 .campaign-gallery-index button{min-height:28px;padding:3px 8px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
 .campaign-gallery-index button[aria-pressed=true]{background:var(--accent);color:var(--panel);border-color:var(--accent)}
-.project-title-band{
+/* Project covers borrow the reel's frame, depth and tinted lower light. */
+.project-cover{
+  --cover-ink:#fff0f7;
   position:relative;isolation:isolate;overflow:hidden;container-type:inline-size;
-  min-height:82px;margin:-13px -13px 10px;padding:13px 16px 19px;
-  display:grid;align-items:center;border-radius:16px 16px 0 0;
-  color:var(--title-ink);
+  display:grid;align-content:space-between;gap:12px;min-height:126px;
+  padding:11px 14px 13px;margin-bottom:12px;border-radius:12px;
+  border:1px solid color-mix(in srgb,var(--cover-light) 42%,#3a253f);
+  background:#291a30;color:var(--cover-ink);
+  box-shadow:0 3px 8px rgb(34 17 38 / .17);
 }
-.project-title-band::before{
-  content:"";position:absolute;z-index:-1;inset:-16px;pointer-events:none;
+.project-cover.has-title{min-height:148px}
+.project-cover::before{
+  content:"";position:absolute;inset:-22px;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(ellipse at 15% 93%,var(--title-glow),transparent 61%),
-    radial-gradient(ellipse at 80% 96%,var(--title-wash),transparent 65%);
-  filter:blur(13px);opacity:.62;
-  mask-image:linear-gradient(transparent 13%,#000 65%,transparent 97%);
+    radial-gradient(ellipse at 17% 99%,var(--cover-shade),transparent 61%),
+    radial-gradient(ellipse at 86% 112%,var(--cover-light),transparent 68%);
+  filter:blur(17px);opacity:.56;
 }
-.project-title-band p{
-  margin:0;font-family:"Didot","Bodoni 72","Baskerville",Georgia,serif;
-  font-size:clamp(26px,9.8cqi,52px);line-height:1.09;font-weight:400;
-  font-style:italic;letter-spacing:-.04em;text-wrap:balance;
+.project-cover::after{
+  content:"";position:absolute;z-index:-1;inset:4px;pointer-events:none;border-radius:8px;
+  border:1px solid rgb(255 228 246 / .15);
+  border-top-color:color-mix(in srgb,var(--cover-light) 57%,transparent);
 }
-:root[data-theme=dark] .project-title-band{color:color-mix(in srgb,var(--title-glow) 40%,#fff)}
-:root[data-theme=dark] .project-title-band::before{opacity:.26}
+.project-cover-meta{display:flex;align-items:center;gap:8px;min-height:29px}
+.project-cover-meta>strong{
+  font-size:11px;letter-spacing:.16em;font-variant-numeric:tabular-nums;color:#f5dce9;
+}
+.project-cover-quarter{
+  font-size:10px;letter-spacing:.1em;line-height:1.5;color:#f6dfeb;
+  border:1px solid rgb(255 229 244 / .30);padding:0 6px;border-radius:999px;
+}
+.project-cover-meta .icon{
+  min-height:30px;width:30px;color:#f7e0ee;background:rgb(255 231 246 / .08);
+  border-color:rgb(255 231 246 / .13);
+}
+.project-cover-meta .icon:hover{background:rgb(255 231 246 / .19);border-color:var(--cover-light)}
+.project-cover :focus-visible{outline-color:#f3ccde;outline-offset:-2px}
+.project-cover-title p{
+  color:var(--cover-ink);font:italic 400 clamp(28px,11.4cqi,58px)/1.02 "Didot","Bodoni 72","Baskerville",Georgia,serif;
+  letter-spacing:-.055em;text-wrap:balance;
+}
+.project-cover .project-name,.project-cover h3{
+  color:var(--cover-ink);font-size:clamp(20px,7.1cqi,36px);
+  font-weight:650;letter-spacing:-.035em;line-height:1.22;margin:0;
+}
+.project-cover .project-name{padding:4px 6px;margin-inline:-6px;width:calc(100% + 12px)}
+.project-cover.has-title .project-name,.project-cover.has-title h3{font-size:15px;letter-spacing:0}
+.project-cover .project-name::placeholder{color:#efd6e7}
+.project-cover .project-name:hover,.project-cover .project-name:focus{
+  background:rgb(255 234 247 / .09);border-color:rgb(255 229 244 / .31);
+}
+.project-cover .viewer-status{color:#f1dce9}
+.project:focus-within .project-cover{
+  border-color:var(--cover-light);box-shadow:0 3px 13px color-mix(in srgb,var(--cover-shade) 42%,transparent);
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+  .project-cover{transition:transform .28s ease,border-color .2s ease,box-shadow .2s ease}
+  .project:hover:not(:focus-within) .project-cover{
+    transform:perspective(660px) translateY(-2px) rotateX(2deg);
+    border-color:var(--cover-light);
+  }
+}
+.project-categories{
+  padding:9px 10px 10px;background:var(--glass);border:1px solid var(--glass-edge);border-radius:10px;
+}
+.project-categories>div{min-width:0}
+.project-categories .primary-detail{margin-top:7px}
+.viewer-categories{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0;font-size:13px}
+.viewer-categories dt{color:var(--muted);font-size:11px}
+.viewer-categories dd{margin:2px 0 0;overflow-wrap:anywhere}
 @media(max-width:720px){.campaign-slide{flex-basis:82%}}
 @media(max-width:460px){
   .campaign-slide{flex-basis:91%}

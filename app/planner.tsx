@@ -1,11 +1,11 @@
 'use client';
-import {useEffect,useRef,useState,type CSSProperties} from 'react';
+import {useEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
 import {ArrowDownToLine,ArrowUpRight,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet} from 'lucide-react';
-import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,recordedSpend,rows,settlementMonths,SECONDARY,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
+import {allocation,backup,COLORS,csv,durationDays,EXPERIENCE_MODES,experienceModeLabel,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,recordedSpend,rows,settlementMonths,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
 import {useCampaignArtwork,usePlanner,type ViewerData} from '../lib/storage';
 
 import {PlanOverview} from './overview';
-import {CampaignGallery,CampaignCardTitle,type CampaignArtwork} from './campaign-gallery';
+import {CampaignGallery,campaignTitles,type CampaignArtwork} from './campaign-gallery';
 import {ProjectSettlement} from './project-settlement';
 import {LoginReel} from './login-reel';
 
@@ -138,6 +138,23 @@ function CampaignDates({start,end}:{start:string;end:string}) {
   const days=durationDays(start,end);
   return <div className="date-caption"><CalendarDays size={13} aria-hidden="true"/><span>{dateLabel(start)} — {dateLabel(end)}</span>{days!==null&&<strong className="duration" title="含开始日和结束日">共 {days} 天</strong>}</div>;
 }
+function ProjectCover({project,actions,children}:{
+  project:Pick<Project,'id'|'code'|'start'|'color'>;actions:ReactNode;children:ReactNode;
+}) {
+  const artwork=Object.hasOwn(campaignTitles,project.id)?campaignTitles[project.id]:undefined;
+  return <header className={'project-cover'+(artwork?' has-title':'')} style={{
+    '--cover-light':artwork?.glow??project.color,
+    '--cover-shade':artwork?.wash??project.color,
+  } as CSSProperties}>
+    <div className="project-cover-meta">
+      <strong>{project.code}</strong><span className="project-cover-quarter">{quarter(project.start)}</span>{actions}
+    </div>
+    <div className="project-cover-title">
+      {artwork&&<p lang="en">{artwork.title}</p>}
+      {children}
+    </div>
+  </header>;
+}
 function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
   const gap=allocation(p), split=(p.build??0)+(p.experience??0);
   const [dateError,setDateError]=useState('');
@@ -148,10 +165,9 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
     setDateError('');edit({[which]:value});
   };
   return <article className="project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
-    <div className="project-stripe" aria-hidden="true"><span/>{p.accent&&<span style={{background:p.accent}}/>}</div>
-    <CampaignCardTitle id={p.id}/>
-    <div className="card-meta"><span className="dot"/><strong>{p.code}</strong><span className="tag">{quarter(p.start)}</span><div className="card-actions"><button className="icon" title="复制项目" aria-label="复制项目" onClick={copy}><Copy/></button><button className="icon" title="删除项目" aria-label="删除项目" onClick={remove}><Trash2/></button></div></div>
-    <input className="project-name" aria-label="主题名称" maxLength={100} placeholder="输入项目主题" value={p.name} onChange={e=>edit({name:e.target.value})}/>
+    <ProjectCover project={p} actions={<div className="card-actions"><button className="icon" title="复制项目" aria-label="复制项目" onClick={copy}><Copy/></button><button className="icon" title="删除项目" aria-label="删除项目" onClick={remove}><Trash2/></button></div>}>
+      <input className="project-name" aria-label="主题名称" maxLength={100} placeholder="输入项目主题" value={p.name} onChange={e=>edit({name:e.target.value})}/>
+    </ProjectCover>
     <CampaignDates start={p.start} end={p.end}/>
     <div className="date-pair"><label>开始<input aria-label="开始日期" type="date" min="2000-01-01" max={p.end} value={p.start} onChange={e=>changeDate('start',e.target.value)}/></label><label>结束<input aria-label="结束日期" type="date" min={p.start} max="2099-12-31" value={p.end} onChange={e=>changeDate('end',e.target.value)}/></label></div>
     {dateError&&<small className="danger" role="alert">{dateError}</small>}
@@ -172,12 +188,19 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
       <ProjectSettlement project={p} onSave={settlement=>edit({settlement})}/>
       </div>
     </details>
-    <div className="fields"><label>主导形式<select aria-label="主导形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>
-      {!PRIMARY_FORMS.some(value=>value===p.primary)&&<option value={p.primary} disabled>{p.primary}（历史值）</option>}
-      {options(PRIMARY_FORMS.filter(v=>v!==p.secondary))}
-    </select></label>
-    <label>叠加形式<select aria-label="叠加形式" value={p.secondary} onChange={e=>edit({secondary:e.target.value as Project['secondary']})}>{options(SECONDARY.filter(v=>v!==p.primary))}</select></label></div>
-    {p.primary==='其他'&&<label className="primary-detail">自定义主导形式<input aria-label="自定义主导形式" maxLength={80} placeholder="输入活动形式" value={p.primaryDetail??''} onChange={e=>edit({primaryDetail:e.target.value})}/></label>}
+    <div className="fields project-categories">
+      <div><label>搭建形式<select aria-label="搭建形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>
+        {!PRIMARY_FORMS.some(value=>value===p.primary)&&<option value={p.primary} disabled>{p.primary}（历史值）</option>}
+        {options(PRIMARY_FORMS.filter(value=>value!==p.secondary||value==='其他'))}
+      </select></label>
+      {p.primary==='其他'&&<label className="primary-detail">自定义搭建形式<input aria-label="自定义搭建形式" maxLength={80} placeholder="输入搭建形式" value={p.primaryDetail??''} onChange={e=>edit({primaryDetail:e.target.value})}/></label>}</div>
+      <div><label>体验模式<select aria-label="体验模式" value={p.secondary} onChange={e=>edit({secondary:e.target.value as Project['secondary']})}>
+        <option value="不叠加">待定</option>
+        {p.secondary!=='不叠加'&&!EXPERIENCE_MODES.some(value=>value===p.secondary)&&<option value={p.secondary} disabled>{p.secondary}（历史值）</option>}
+        {options(EXPERIENCE_MODES)}
+      </select></label>
+      {p.secondary==='其他'&&<label className="primary-detail">自定义体验模式<input aria-label="自定义体验模式" maxLength={80} placeholder="输入体验模式" value={p.secondaryDetail??''} onChange={e=>edit({secondaryDetail:e.target.value})}/></label>}</div>
+    </div>
     <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
   </article>;
 }
@@ -407,7 +430,7 @@ function Annual({items,hidden}:{items:Project[];hidden:boolean}) {
         <div className="key-value"><span>项目待分配合计</span><b>{yuan(t.unallocated)}</b></div>
         <div className={'key-value '+(t.over?'danger':'')}><span>项目超额合计</span><b>{yuan(t.over)}</b></div>
       </article>
-      <article className="panel"><h3>项目类型分布</h3><p>按主导形式 · 数量与预算</p>{types.length?types.map(g=>track(g.name,g.value,t.total,g.color,g.count+' 项')):<p>暂无项目</p>}</article>
+      <article className="panel"><h3>项目类型分布</h3><p>按搭建形式 · 数量与预算</p>{types.length?types.map(g=>track(g.name,g.value,t.total,g.color,g.count+' 项')):<p>暂无项目</p>}</article>
       <article className="panel"><h3>S 级 / A 级预算对比</h3><p>占全年项目预算比例</p>{track('S 级',t.S,t.total,'var(--tier-s)',pct(t.S,t.total))}{track('A 级',t.A,t.total,'var(--tier-a)',pct(t.A,t.total))}</article>
     </div>
   </section>;
@@ -438,11 +461,11 @@ function Viewer({data,artwork,dark,toggle,logout,error}:{data:ViewerData;artwork
         <section id="projects" className="section pane" hidden={pane!=='projects'}><div className="section-heading"><h2>年度项目 <small>{projects.length} / {data.projects.length}</small></h2></div>
           <div className="filters"><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div><label><CalendarDays size={15}/><select aria-label="季度筛选" value={quarterFilter} onChange={e=>setQuarterFilter(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label></div>
           <div className="cards">{projects.map(p=><article key={p.id} className="project viewer-project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
-            <div className="project-stripe" aria-hidden="true"><span/>{p.accent&&<span style={{background:p.accent}}/>}</div>
-            <CampaignCardTitle id={p.id}/>
-            <div className="card-meta"><span className="dot"/><strong>{p.code}</strong><span className="tag">{quarter(p.start)}</span><span className="viewer-status">{p.status}</span></div>
-            <h3>{p.name||'未命名项目'}</h3><CampaignDates start={p.start} end={p.end}/>
-            <p className="viewer-forms">{primaryFormLabel(p)}{p.secondary!=='不叠加'&&' · '+p.secondary}</p>
+            <ProjectCover project={p} actions={<span className="viewer-status">{p.status}</span>}>
+              <h3>{p.name||'未命名项目'}</h3>
+            </ProjectCover>
+            <CampaignDates start={p.start} end={p.end}/>
+            <dl className="viewer-categories"><div><dt>搭建形式</dt><dd>{primaryFormLabel(p)}</dd></div><div><dt>体验模式</dt><dd>{experienceModeLabel(p)}</dd></div></dl>
             <div className="viewer-budget"><span>预算 <b>****</b></span><span>搭建 <b>****</b></span><span>体验 <b>****</b></span></div>
           </article>)}</div>
           {!projects.length&&<p className="panel">这个级别暂无项目。</p>}
@@ -546,7 +569,7 @@ export default function Planner() {
         }}/>
         <div className="filters"><div className="segmented" aria-label="级别筛选">{[['S','S 级'],['A','A 级'],['all','全部']].map(([value,label])=><button key={value} aria-pressed={tier===value} onClick={()=>setTier(value)}>{label}</button>)}</div>
           <label><CalendarDays size={15}/><select aria-label="季度筛选" value={q} onChange={e=>setQ(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label>
-          <label><select aria-label="活动形式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">全部形式</option>{options(FORM_FILTERS.filter(value=>PRIMARY_FORMS.some(primary=>primary===value)||items.some(p=>p.primary===value||p.secondary===value)))}</select></label></div>
+          <label><select aria-label="搭建形式与体验模式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">搭建 / 体验</option>{options(FORM_FILTERS.filter(value=>PRIMARY_FORMS.some(primary=>primary===value)||EXPERIENCE_MODES.some(mode=>mode===value)||items.some(p=>p.primary===value||p.secondary===value)))}</select></label></div>
         {notice&&<p className="notice" role="status">{notice}<button className="icon" onClick={()=>setNotice('')} aria-label="关闭提示">×</button></p>}
         <div className="cards">{shown.map(p=><Card key={p.id} p={p} edit={patch=>edit(p.id,patch)} copy={()=>add(p)} remove={()=>ask({title:'删除 '+p.code+'？',description:'将从年度计划移除「'+p.name+'」，预算会随之更新。',action:()=>store.change(items.filter(x=>x.id!==p.id))})}/>)}</div>
         {!shown.length&&<div className="empty panel">当前筛选下没有项目。<button onClick={()=>{setTier('all');setQ('all');setForm('all');}}>清除筛选</button></div>}

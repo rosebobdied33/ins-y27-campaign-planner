@@ -1,12 +1,14 @@
 import { z } from 'zod';
 
 export const FORMS = ['待定','空间搭建','场景营造','艺术装置','互动体验','沉浸演艺','市集快闪','事件营销','IP联动','全楼运营'] as const;
-export const SECONDARY = ['不叠加', ...FORMS.slice(1)] as const;
+export const EXPERIENCE_MODES = ['常规体验','创新体验','其他'] as const;
+const SECONDARY = ['不叠加', ...FORMS.slice(1), ...EXPERIENCE_MODES] as const;
 const PRIMARY_CATEGORIES = [
-  '氛围搭建','主体装置','设定场景','娱乐互动','沉浸演艺','商务联动','简易布置',
+  '氛围搭建','主体装置','设定场景','娱乐互动','沉浸演艺','商务联动','简易布置','搭建改造',
 ] as const;
 export const PRIMARY_FORMS = ['待定', ...PRIMARY_CATEGORIES, '其他'] as const;
-export const FORM_FILTERS = [...new Set([...PRIMARY_FORMS, ...FORMS])];
+const BUILD_FORMS = [...new Set([...PRIMARY_FORMS, ...FORMS])];
+export const FORM_FILTERS = [...new Set([...BUILD_FORMS, ...EXPERIENCE_MODES])];
 export const STATUSES = ['规划中','已确认','执行中','已完成'] as const;
 export const COLORS = ['#e49a60','#75aa81','#a186d4','#688ed2','#c377a1','#9d537b','#55a390','#cf747b'];
 export const QUARTERS = ['Q1','Q2','Q3','Q4'] as const;
@@ -26,9 +28,9 @@ const project = z.object({
   id:z.string().min(1).max(80), code:z.string().regex(/^[SA]\d{2,4}$/),
   tier:z.enum(['S','A']), name:z.string().max(100), start:date, end:date,
   budget:money, settlement:settlement.optional(), spent:money.nullable().optional(), payments:z.array(payment).max(100).refine(rows=>new Set(rows.map(row=>row.id)).size===rows.length).optional(), build:money.nullable(), experience:money.nullable(),
-  primary:z.enum(FORM_FILTERS), primaryDetail:z.string().max(80).optional(), secondary:z.enum(SECONDARY), status:z.enum(STATUSES),
+  primary:z.enum(BUILD_FORMS), primaryDetail:z.string().max(80).optional(), secondary:z.enum(SECONDARY), secondaryDetail:z.string().max(80).optional(), status:z.enum(STATUSES),
   notes:z.string().max(1000), color:z.string().regex(/^#[a-fA-F0-9]{6}$/), accent:z.string().regex(/^#[a-fA-F0-9]{6}$/).optional()
-}).refine(p => p.start <= p.end && p.primary !== p.secondary && p.code.startsWith(p.tier));
+}).refine(p => p.start <= p.end && (p.primary !== p.secondary || p.secondary === '其他') && p.code.startsWith(p.tier));
 export type Project = z.infer<typeof project>;
 const projects = z.array(project).max(300).refine(p => new Set(p.map(x=>x.code)).size === p.length && new Set(p.map(x=>x.id)).size === p.length);
 export const quarter = (start:string) => QUARTERS[Math.floor((Number(start.slice(5,7))-1)/3)];
@@ -105,10 +107,14 @@ export const validateProjects = (value:unknown) => projects.parse(value);
 export function primaryFormLabel(project:{primary:Project['primary'];primaryDetail?:string|null}):string {
   return project.primary==='其他' ? project.primaryDetail?.trim() || '其他' : project.primary;
 }
-export const HEADERS = ['编号','级别','主题名称','季度','开始日期','结束日期','周期（天）','状态','预算（元）','搭建（元）','体验（元）','待分配 / 超额（元）','主导形式','叠加形式','备注','实际已支出（元）','预算差额（元）','实际搭建费（元）','实际体验费（元）','结算日期'];
+export function experienceModeLabel(project:{secondary:Project['secondary'];secondaryDetail?:string|null}):string {
+  if(project.secondary==='不叠加')return '待定';
+  return project.secondary==='其他' ? project.secondaryDetail?.trim() || '其他' : project.secondary;
+}
+export const HEADERS = ['编号','级别','主题名称','季度','开始日期','结束日期','周期（天）','状态','预算（元）','搭建（元）','体验（元）','待分配 / 超额（元）','搭建形式','体验模式','备注','实际已支出（元）','预算差额（元）','实际搭建费（元）','实际体验费（元）','结算日期'];
 export const rows = (items:Project[]) => items.map(p => {
   const actual=recordedSpend(p);
-  return [p.code,p.tier,p.name,quarter(p.start),p.start,p.end,durationDays(p.start,p.end),p.status,p.budget/100,p.build===null?null:p.build/100,p.experience===null?null:p.experience/100,allocation(p)/100,primaryFormLabel(p),p.secondary,p.notes,actual==null?null:actual/100,(p.budget-(actual??0))/100,p.settlement?p.settlement.build/100:null,p.settlement?p.settlement.experience/100:null,p.settlement?.date??null];
+  return [p.code,p.tier,p.name,quarter(p.start),p.start,p.end,durationDays(p.start,p.end),p.status,p.budget/100,p.build===null?null:p.build/100,p.experience===null?null:p.experience/100,allocation(p)/100,primaryFormLabel(p),experienceModeLabel(p),p.notes,actual==null?null:actual/100,(p.budget-(actual??0))/100,p.settlement?p.settlement.build/100:null,p.settlement?p.settlement.experience/100:null,p.settlement?.date??null];
 });
 export const csv = (items:Project[]) => '\uFEFF'+[HEADERS,...rows(items)].map(row => row.map(v => {
   const s = String(v ?? '');

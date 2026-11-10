@@ -30,4 +30,6 @@ GitHub Pages 项目站点用 `PLANNER_BASE_PATH=/ins-y27-campaign-planner pnpm b
 
 所有业务调用通过 `y27_access`。后端验证角色和到期时间，数据库仅保存会话令牌的散列。浏览者看不到真实金额，浏览会话不能执行任何计划写操作。管理者的实际凭据由项目拥有者保管。
 
+搭建形式和体验模式的自定义说明分别由 `supabase/004_primary_form_detail.sql` 和 `supabase/008_experience_mode_detail.sql` 加入浏览者读取范围。
+
 登录页封面轮播素材可选。执行 `supabase/006_login_backdrop.sql`、`supabase/007_login_reel.sql` 后，由管理员将登录页专用 WebP 图集以 Base64 写入 `public.y27_login_backdrop` 的 `campaign-collage` 行的 `reel_base64` 列。图集按 S01–S07 顺序排在 3×3 网格，单格宽高比 336:440。该图集允许访客读取。登录后的七张完整封面继续走会话验证。
