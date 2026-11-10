@@ -154,6 +154,15 @@ function ProjectIndexHeading({visible,total,children}:{visible:number;total:numb
     {children}
   </header>;
 }
+function CoverOrbit({className}:{className:string}) {
+  return <svg className={className} viewBox="0 0 194 150" aria-hidden="true">
+      <g transform="rotate(-30 97 75)" fill="none" stroke="currentColor" strokeWidth=".75">
+        <ellipse cx="97" cy="75" rx="90" ry="59"/><ellipse cx="97" cy="75" rx="90" ry="41"/><ellipse cx="97" cy="75" rx="90" ry="23"/>
+        <ellipse cx="97" cy="75" rx="65" ry="59"/><ellipse cx="97" cy="75" rx="32" ry="59"/>
+      </g>
+      <circle cx="162" cy="34" r="2" fill="currentColor"/>
+    </svg>;
+}
 function ProjectCover({project}:{project:Pick<Project,'id'|'code'|'start'|'color'>}) {
   const art=Object.hasOwn(campaignTitles,project.id)?campaignTitles[project.id]:undefined;
   return <header className={'project-cover'+(art?'':' is-index')} style={{
@@ -161,13 +170,7 @@ function ProjectCover({project}:{project:Pick<Project,'id'|'code'|'start'|'color
     '--cover-shade':project.color,
     ...(art?{'--cover-deep':art.cover[0],'--cover-mid':art.cover[1]}:{}),
   } as CSSProperties}>
-    <svg className="project-cover-orbit" viewBox="0 0 194 150" aria-hidden="true">
-      <g transform="rotate(-30 97 75)" fill="none" stroke="currentColor" strokeWidth=".75">
-        <ellipse cx="97" cy="75" rx="90" ry="59"/><ellipse cx="97" cy="75" rx="90" ry="41"/><ellipse cx="97" cy="75" rx="90" ry="23"/>
-        <ellipse cx="97" cy="75" rx="65" ry="59"/><ellipse cx="97" cy="75" rx="32" ry="59"/>
-      </g>
-      <circle cx="162" cy="34" r="2" fill="currentColor"/>
-    </svg>
+    <CoverOrbit className="project-cover-orbit"/>
     <p className="project-cover-meta">{art?project.code:'CAMPAIGN'} <span>/</span> {quarter(project.start)}</p>
     <p className="project-cover-title" lang="en">{art?.title??project.code}</p>
   </header>;
@@ -263,17 +266,17 @@ function SpendingBoard({items,baseline,openProject}:{items:Project[];baseline:nu
   return <>
     <div className="budget-tiles">
       <article className="panel budget-feature">
-        <div className="budget-feature-copy">
-          <h3 className="budget-title">年度预算基准</h3>
-          <strong className="budget-number">{yuan(baseline)}</strong>
-          <p>已规划 <b>{yuan(plan.total)}</b> · {items.length} 项</p>
-          <span className={'budget-pill '+(plan.remaining<0?'danger':'')}>{plan.remaining<0?'超出基准':'基准余量'} {yuan(Math.abs(plan.remaining))}</span>
+        <CoverOrbit className="budget-orbit"/>
+        <h3 className="budget-title">年度预算基准</h3>
+        <strong className="budget-number">{yuan(baseline)}</strong>
+        <div className="budget-feature-foot">
+          <div className="budget-feature-meta"><span>已规划 <b>{yuan(plan.total)}</b> · {items.length} 项</span><span>规划率 <b>{pct(plan.total,baseline)}</b></span></div>
+          <Ratio segments={[
+            {value:Math.min(plan.total,baseline),color:'var(--budget-lilac)'},
+            {value:Math.max(-plan.remaining,0),color:'var(--budget-coral)'},
+          ]} scale={Math.max(plan.total,baseline)} label={'年度预算规划率 '+pct(plan.total,baseline)}/>
+          <span className={'budget-feature-balance'+(plan.remaining<0?' is-over':'')}>{plan.remaining<0?'超出基准':'基准余量'} {yuan(Math.abs(plan.remaining))}</span>
         </div>
-        <Donut segments={[
-          {value:Math.min(plan.total,baseline),color:'var(--budget-lilac)'},
-          {value:Math.max(-plan.remaining,0),color:'var(--budget-coral)'},
-          {value:Math.max(plan.remaining,0),color:'var(--budget-ring-track)'},
-        ]} value={pct(plan.total,baseline)} caption="规划率" label={'年度预算规划率 '+pct(plan.total,baseline)}/>
       </article>
       <article className="panel budget-snapshot budget-paid">
         <h3 className="budget-title">实际已支出</h3><strong className="budget-number">{paidLabel}</strong>
@@ -306,29 +309,28 @@ function SpendingBoard({items,baseline,openProject}:{items:Project[];baseline:nu
         <p className="budget-hint">{series==='plan'?'按项目开始季度归集':'按 2027 年结算季度归集'} · 点柱图筛选明细</p>
       </article>
 
-      <div className="budget-structure">
-        <article className="panel budget-tier">
-          <h3 className="budget-title">S / A 预算结构</h3>
-          <div className="chart-pair">
-            <Donut segments={tierSegments(plan.S,plan.A)} value={plan.total?pct(plan.S,plan.total):'—'} caption="S 级占比" label={'S 级 '+pct(plan.S,plan.total)+'，A 级 '+pct(plan.A,plan.total)}/>
-            <div className="chart-list">
-              <div><span><i style={{background:'var(--tier-s)'}}/>S 级</span><b>{yuan(plan.S)}</b></div>
-              <div><span><i style={{background:'var(--tier-a)'}}/>A 级</span><b>{yuan(plan.A)}</b></div>
-            </div>
+      <article className="panel budget-structure">
+        <h3 className="budget-title">预算结构</h3>
+        <section className="budget-tier">
+          <h4>S / A 级别</h4>
+          <Ratio segments={tierSegments(plan.S,plan.A)} label={'S 级 '+pct(plan.S,plan.total)+'，A 级 '+pct(plan.A,plan.total)}/>
+          <div className="budget-legend">
+            <div><span><i style={{background:'var(--tier-s)'}}/>S 级 <small>{pct(plan.S,plan.total)}</small></span><b>{yuan(plan.S)}</b></div>
+            <div><span><i style={{background:'var(--tier-a)'}}/>A 级 <small>{pct(plan.A,plan.total)}</small></span><b>{yuan(plan.A)}</b></div>
           </div>
-        </article>
-        <article className="panel budget-allocation">
-          <h3 className="budget-title">费用分配结构</h3>
+        </section>
+        <section className="budget-allocation">
+          <h4>费用分配</h4>
           <Ratio segments={[...splitSegments(plan.build,plan.experience),{value:plan.unallocated,color:'var(--unassigned)'}]} scale={splitTotal}
             label={`搭建 ${yuan(plan.build)}，体验 ${yuan(plan.experience)}，待分配 ${yuan(plan.unallocated)}`}/>
-          <div className="chart-list">
+          <div className="budget-legend">
             <div><span><i style={{background:'var(--build)'}}/>搭建</span><b>{yuan(plan.build)}</b></div>
             <div><span><i style={{background:'var(--experience)'}}/>体验</span><b>{yuan(plan.experience)}</b></div>
             <div><span><i style={{background:'var(--unassigned)'}}/>待分配</span><b>{yuan(plan.unallocated)}</b></div>
           </div>
           {plan.over>0&&<p className="danger">分配超额 {yuan(plan.over)}</p>}
-        </article>
-      </div>
+        </section>
+      </article>
     </div>
 
     <PaymentLedger items={items} selectedQuarter={selectedQuarter} bySettlement={series==='paid'} clearQuarter={()=>setSelectedQuarter(null)} openProject={openProject}/>
@@ -389,6 +391,7 @@ function PaymentLedger({items,selectedQuarter,bySettlement,clearQuarter,openProj
     {visible.length>0?<div className="spend-explorer">
       {view==='project'?<div className="spend-compare">
         <div className="spend-legend"><span><i/>预算</span><span><i/>实际支出</span><span><i/>超预算</span></div>
+        <div className="spend-column-head" aria-hidden="true"><span>项目</span><span>预算水位</span><span>实际 / 预算</span></div>
         {visible.map(project=>{
           const actual=recordedSpend(project);
           const paid=actual??0;
@@ -582,7 +585,11 @@ export default function Planner() {
         <PlanOverview items={items} budget={t} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
-        <div className="section-heading pane-heading"><h2>预算看板</h2></div>
+        <header className="budget-heading project-index-heading">
+          <span className="project-index-kicker" lang="en">FINANCE / 2027</span>
+          <p className="project-index-display" lang="en" aria-hidden="true">Budget</p>
+          <h2>预算看板</h2>
+        </header>
         <SpendingBoard items={items} baseline={baseline} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id,true);}}/>
       </section>
       {store.error&&<div className="banner" role="alert">{store.error}<div className="actions">
