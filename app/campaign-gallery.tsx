@@ -71,12 +71,12 @@ export function CampaignGallery({projects,artwork,openProject}:{
   </section>;
 }
 
-export const campaignTitles:Record<string,{title:string;glow:string;wash:string}>={
-  S01:{title:'Lamb Ranch',glow:'#f3bb93',wash:'#b19acc'},
-  S02:{title:'Spring Market',glow:'#f5a5b8',wash:'#73b5aa'},
-  S03:{title:'Game World 4',glow:'#f481cb',wash:'#ad80c9'},
-  S04:{title:'Summer Pool',glow:'#b7ebf7',wash:'#73abd9'},
-  S05:{title:'Rockwood',glow:'#fbbb72',wash:'#dc8868'},
-  S06:{title:'Misty Theatre',glow:'#ee8eb1',wash:'#a78bb8'},
-  S07:{title:'Winter Museum',glow:'#edca91',wash:'#81a49e'},
+export const campaignTitles:Record<string,{title:string;glow:string;wash:string;cover:readonly [string,string,string]}>={
+  S01:{title:'Lamb Ranch',glow:'#f3bb93',wash:'#b19acc',cover:['#342039','#8c536e','#efbda4']},
+  S02:{title:'Spring Market',glow:'#f5a5b8',wash:'#73b5aa',cover:['#203436','#557370','#d8a6be']},
+  S03:{title:'Game World 4',glow:'#f481cb',wash:'#ad80c9',cover:['#302039','#793e77','#d998d6']},
+  S04:{title:'Summer Pool',glow:'#b7ebf7',wash:'#73abd9',cover:['#213047','#4d6687','#b1d4ec']},
+  S05:{title:'Rockwood',glow:'#fbbb72',wash:'#dc8868',cover:['#3a2531','#865152','#e7ad87']},
+  S06:{title:'Misty Theatre',glow:'#ee8eb1',wash:'#a78bb8',cover:['#342035','#753854','#ed9fba']},
+  S07:{title:'Winter Museum',glow:'#edca91',wash:'#81a49e',cover:['#272b38','#6b454d','#e4c2a5']},
 };

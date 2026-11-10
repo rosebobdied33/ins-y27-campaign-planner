@@ -98,16 +98,22 @@ function usePane(owner:boolean) {
   return (requested==='projects'||requested==='resources'||(requested==='budget'&&owner)?requested:'overview') as Pane;
 }
 function useProjectJump(pane:Pane) {
-  const [target,setTarget]=useState<string|null>(null);
+  const [target,setTarget]=useState<{id:string;budget:boolean}|null>(null);
   useEffect(()=>{
     if(pane!=='projects'||target===null)return;
-    const project=document.getElementById(target);
+    const project=document.getElementById(target.id);
+    if(target.budget){
+      const editor=project?.querySelector<HTMLDetailsElement>('.project-editor');
+      const budget=editor?.querySelector<HTMLDetailsElement>('.budget-disclosure');
+      if(editor)editor.open=true;
+      if(budget)budget.open=true;
+    }
     project?.scrollIntoView({block:'start'});
     project?.focus({preventScroll:true});
     setTarget(null);
   },[pane,target]);
-  return (id:string)=>{
-    setTarget(id);
+  return (id:string,budget=false)=>{
+    setTarget({id,budget});
     window.location.hash='projects';
   };
 }
@@ -138,22 +144,39 @@ function CampaignDates({start,end}:{start:string;end:string}) {
   const days=durationDays(start,end);
   return <div className="date-caption"><CalendarDays size={13} aria-hidden="true"/><span>{dateLabel(start)} — {dateLabel(end)}</span>{days!==null&&<strong className="duration" title="含开始日和结束日">共 {days} 天</strong>}</div>;
 }
-function ProjectCover({project,actions,children}:{
-  project:Pick<Project,'id'|'code'|'start'|'color'>;actions:ReactNode;children:ReactNode;
-}) {
-  const artwork=Object.hasOwn(campaignTitles,project.id)?campaignTitles[project.id]:undefined;
-  return <header className={'project-cover'+(artwork?' has-title':'')} style={{
-    '--cover-light':artwork?.glow??project.color,
-    '--cover-shade':artwork?.wash??project.color,
-  } as CSSProperties}>
-    <div className="project-cover-meta">
-      <strong>{project.code}</strong><span className="project-cover-quarter">{quarter(project.start)}</span>{actions}
+function ProjectIndexHeading({visible,total,children}:{visible:number;total:number;children?:ReactNode}) {
+  return <header className="project-heading">
+    <div className="project-index-heading">
+      <span className="project-index-kicker" lang="en">PROJECT INDEX / 2027</span>
+      <p className="project-index-display" lang="en" aria-hidden="true">Campaigns</p>
+      <h2>项目规划 <small>{visible} / {total}</small></h2>
     </div>
-    <div className="project-cover-title">
-      {artwork&&<p lang="en">{artwork.title}</p>}
-      {children}
-    </div>
+    {children}
   </header>;
+}
+function ProjectCover({project}:{project:Pick<Project,'id'|'code'|'start'|'color'>}) {
+  const art=Object.hasOwn(campaignTitles,project.id)?campaignTitles[project.id]:undefined;
+  return <header className={'project-cover'+(art?'':' is-index')} style={{
+    '--cover-light':art?.cover[2]??project.color,
+    '--cover-shade':project.color,
+    ...(art?{'--cover-deep':art.cover[0],'--cover-mid':art.cover[1]}:{}),
+  } as CSSProperties}>
+    <svg className="project-cover-orbit" viewBox="0 0 194 150" aria-hidden="true">
+      <g transform="rotate(-30 97 75)" fill="none" stroke="currentColor" strokeWidth=".75">
+        <ellipse cx="97" cy="75" rx="90" ry="59"/><ellipse cx="97" cy="75" rx="90" ry="41"/><ellipse cx="97" cy="75" rx="90" ry="23"/>
+        <ellipse cx="97" cy="75" rx="65" ry="59"/><ellipse cx="97" cy="75" rx="32" ry="59"/>
+      </g>
+      <circle cx="162" cy="34" r="2" fill="currentColor"/>
+    </svg>
+    <p className="project-cover-meta">{art?project.code:'CAMPAIGN'} <span>/</span> {quarter(project.start)}</p>
+    <p className="project-cover-title" lang="en">{art?.title??project.code}</p>
+  </header>;
+}
+function ProjectSummary({project}:{project:Pick<Project,'name'|'status'|'start'|'end'>}) {
+  return <div className="project-summary">
+    <div className="project-summary-heading"><h3>{project.name||'未命名项目'}</h3><span className="project-status">{project.status}</span></div>
+    <CampaignDates start={project.start} end={project.end}/>
+  </div>;
 }
 function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
   const gap=allocation(p), split=(p.build??0)+(p.experience??0);
@@ -165,43 +188,53 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
     setDateError('');edit({[which]:value});
   };
   return <article className="project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
-    <ProjectCover project={p} actions={<div className="card-actions"><button className="icon" title="复制项目" aria-label="复制项目" onClick={copy}><Copy/></button><button className="icon" title="删除项目" aria-label="删除项目" onClick={remove}><Trash2/></button></div>}>
-      <input className="project-name" aria-label="主题名称" maxLength={100} placeholder="输入项目主题" value={p.name} onChange={e=>edit({name:e.target.value})}/>
-    </ProjectCover>
-    <CampaignDates start={p.start} end={p.end}/>
-    <div className="date-pair"><label>开始<input aria-label="开始日期" type="date" min="2000-01-01" max={p.end} value={p.start} onChange={e=>changeDate('start',e.target.value)}/></label><label>结束<input aria-label="结束日期" type="date" min={p.start} max="2099-12-31" value={p.end} onChange={e=>changeDate('end',e.target.value)}/></label></div>
-    {dateError&&<small className="danger" role="alert">{dateError}</small>}
-    <div className="fields"><label>级别<select aria-label="级别" value={p.tier} onChange={e=>edit({tier:e.target.value as Tier})}><option value="S">S 级</option><option value="A">A 级</option></select></label>
-    <label>状态<select aria-label="状态" value={p.status} onChange={e=>edit({status:e.target.value as Project['status']})}>{options(STATUSES)}</select></label></div>
-    <details className="budget-disclosure">
+    <ProjectCover project={p}/>
+    <ProjectSummary project={p}/>
+    <details className="project-editor">
       <summary>
-        <span className="budget-disclosure-label">总预算</span>
-        <strong className="budget-disclosure-amount">{yuan(p.budget)}</strong>
-        <ChevronDown className="budget-disclosure-chevron" size={15} aria-hidden="true"/>
+        <span className="project-budget-preview"><small>总预算</small><strong>{yuan(p.budget)}</strong></span>
+        <span className="project-edit-trigger"><span className="edit-show">编辑项目</span><span className="edit-hide">收起编辑</span><ChevronDown size={15} aria-hidden="true"/></span>
       </summary>
-      <div className="card-budget">
-      <div className="budget-top"><Money label="预算总额" value={p.budget} required onChange={budget=>budget!==null&&edit({budget})}/>
-      <span className={'budget-state '+(gap<0?'danger':gap===0?'success':'')}>{gap<0?'超额 '+yuan(-gap):gap===0?'已分配完成':'待分配 '+yuan(gap)}</span></div>
-      <div className="split"><Money label="搭建" value={p.build} onChange={build=>edit({build})}/><Money label="体验" value={p.experience} onChange={experience=>edit({experience})}/></div>
-      <Ratio segments={[...splitSegments(p.build??0,p.experience??0),{value:Math.max(0,gap),color:'var(--unassigned)'}]} label={'项目预算分配：搭建 '+yuan(p.build??0)+'，体验 '+yuan(p.experience??0)+'，'+(gap<0?'超额 ':'待分配 ')+yuan(Math.abs(gap))}/>
-      <div className="split-legend"><span><i/>搭建 {split&&p.build!==null?pct(p.build,split):'—'}</span><span><i/>体验 {split&&p.experience!==null?pct(p.experience,split):'—'}</span>{gap>0&&<span className="unassigned"><i/>待分配</span>}</div>
-      <ProjectSettlement project={p} onSave={settlement=>edit({settlement})}/>
+      <div className="project-edit-body">
+        <div className="project-edit-head">
+          <span>项目信息</span>
+          <div className="card-actions"><button className="icon" title="复制项目" aria-label="复制项目" onClick={copy}><Copy/></button><button className="icon" title="删除项目" aria-label="删除项目" onClick={remove}><Trash2/></button></div>
+        </div>
+        <label className="project-edit-name">主题名称<input aria-label="主题名称" maxLength={100} placeholder="输入项目主题" value={p.name} onChange={e=>edit({name:e.target.value})}/></label>
+        <div className="date-pair"><label>开始<input aria-label="开始日期" type="date" min="2000-01-01" max={p.end} value={p.start} onChange={e=>changeDate('start',e.target.value)}/></label><label>结束<input aria-label="结束日期" type="date" min={p.start} max="2099-12-31" value={p.end} onChange={e=>changeDate('end',e.target.value)}/></label></div>
+        {dateError&&<small className="danger" role="alert">{dateError}</small>}
+        <div className="fields"><label>级别<select aria-label="级别" value={p.tier} onChange={e=>edit({tier:e.target.value as Tier})}><option value="S">S 级</option><option value="A">A 级</option></select></label>
+        <label>状态<select aria-label="状态" value={p.status} onChange={e=>edit({status:e.target.value as Project['status']})}>{options(STATUSES)}</select></label></div>
+        <div className="fields project-categories">
+          <div><label>搭建形式<select aria-label="搭建形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>
+            {!PRIMARY_FORMS.some(value=>value===p.primary)&&<option value={p.primary} disabled>{p.primary}（历史值）</option>}
+            {options(PRIMARY_FORMS.filter(value=>value!==p.secondary||value==='其他'))}
+          </select></label>
+          {p.primary==='其他'&&<label className="primary-detail">自定义搭建形式<input aria-label="自定义搭建形式" maxLength={80} placeholder="输入搭建形式" value={p.primaryDetail??''} onChange={e=>edit({primaryDetail:e.target.value})}/></label>}</div>
+          <div><label>体验模式<select aria-label="体验模式" value={p.secondary} onChange={e=>edit({secondary:e.target.value as Project['secondary']})}>
+            <option value="不叠加">待定</option>
+            {p.secondary!=='不叠加'&&!EXPERIENCE_MODES.some(value=>value===p.secondary)&&<option value={p.secondary} disabled>{p.secondary}（历史值）</option>}
+            {options(EXPERIENCE_MODES)}
+          </select></label>
+          {p.secondary==='其他'&&<label className="primary-detail">自定义体验模式<input aria-label="自定义体验模式" maxLength={80} placeholder="输入体验模式" value={p.secondaryDetail??''} onChange={e=>edit({secondaryDetail:e.target.value})}/></label>}</div>
+        </div>
+        <details className="budget-disclosure">
+          <summary>
+            <span className="budget-disclosure-label">预算与结算</span>
+            <ChevronDown className="budget-disclosure-chevron" size={15} aria-hidden="true"/>
+          </summary>
+          <div className="card-budget">
+          <div className="budget-top"><Money label="预算总额" value={p.budget} required onChange={budget=>budget!==null&&edit({budget})}/>
+          <span className={'budget-state '+(gap<0?'danger':gap===0?'success':'')}>{gap<0?'超额 '+yuan(-gap):gap===0?'已分配完成':'待分配 '+yuan(gap)}</span></div>
+          <div className="split"><Money label="搭建" value={p.build} onChange={build=>edit({build})}/><Money label="体验" value={p.experience} onChange={experience=>edit({experience})}/></div>
+          <Ratio segments={[...splitSegments(p.build??0,p.experience??0),{value:Math.max(0,gap),color:'var(--unassigned)'}]} label={'项目预算分配：搭建 '+yuan(p.build??0)+'，体验 '+yuan(p.experience??0)+'，'+(gap<0?'超额 ':'待分配 ')+yuan(Math.abs(gap))}/>
+          <div className="split-legend"><span><i/>搭建 {split&&p.build!==null?pct(p.build,split):'—'}</span><span><i/>体验 {split&&p.experience!==null?pct(p.experience,split):'—'}</span>{gap>0&&<span className="unassigned"><i/>待分配</span>}</div>
+          <ProjectSettlement project={p} onSave={settlement=>edit({settlement})}/>
+          </div>
+        </details>
+        <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
       </div>
     </details>
-    <div className="fields project-categories">
-      <div><label>搭建形式<select aria-label="搭建形式" value={p.primary} onChange={e=>edit({primary:e.target.value as Project['primary']})}>
-        {!PRIMARY_FORMS.some(value=>value===p.primary)&&<option value={p.primary} disabled>{p.primary}（历史值）</option>}
-        {options(PRIMARY_FORMS.filter(value=>value!==p.secondary||value==='其他'))}
-      </select></label>
-      {p.primary==='其他'&&<label className="primary-detail">自定义搭建形式<input aria-label="自定义搭建形式" maxLength={80} placeholder="输入搭建形式" value={p.primaryDetail??''} onChange={e=>edit({primaryDetail:e.target.value})}/></label>}</div>
-      <div><label>体验模式<select aria-label="体验模式" value={p.secondary} onChange={e=>edit({secondary:e.target.value as Project['secondary']})}>
-        <option value="不叠加">待定</option>
-        {p.secondary!=='不叠加'&&!EXPERIENCE_MODES.some(value=>value===p.secondary)&&<option value={p.secondary} disabled>{p.secondary}（历史值）</option>}
-        {options(EXPERIENCE_MODES)}
-      </select></label>
-      {p.secondary==='其他'&&<label className="primary-detail">自定义体验模式<input aria-label="自定义体验模式" maxLength={80} placeholder="输入体验模式" value={p.secondaryDetail??''} onChange={e=>edit({secondaryDetail:e.target.value})}/></label>}</div>
-    </div>
-    <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
   </article>;
 }
 function SpendingBoard({items,baseline,openProject}:{items:Project[];baseline:number;openProject:(id:string)=>void}) {
@@ -458,13 +491,11 @@ function Viewer({data,artwork,dark,toggle,logout,error}:{data:ViewerData;artwork
           <PlanOverview items={data.projects} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
         </section>
         {error&&<p className="banner" role="alert">{error}</p>}
-        <section id="projects" className="section pane" hidden={pane!=='projects'}><div className="section-heading"><h2>年度项目 <small>{projects.length} / {data.projects.length}</small></h2></div>
+        <section id="projects" className="section pane" hidden={pane!=='projects'}><ProjectIndexHeading visible={projects.length} total={data.projects.length}/>
           <div className="filters"><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div><label><CalendarDays size={15}/><select aria-label="季度筛选" value={quarterFilter} onChange={e=>setQuarterFilter(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label></div>
           <div className="cards">{projects.map(p=><article key={p.id} className="project viewer-project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
-            <ProjectCover project={p} actions={<span className="viewer-status">{p.status}</span>}>
-              <h3>{p.name||'未命名项目'}</h3>
-            </ProjectCover>
-            <CampaignDates start={p.start} end={p.end}/>
+            <ProjectCover project={p}/>
+            <ProjectSummary project={p}/>
             <dl className="viewer-categories"><div><dt>搭建形式</dt><dd>{primaryFormLabel(p)}</dd></div><div><dt>体验模式</dt><dd>{experienceModeLabel(p)}</dd></div></dl>
             <div className="viewer-budget"><span>预算 <b>****</b></span><span>搭建 <b>****</b></span><span>体验 <b>****</b></span></div>
           </article>)}</div>
@@ -515,7 +546,12 @@ export default function Planner() {
     const p:Project={build:null,experience:null,notes:'',primary:'待定',secondary:'不叠加',status:'规划中',name:'新建项目',start:'2027-01-01',end:'2027-01-01',budget:0,color:COLORS[items.length%COLORS.length],
       ...(source?{...source,name:source.name.slice(0,95)+'（副本）'}:{}),id:crypto.randomUUID(),code,tier:chosen,spent:null,payments:[],settlement:undefined};
     store.change([p,...items]);setTier(chosen);setQ('all');setForm('all');setNotice(source?'已复制 '+p.code:'已新增 '+p.code);
-    requestAnimationFrame(()=>document.getElementById(p.id)?.scrollIntoView({block:'nearest'}));
+    requestAnimationFrame(()=>{
+      const project=document.getElementById(p.id);
+      const editor=project?.querySelector<HTMLDetailsElement>('.project-editor');
+      if(editor)editor.open=true;
+      project?.scrollIntoView({block:'nearest'});
+    });
   };
   const exportExcel=async()=>{
     setExcelBusy(true);
@@ -547,20 +583,20 @@ export default function Planner() {
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
         <div className="section-heading pane-heading"><h2>预算看板</h2></div>
-        <SpendingBoard items={items} baseline={baseline} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
+        <SpendingBoard items={items} baseline={baseline} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id,true);}}/>
       </section>
       {store.error&&<div className="banner" role="alert">{store.error}<div className="actions">
         {store.dirty&&<button onClick={()=>void store.flush()}>重试同步</button>}
         <button onClick={()=>ask({title:'重新加载工作台？',description:'未保存的修改会丢失。建议先导出 JSON 草稿。',action:()=>void store.load()})}>重新加载</button>
       </div></div>}
       <section id="projects" className="section pane" hidden={pane!=='projects'}>
-        <div className="section-heading project-heading"><div><h2>年度项目 <small>{shown.length} / {items.length}</small></h2></div>
+        <ProjectIndexHeading visible={shown.length} total={items.length}>
         <div className="actions"><details className="menu" ref={menu} onClick={e=>{if(e.target instanceof Element&&e.target.closest('button')&&menu.current)menu.current.open=false;}}><summary><ArrowDownToLine size={15}/> 数据 <ChevronDown size={13}/></summary><div>
           <button disabled={excelBusy} onClick={()=>void exportExcel()}>导出 Excel</button><button onClick={()=>download(csv(items),'INS-Y27-Campaign.csv','text/csv;charset=utf-8')}>导出 CSV</button>
           <button onClick={()=>download(backup(items),'INS-Y27-Backup.json','application/json')}>导出 JSON 备份</button><button onClick={()=>input.current?.click()}>导入 JSON 备份</button>
           <button className="danger" onClick={()=>{setResetStep(true);setConfirm({title:'恢复初始化数据？',description:'此操作将用 17 个初始项目替换当前计划。建议先导出 JSON 备份。',action:()=>{void store.reset().then(ok=>{if(ok){setTier('S');setQ('all');setForm('all');setNotice('已恢复初始计划');}});}});}}>恢复初始化数据</button>
         </div></details>
-        <button className="primary" onClick={()=>add()}><Plus size={16}/>新增项目</button></div></div>
+        <button className="primary" onClick={()=>add()}><Plus size={16}/>新增项目</button></div></ProjectIndexHeading>
         <input type="file" accept=".json,application/json" hidden ref={input} onChange={async e=>{
           const file=e.target.files?.[0];e.target.value='';if(!file)return;
           try{if(file.size>2_000_000)throw new Error();const next=readBackup(await file.text());
