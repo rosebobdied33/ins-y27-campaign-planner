@@ -5,7 +5,7 @@ import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORM_FILTERS,HE
 import {useCampaignArtwork,usePlanner,type ViewerData} from '../lib/storage';
 
 import {PlanOverview} from './overview';
-import {CampaignGallery,ProjectArtwork,type CampaignArtwork} from './campaign-gallery';
+import {CampaignGallery,CampaignCardTitle,type CampaignArtwork} from './campaign-gallery';
 import {ProjectSettlement} from './project-settlement';
 
 const pct=(v:number,t:number)=>percent(v,t).toFixed(1)+'%';
@@ -137,7 +137,7 @@ function CampaignDates({start,end}:{start:string;end:string}) {
   const days=durationDays(start,end);
   return <div className="date-caption"><CalendarDays size={13} aria-hidden="true"/><span>{dateLabel(start)} — {dateLabel(end)}</span>{days!==null&&<strong className="duration" title="含开始日和结束日">共 {days} 天</strong>}</div>;
 }
-function Card({p,artwork,edit,copy,remove}:{p:Project;artwork?:string;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
+function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
   const gap=allocation(p), split=(p.build??0)+(p.experience??0);
   const [dateError,setDateError]=useState('');
   const changeDate=(which:'start'|'end', value:string)=>{
@@ -148,7 +148,7 @@ function Card({p,artwork,edit,copy,remove}:{p:Project;artwork?:string;edit:(patc
   };
   return <article className="project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
     <div className="project-stripe" aria-hidden="true"><span/>{p.accent&&<span style={{background:p.accent}}/>}</div>
-    <ProjectArtwork src={artwork} name={p.name}/>
+    <CampaignCardTitle id={p.id}/>
     <div className="card-meta"><span className="dot"/><strong>{p.code}</strong><span className="tag">{quarter(p.start)}</span><div className="card-actions"><button className="icon" title="复制项目" aria-label="复制项目" onClick={copy}><Copy/></button><button className="icon" title="删除项目" aria-label="删除项目" onClick={remove}><Trash2/></button></div></div>
     <input className="project-name" aria-label="主题名称" maxLength={100} placeholder="输入项目主题" value={p.name} onChange={e=>edit({name:e.target.value})}/>
     <CampaignDates start={p.start} end={p.end}/>
@@ -438,7 +438,7 @@ function Viewer({data,artwork,dark,toggle,logout,error}:{data:ViewerData;artwork
           <div className="filters"><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div><label><CalendarDays size={15}/><select aria-label="季度筛选" value={quarterFilter} onChange={e=>setQuarterFilter(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label></div>
           <div className="cards">{projects.map(p=><article key={p.id} className="project viewer-project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
             <div className="project-stripe" aria-hidden="true"><span/>{p.accent&&<span style={{background:p.accent}}/>}</div>
-            <ProjectArtwork src={artwork[p.id]} name={p.name}/>
+            <CampaignCardTitle id={p.id}/>
             <div className="card-meta"><span className="dot"/><strong>{p.code}</strong><span className="tag">{quarter(p.start)}</span><span className="viewer-status">{p.status}</span></div>
             <h3>{p.name||'未命名项目'}</h3><CampaignDates start={p.start} end={p.end}/>
             <p className="viewer-forms">{primaryFormLabel(p)}{p.secondary!=='不叠加'&&' · '+p.secondary}</p>
@@ -563,7 +563,7 @@ export default function Planner() {
           <label><CalendarDays size={15}/><select aria-label="季度筛选" value={q} onChange={e=>setQ(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label>
           <label><select aria-label="活动形式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">全部形式</option>{options(FORM_FILTERS.filter(value=>PRIMARY_FORMS.some(primary=>primary===value)||items.some(p=>p.primary===value||p.secondary===value)))}</select></label></div>
         {notice&&<p className="notice" role="status">{notice}<button className="icon" onClick={()=>setNotice('')} aria-label="关闭提示">×</button></p>}
-        <div className="cards">{shown.map(p=><Card key={p.id} p={p} artwork={artwork[p.id]} edit={patch=>edit(p.id,patch)} copy={()=>add(p)} remove={()=>ask({title:'删除 '+p.code+'？',description:'将从年度计划移除「'+p.name+'」，预算会随之更新。',action:()=>store.change(items.filter(x=>x.id!==p.id))})}/>)}</div>
+        <div className="cards">{shown.map(p=><Card key={p.id} p={p} edit={patch=>edit(p.id,patch)} copy={()=>add(p)} remove={()=>ask({title:'删除 '+p.code+'？',description:'将从年度计划移除「'+p.name+'」，预算会随之更新。',action:()=>store.change(items.filter(x=>x.id!==p.id))})}/>)}</div>
         {!shown.length&&<div className="empty panel">当前筛选下没有项目。<button onClick={()=>{setTier('all');setQ('all');setForm('all');}}>清除筛选</button></div>}
       </section>
       <Annual items={items} hidden={pane!=='resources'}/>

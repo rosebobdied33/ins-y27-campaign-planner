@@ -718,11 +718,11 @@ button.calendar-bar{min-height:0;padding:0 2px}
 }
 .campaign-slide:hover{border-color:var(--accent);background:var(--panel)}
 .campaign-slide:focus-visible{outline-offset:-3px}
-.campaign-artwork,.project-artwork{
+.campaign-artwork{
   aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden;
   background:linear-gradient(145deg,color-mix(in srgb,var(--poster-color,var(--theme)) 28%,var(--panel)),var(--soft));
 }
-.campaign-artwork img,.project-artwork img{display:block;width:100%;height:100%;object-fit:contain}
+.campaign-artwork img{display:block;width:100%;height:100%;object-fit:contain}
 .campaign-artwork-placeholder{font-size:clamp(26px,4vw,62px);font-family:serif;color:var(--muted)}
 .campaign-slide-info{
   display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:9px;padding:10px 12px;
@@ -735,7 +735,27 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .campaign-gallery-index{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
 .campaign-gallery-index button{min-height:28px;padding:3px 8px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
 .campaign-gallery-index button[aria-pressed=true]{background:var(--accent);color:var(--panel);border-color:var(--accent)}
-.project-artwork{margin:0 0 10px;border-radius:9px;border:1px solid color-mix(in srgb,var(--theme) 36%,var(--line))}
+.project-title-band{
+  position:relative;isolation:isolate;overflow:hidden;container-type:inline-size;
+  min-height:82px;margin:-13px -13px 10px;padding:13px 16px 19px;
+  display:grid;align-items:center;border-radius:16px 16px 0 0;
+  color:var(--title-ink);
+}
+.project-title-band::before{
+  content:"";position:absolute;z-index:-1;inset:-16px;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 15% 93%,var(--title-glow),transparent 61%),
+    radial-gradient(ellipse at 80% 96%,var(--title-wash),transparent 65%);
+  filter:blur(13px);opacity:.62;
+  mask-image:linear-gradient(transparent 13%,#000 65%,transparent 97%);
+}
+.project-title-band p{
+  margin:0;font-family:"Didot","Bodoni 72","Baskerville",Georgia,serif;
+  font-size:clamp(26px,9.8cqi,52px);line-height:1.09;font-weight:400;
+  font-style:italic;letter-spacing:-.04em;text-wrap:balance;
+}
+:root[data-theme=dark] .project-title-band{color:color-mix(in srgb,var(--title-glow) 40%,#fff)}
+:root[data-theme=dark] .project-title-band::before{opacity:.26}
 @media(max-width:720px){.campaign-slide{flex-basis:82%}}
 @media(max-width:460px){
   .campaign-slide{flex-basis:91%}

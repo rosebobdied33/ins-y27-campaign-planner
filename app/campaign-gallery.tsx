@@ -71,7 +71,21 @@ export function CampaignGallery({projects,artwork,openProject}:{
   </section>;
 }
 
-export function ProjectArtwork({src,name}:{src?:string;name:string}) {
-  if(!src)return null;
-  return <div className="project-artwork"><img src={src} alt={name+' 项目封面'} width={1120} height={630} decoding="async" loading="lazy"/></div>;
+const cardTitles:Record<string,{title:string;ink:string;glow:string;wash:string}>={
+  S01:{title:'Lamb Ranch',ink:'#4a3157',glow:'#f3bb93',wash:'#b19acc'},
+  S02:{title:'Spring Market',ink:'#154743',glow:'#f5a5b8',wash:'#73b5aa'},
+  S03:{title:'Game World 4',ink:'#5b2765',glow:'#f481cb',wash:'#ad80c9'},
+  S04:{title:'Summer Pool',ink:'#17486c',glow:'#b7ebf7',wash:'#73abd9'},
+  S05:{title:'Rockwood',ink:'#703517',glow:'#fbbb72',wash:'#dc8868'},
+  S06:{title:'Misty Theatre',ink:'#64223f',glow:'#ee8eb1',wash:'#a78bb8'},
+  S07:{title:'Winter Museum',ink:'#622d39',glow:'#edca91',wash:'#81a49e'},
+};
+
+export function CampaignCardTitle({id}:{id:string}) {
+  if(!Object.hasOwn(cardTitles,id))return null;
+  const {title,ink,glow,wash}=cardTitles[id];
+  const palette={'--title-ink':ink,'--title-glow':glow,'--title-wash':wash} as CSSProperties;
+  return <div className="project-title-band" style={palette}>
+    <p lang="en">{title}</p>
+  </div>;
 }
