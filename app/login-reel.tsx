@@ -73,12 +73,14 @@ export function LoginReel({busy,error,onLogin}:{
   } as CSSProperties}>
     <header className="reel-header">
       <span className="reel-wordmark">INS LAND<small>2027</small></span>
-      <button type="button" className="reel-enter" onClick={enter}>进入工作台<ArrowUpRight size={16}/></button>
+
     </header>
 
     <div className="reel-intro">
-      <p>THE 2027 COLLECTION</p>
-      <h1 lang="en">Campaign <em>Archive</em></h1>
+      <button type="button" className="reel-enter reel-entry-window" onClick={enter}>
+        <span className="reel-entry-kicker">INS LAND / 2027</span>
+        <strong>进入工作台</strong><ArrowUpRight size={22} aria-hidden="true"/>
+      </button>
     </div>
 
     <section className="reel-stage" aria-label="七个年度活动封面"

@@ -2,6 +2,7 @@
 import {createClient} from '@supabase/supabase-js';
 import {useEffect,useRef,useState} from 'react';
 import {validateProjects,type Project} from './planner';
+import {weekdayPlanSchema,type WeekdayPlan} from './weekday';
 
 const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -9,7 +10,7 @@ const client=url&&key ? createClient(url,key,{auth:{persistSession:false,autoRef
 const SESSION='ins-y27-session';
 export type ViewerProject=Omit<Project,'budget'|'spent'|'payments'|'settlement'|'build'|'experience'|'notes'|'accent'|'primaryDetail'|'secondaryDetail'> & {accent?:string|null;primaryDetail?:string|null;secondaryDetail?:string|null};
 export type ViewerData={role:'viewer';name:string;projects:ViewerProject[];charts:{tier:number|null;build:number|null;quarters:number[]}};
-type OwnerData={role:'owner';name:string;projects:Project[];revision:number;baseline:number};
+type OwnerData={role:'owner';name:string;projects:Project[];revision:number;baseline:number;weekdayPlan?:WeekdayPlan|null};
 type Snapshot=OwnerData|ViewerData;
 class AccessError extends Error { constructor(message:string, readonly code?:string){super(message);} }
 async function rpc<T>(action:string,payload:Record<string,unknown>={}) {
@@ -69,7 +70,7 @@ export function usePlanner() {
   const saving=useRef(false), conflict=useRef(false), generation=useRef(0);
   function apply(data:Snapshot) {
     if(data.role==='owner'){
-      data={...data,projects:validateProjects(data.projects)};
+      data={...data,projects:validateProjects(data.projects),weekdayPlan:weekdayPlanSchema.safeParse(data.weekdayPlan).data};
       revision.current=data.revision;
     }
     setSnapshot(data);
