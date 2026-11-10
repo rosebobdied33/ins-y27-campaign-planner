@@ -19,23 +19,23 @@ async function rpc<T>(action:string,payload:Record<string,unknown>={}) {
   if(data.error)throw new AccessError(data.error,data.code);
   return data as T;
 }
-export function useLoginBackdrop(visible:boolean) {
+export function useLoginReel() {
   const [image,setImage]=useState('');
   useEffect(()=>{
-    if(!visible||!client||image)return;
+    if(!client)return;
     const request=new AbortController();
     const backend=client;
     void (async()=>{
       try{
-        const {data,error}=await backend.from('y27_login_backdrop').select('image_base64')
+        const {data,error}=await backend.from('y27_login_backdrop').select('reel_base64')
           .eq('id','campaign-collage').abortSignal(request.signal).maybeSingle();
-        if(!error&&data?.image_base64&&!request.signal.aborted){
-          setImage('data:image/webp;base64,'+data.image_base64.replace(/\s/g,''));
+        if(!error&&data?.reel_base64&&!request.signal.aborted){
+          setImage('data:image/webp;base64,'+data.reel_base64.replace(/\s/g,''));
         }
       }catch{ /* The login form keeps its background color when artwork is unavailable. */ }
     })();
     return ()=>request.abort();
-  },[visible,image]);
+  },[]);
   return image;
 }
 export function useCampaignArtwork(role:Snapshot['role']|undefined) {

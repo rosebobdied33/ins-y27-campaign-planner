@@ -1,12 +1,13 @@
 'use client';
-import {useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react';
+import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import {ArrowDownToLine,ArrowUpRight,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet} from 'lucide-react';
 import {allocation,backup,COLORS,csv,durationDays,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,recordedSpend,rows,settlementMonths,SECONDARY,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
-import {useCampaignArtwork,useLoginBackdrop,usePlanner,type ViewerData} from '../lib/storage';
+import {useCampaignArtwork,usePlanner,type ViewerData} from '../lib/storage';
 
 import {PlanOverview} from './overview';
 import {CampaignGallery,CampaignCardTitle,type CampaignArtwork} from './campaign-gallery';
 import {ProjectSettlement} from './project-settlement';
+import {LoginReel} from './login-reel';
 
 const pct=(v:number,t:number)=>percent(v,t).toFixed(1)+'%';
 const options=(values:readonly string[])=>values.map(x=><option key={x}>{x}</option>);
@@ -463,11 +464,9 @@ type Confirmation={title:string;description:string;action:()=>void};
 export default function Planner() {
   const store=usePlanner();
   const artwork=useCampaignArtwork(store.snapshot?.role);
-  const loginBackdrop=useLoginBackdrop(!store.snapshot);
   const pane=usePane(true);
   const jumpToProject=useProjectJump(pane);
   const [tier,setTier]=useState('S'),[q,setQ]=useState('all'),[form,setForm]=useState('all');
-  const [register,setRegister]=useState(false);
   const [dark,setDark]=useState(false),[notice,setNotice]=useState('');
   const [confirm,setConfirm]=useState<Confirmation|null>(null);
   const [resetStep,setResetStep]=useState(false);
@@ -507,25 +506,8 @@ export default function Planner() {
       download(new Uint8Array(bytes),'INS-Y27-Campaign.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }catch{setNotice('Excel 导出失败，请重试或导出 CSV。');}finally{setExcelBusy(false);}
   };
-  const login=(e:FormEvent<HTMLFormElement>)=>{
-    e.preventDefault();const data=new FormData(e.currentTarget);
-    void store.login(String(data.get('handle')).trim(),String(data.get('password')),register);
-  };
   if(store.snapshot?.role==='viewer')return <Viewer data={store.snapshot} artwork={artwork} dark={dark} toggle={toggle} logout={()=>void store.logout()} error={store.error}/>;
-  if(!store.items)return <main className="auth">
-    {loginBackdrop&&<img className="auth-backdrop" src={loginBackdrop} width={1440} height={960} alt="" decoding="async"/>}
-    <div className="auth-card panel">
-    <Brand/><span className="eyebrow">2027 年度工作台</span><h1>INS LAND 年度规划</h1>
-    <p>登录查看 2027 活动规划。费用仅对管理者开放。</p>
-    {store.error&&<p className="danger" role="alert">{store.error}</p>}
-    <div className="segmented auth-tabs"><button aria-pressed={!register} onClick={()=>setRegister(false)} disabled={store.loading}>登录</button><button aria-pressed={register} onClick={()=>setRegister(true)} disabled={store.loading}>注册浏览账号</button></div>
-    <form key={String(register)} method="post" onSubmit={login}>
-      <label>{register?'你的名字':'账号或注册姓名'}<input name="handle" required minLength={2} maxLength={32} autoComplete="username" placeholder={register?'输入 2–32 个字符':'输入账号或姓名'}/></label>
-      <label>{register?'注册密码':'密码'}<input name="password" type="password" required maxLength={72} autoComplete={register?'new-password':'current-password'} placeholder="输入密码"/></label>
-      {register&&<p className="helper">使用分享人提供的默认密码。注册后可查看规划和概览图。</p>}
-      <button className="primary" disabled={store.loading}>{store.loading?'正在连接…':register?'注册并进入':'登录'}</button>
-    </form>
-  </div></main>;
+  if(!store.items)return <LoginReel busy={store.loading} error={store.error} onLogin={(name,password,register)=>void store.login(name,password,register)}/>;
 
   return <div className="shell">
     <Sidebar pane={pane} owner/>

@@ -71,7 +71,7 @@ export function CampaignGallery({projects,artwork,openProject}:{
   </section>;
 }
 
-const cardTitles:Record<string,{title:string;ink:string;glow:string;wash:string}>={
+export const campaignTitles:Record<string,{title:string;ink:string;glow:string;wash:string}>={
   S01:{title:'Lamb Ranch',ink:'#4a3157',glow:'#f3bb93',wash:'#b19acc'},
   S02:{title:'Spring Market',ink:'#154743',glow:'#f5a5b8',wash:'#73b5aa'},
   S03:{title:'Game World 4',ink:'#5b2765',glow:'#f481cb',wash:'#ad80c9'},
@@ -82,8 +82,8 @@ const cardTitles:Record<string,{title:string;ink:string;glow:string;wash:string}
 };
 
 export function CampaignCardTitle({id}:{id:string}) {
-  if(!Object.hasOwn(cardTitles,id))return null;
-  const {title,ink,glow,wash}=cardTitles[id];
+  if(!Object.hasOwn(campaignTitles,id))return null;
+  const {title,ink,glow,wash}=campaignTitles[id];
   const palette={'--title-ink':ink,'--title-glow':glow,'--title-wash':wash} as CSSProperties;
   return <div className="project-title-band" style={palette}>
     <p lang="en">{title}</p>
