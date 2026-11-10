@@ -10,6 +10,7 @@ import {ProjectSettlement} from './project-settlement';
 import {ResourceAnalysis,WeekdayBudget} from './year-insights';
 import {monthlyTotal,type WeekdayPlan} from '../lib/weekday';
 import {LoginReel} from './login-reel';
+import {ChapterJump,WorkspaceChapter} from './workspace-chapter';
 
 const pct=(v:number,t:number)=>percent(v,t).toFixed(1)+'%';
 const options=(values:readonly string[])=>values.map(x=><option key={x}>{x}</option>);
@@ -104,41 +105,36 @@ function useProjectJump(pane:Pane) {
   };
 }
 function Brand() {return <span className="brand">INS<sup>®</sup></span>;}
-function Sidebar({pane,owner}:{pane:Pane;owner:boolean}) {
+function WorkspaceNavigation({pane,owner,children}:{pane:Pane;owner:boolean;children:ReactNode}) {
   const links:Pane[]=owner?['overview','budget','projects','resources']:['overview','projects','resources'];
-  return <aside><a className="sidebar-brand" href="#overview"><Brand/><span className="eyebrow">年度规划</span></a>
-    <div className="nav-caption">INS LAND / 2027</div>
+  const order:Pane[]=['overview','budget','projects','resources'];
+  return <header className="edition-nav">
+    <a className="edition-brand" href="#overview" aria-label="INS LAND 年度总览"><Brand/><small>LAND / Y27</small></a>
     <nav aria-label="工作台导航">{links.map(key=>{
       const {icon:Icon,label}=PANE_INFO[key];
-      return <a href={'#'+key} key={key} aria-current={pane===key?'page':undefined}><Icon aria-hidden="true"/><span>{label}</span></a>;
+      return <a href={'#'+key} key={key} aria-current={pane===key?'page':undefined}>
+        <span className="edition-nav-number">0{order.indexOf(key)+1}</span><Icon aria-hidden="true"/><span>{label}</span>
+      </a>;
     })}</nav>
-    <div className="side-bottom"><span>INS LAND</span><span>2027</span></div>
-  </aside>;
-}
-function CampaignHero() {
-  return <header className="campaign-hero">
-    <p className="campaign-hero-mark">INS LAND <span>2027</span></p>
-    <h1 lang="en">Campaign Planner
-      <svg className="campaign-title-flourish" viewBox="0 0 650 116" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M146 51C91 21 17 6 11 38C5 68 69 81 114 57C160 32 170 23 203 36C229 46 190 76 144 82C94 89 40 85 10 105"/>
-        <path d="M408 65C450 41 480 16 515 22C563 32 519 64 476 84C431 105 466 115 508 101C568 81 607 47 640 61C661 70 627 94 600 87"/>
-      </svg>
-    </h1>
+    <div className="actions edition-account">{children}</div>
   </header>;
 }
 function CampaignDates({start,end}:{start:string;end:string}) {
   const days=durationDays(start,end);
   return <div className="date-caption"><CalendarDays size={13} aria-hidden="true"/><span>{dateLabel(start)} — {dateLabel(end)}</span>{days!==null&&<strong className="duration" title="含开始日和结束日">共 {days} 天</strong>}</div>;
 }
-function ProjectIndexHeading({visible,total,children}:{visible:number;total:number;children?:ReactNode}) {
-  return <header className="project-heading">
-    <div className="project-index-heading">
-      <span className="project-index-kicker" lang="en">PROJECT INDEX / 2027</span>
-      <p className="project-index-display" lang="en" aria-hidden="true">Campaigns</p>
-      <h2>项目规划 <small>{visible} / {total}</small></h2>
+function ProjectCollection({filters,children}:{filters:ReactNode;children:ReactNode}) {
+  const [layout,setLayout]=useState<'folio'|'list'>('folio');
+  return <div className="edition-collection">
+    <div className="edition-collection-toolbar">
+      <div className="filters">{filters}</div>
+      <div className="segmented" aria-label="项目显示方式">
+        <button aria-pressed={layout==='folio'} onClick={()=>setLayout('folio')}>卡册</button>
+        <button aria-pressed={layout==='list'} onClick={()=>setLayout('list')}>清单</button>
+      </div>
     </div>
-    {children}
-  </header>;
+    <div className="cards edition-projects" data-layout={layout}>{children}</div>
+  </div>;
 }
 function CoverOrbit({className}:{className:string}) {
   return <svg className={className} viewBox="0 0 194 150" aria-hidden="true">
@@ -157,7 +153,7 @@ function ProjectCover({project}:{project:Pick<Project,'id'|'code'|'start'|'color
     ...(art?{'--cover-deep':art.cover[0],'--cover-mid':art.cover[1]}:{}),
   } as CSSProperties}>
     <CoverOrbit className="project-cover-orbit"/>
-    <p className="project-cover-meta">{art?project.code:'CAMPAIGN'} <span>/</span> {quarter(project.start)}</p>
+    <p className="project-cover-meta">{project.code} <span>/</span> {quarter(project.start)}<small>2027 COLLECTION</small></p>
     <p className="project-cover-title" lang="en">{art?.title??project.code}</p>
   </header>;
 }
@@ -257,7 +253,10 @@ function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];bas
         <CoverOrbit className="budget-orbit"/>
         <h3 className="budget-title">{weekday?'年度合计规划':'年度预算基准'}</h3>
         <strong className="budget-number">{yuan(weekday?plan.total+week:baseline)}</strong>
-        {weekday&&<div className="budget-program-split"><span>S / A {yuan(plan.total)}</span><span>周中 {yuan(week)}</span></div>}
+        <div className="edition-finance-mix">
+          <Ratio segments={[...tierSegments(plan.S,plan.A),{value:week,color:'var(--weekday-color)'}]} label={'S 级 '+yuan(plan.S)+'，A 级 '+yuan(plan.A)+'，周中 '+yuan(week)}/>
+          <div className="budget-program-split"><span>S 级 <b>{yuan(plan.S)}</b></span><span>A 级 <b>{yuan(plan.A)}</b></span>{weekday&&<span>周中 <b>{yuan(week)}</b></span>}</div>
+        </div>
         <div className="budget-feature-foot">
           <div className="budget-feature-meta"><span>S / A 基准 <b>{yuan(baseline)}</b> · {items.length} 项</span><span>项目规划率 <b>{pct(plan.total,baseline)}</b></span></div>
           <Ratio segments={[
@@ -267,17 +266,20 @@ function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];bas
           <span className={'budget-feature-balance'+(plan.remaining<0?' is-over':'')}>{plan.remaining<0?'超出基准':'基准余量'} {yuan(Math.abs(plan.remaining))}</span>
         </div>
       </article>
-      <article className="panel budget-snapshot budget-paid">
+      <section className="panel edition-settlement" aria-label="项目结算状态">
+        <div className="edition-section-label"><span>01 / SETTLEMENT</span><b>项目结算状态</b></div>
+      <article className="budget-snapshot budget-paid">
         <h3 className="budget-title">项目实际已支出</h3><strong className="budget-number">{paidLabel}</strong>
         <Ratio segments={[{value:totals.paid,color:'var(--budget-teal)'}]} scale={coverage} label={'已支出占已支出与待结算预算合计 '+pct(totals.paid,coverage)}/>
         <p>{totals.recorded?`${totals.withPayment} 项已有支出`:'暂无支出记录'}{totals.over>0&&<b className="danger"> · 超支 {yuan(totals.over)}</b>}</p>
         {actualSplit.count>0&&<p>已结算搭建 {yuan(actualSplit.build)} · 体验 {yuan(actualSplit.experience)}</p>}
       </article>
-      <article className="panel budget-snapshot budget-pending">
+      <article className="budget-snapshot budget-pending">
         <h3 className="budget-title">项目待结算预算</h3><strong className="budget-number">{yuan(totals.pending)}</strong>
         <Ratio segments={[{value:totals.pending,color:'var(--budget-gold)'}]} scale={coverage} label={'待支出占已支出与待结算预算合计 '+pct(totals.pending,coverage)}/>
         <p>{totals.withBalance} 项有待结算预算 · {items.length-totals.recorded} 项未录入实际支出</p>
       </article>
+      </section>
     </div>
 
     <div className="budget-modules">
@@ -368,7 +370,7 @@ function PaymentLedger({items,selectedQuarter,bySettlement,clearQuarter,openProj
   const listed=dated.filter(({settlement})=>settlement.date.startsWith(activeYear+'-'+(activeMonth??'')));
   const undated=visible.reduce((sum,project)=>sum+(project.settlement?0:recordedSpend(project)??0),0);
 
-  return <article className="panel payment-ledger">
+  return <article id="settlement-ledger" tabIndex={-1} className="panel payment-ledger">
     <div className="ledger-heading">
       <div><h3 className="budget-title">项目结算明细</h3><p>实际搭建费与实际体验费在项目规划填写。</p></div>
       <div className="segmented" aria-label="支出查看方式"><button aria-pressed={view==='project'} onClick={()=>setView('project')}>按项目</button><button aria-pressed={view==='time'} onClick={()=>setView('time')}>按结算时间</button></div>
@@ -435,29 +437,26 @@ function Viewer({data,artwork,dark,toggle,logout,error}:{data:ViewerData;artwork
   const pane=usePane(false);
   const jumpToProject=useProjectJump(pane);
   const projects=data.projects.filter(p=>(filter==='all'||p.tier===filter)&&(quarterFilter==='all'||quarter(p.start)===quarterFilter));
-  return <div className="shell viewer">
-    <Sidebar pane={pane} owner={false}/>
-    <main>
-      <header className="topbar"><div className="breadcrumb"><span>INS LAND</span><span>/</span><strong>{PANE_INFO[pane].label}</strong></div>
-        <div className="actions"><span className="role-chip">浏览者</span><button className="icon" aria-label={dark?'切换浅色主题':'切换深色主题'} onClick={toggle}>{dark?<Sun/>:<Moon/>}</button><button className="icon" aria-label="退出登录" onClick={logout}><LogOut/></button></div>
-      </header>
-      <div className="content">
+  return <div className="shell edition-shell viewer">
+    <WorkspaceNavigation pane={pane} owner={false}><span className="role-chip">浏览者</span><button className="icon" aria-label={dark?'切换浅色主题':'切换深色主题'} onClick={toggle}>{dark?<Sun/>:<Moon/>}</button><button className="icon" aria-label="退出登录" onClick={logout}><LogOut/></button>
+    </WorkspaceNavigation>
+    <main><div className="content edition-content">
         <section id="overview" className="pane" hidden={pane!=='overview'}>
-          <div className="campaign-masthead">
-            <CampaignHero/>
+          <WorkspaceChapter pane="overview"><ChapterJump target="annual-schedule">查看全年排期</ChapterJump></WorkspaceChapter>
+          <div className="edition-gallery">
             <CampaignGallery projects={data.projects} artwork={artwork} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
           </div>
           <PlanOverview items={data.projects} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
         </section>
         {error&&<p className="banner" role="alert">{error}</p>}
-        <section id="projects" className="section pane" hidden={pane!=='projects'}><ProjectIndexHeading visible={projects.length} total={data.projects.length}/>
-          <div className="filters"><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div><label><CalendarDays size={15}/><select aria-label="季度筛选" value={quarterFilter} onChange={e=>setQuarterFilter(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label></div>
-          <div className="cards">{projects.map(p=><article key={p.id} className="project viewer-project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
+        <section id="projects" className="section pane" hidden={pane!=='projects'}><WorkspaceChapter pane="projects" detail={projects.length+' / '+data.projects.length+' 项'}/>
+          <ProjectCollection filters={<><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div><label><CalendarDays size={15}/><select aria-label="季度筛选" value={quarterFilter} onChange={e=>setQuarterFilter(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label></>}>
+          {projects.map(p=><article key={p.id} className="project viewer-project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
             <ProjectCover project={p}/>
             <ProjectSummary project={p}/>
             <dl className="viewer-categories"><div><dt>搭建形式</dt><dd>{primaryFormLabel(p)}</dd></div><div><dt>体验模式</dt><dd>{experienceModeLabel(p)}</dd></div></dl>
             <div className="viewer-budget"><span>预算 <b>****</b></span><span>搭建 <b>****</b></span><span>体验 <b>****</b></span></div>
-          </article>)}</div>
+          </article>)}</ProjectCollection>
           {!projects.length&&<p className="panel">这个级别暂无项目。</p>}
         </section>
         <ResourceAnalysis items={data.projects} approx={data.charts} hidden={pane!=='resources'}/>
@@ -521,25 +520,22 @@ export default function Planner() {
   if(store.snapshot?.role==='viewer')return <Viewer data={store.snapshot} artwork={artwork} dark={dark} toggle={toggle} logout={()=>void store.logout()} error={store.error}/>;
   if(!store.items)return <LoginReel busy={store.loading} error={store.error} onLogin={(name,password,register)=>void store.login(name,password,register)}/>;
 
-  return <div className="shell">
-    <Sidebar pane={pane} owner/>
-    <main>
-      <header className="topbar"><div className="breadcrumb"><span>INS LAND</span><span>/</span><strong>{PANE_INFO[pane].label}</strong></div>
-      <div className="actions"><span className="save" aria-live="polite"><span className="dot"/>{store.status}</span><button className="icon" aria-label={dark?'切换浅色主题':'切换深色主题'} onClick={toggle}>{dark?<Sun/>:<Moon/>}</button><span className="role-chip">管理者</span><button className="icon" aria-label="退出登录" disabled={store.dirty} onClick={()=>void store.logout()}><LogOut/></button></div></header>
-      <div className="content">
+  return <div className="shell edition-shell">
+    <WorkspaceNavigation pane={pane} owner><span className="save" aria-live="polite"><span className="dot"/>{store.status}</span><button className="icon" aria-label={dark?'切换浅色主题':'切换深色主题'} onClick={toggle}>{dark?<Sun/>:<Moon/>}</button><span className="role-chip">管理者</span><button className="icon" aria-label="退出登录" disabled={store.dirty} onClick={()=>void store.logout()}><LogOut/></button>
+    </WorkspaceNavigation>
+    <main><div className="content edition-content">
       <section id="overview" className="pane" hidden={pane!=='overview'}>
-        <div className="campaign-masthead">
-          <CampaignHero/>
+        <WorkspaceChapter pane="overview"><ChapterJump target="annual-schedule">查看全年排期</ChapterJump></WorkspaceChapter>
+        <div className="edition-gallery">
           <CampaignGallery projects={items} artwork={artwork} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
         </div>
         <PlanOverview items={items} budget={t} weekday={weekday} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
-        <header className="budget-heading project-index-heading">
-          <span className="project-index-kicker" lang="en">FINANCE / 2027</span>
-          <p className="project-index-display" lang="en" aria-hidden="true">Budget</p>
-          <h2>预算看板</h2>
-        </header>
+        <WorkspaceChapter pane="budget">
+          {weekday&&<ChapterJump target="weekday-budget">周中预算</ChapterJump>}
+          <ChapterJump target="settlement-ledger">项目结算</ChapterJump>
+        </WorkspaceChapter>
         <SpendingBoard items={items} baseline={baseline} weekday={weekday} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id,true);}}/>
       </section>
       {store.error&&<div className="banner" role="alert">{store.error}<div className="actions">
@@ -547,24 +543,25 @@ export default function Planner() {
         <button onClick={()=>ask({title:'重新加载工作台？',description:'未保存的修改会丢失。建议先导出 JSON 草稿。',action:()=>void store.load()})}>重新加载</button>
       </div></div>}
       <section id="projects" className="section pane" hidden={pane!=='projects'}>
-        <ProjectIndexHeading visible={shown.length} total={items.length}>
+        <WorkspaceChapter pane="projects" detail={shown.length+' / '+items.length+' 项'}>
         <div className="actions"><details className="menu" ref={menu} onClick={e=>{if(e.target instanceof Element&&e.target.closest('button')&&menu.current)menu.current.open=false;}}><summary><ArrowDownToLine size={15}/> 数据 <ChevronDown size={13}/></summary><div>
           <button disabled={excelBusy} onClick={()=>void exportExcel()}>导出 Excel</button><button onClick={()=>download(csv(items),'INS-Y27-Campaign.csv','text/csv;charset=utf-8')}>导出 CSV</button>
           <button onClick={()=>download(backup(items),'INS-Y27-Backup.json','application/json')}>导出 JSON 备份</button><button onClick={()=>input.current?.click()}>导入 JSON 备份</button>
           <button className="danger" onClick={()=>{setResetStep(true);setConfirm({title:'恢复初始化数据？',description:'此操作将用 17 个初始项目替换当前计划。建议先导出 JSON 备份。',action:()=>{void store.reset().then(ok=>{if(ok){setTier('S');setQ('all');setForm('all');setNotice('已恢复初始计划');}});}});}}>恢复初始化数据</button>
         </div></details>
-        <button className="primary" onClick={()=>add()}><Plus size={16}/>新增项目</button></div></ProjectIndexHeading>
+        <button className="primary" onClick={()=>add()}><Plus size={16}/>新增项目</button></div></WorkspaceChapter>
         <input type="file" accept=".json,application/json" hidden ref={input} onChange={async e=>{
           const file=e.target.files?.[0];e.target.value='';if(!file)return;
           try{if(file.size>2_000_000)throw new Error();const next=readBackup(await file.text());
             ask({title:'导入并替换当前计划？',description:'备份包含 '+next.length+' 个项目。导入后会替换当前所有项目。',action:()=>{store.change(next);setTier('all');setQ('all');setForm('all');setNotice('已导入 '+next.length+' 个项目');}});
           }catch{setNotice('导入失败：请选择有效的 2027 年度 JSON 备份。');}
         }}/>
-        <div className="filters"><div className="segmented" aria-label="级别筛选">{[['S','S 级'],['A','A 级'],['all','全部']].map(([value,label])=><button key={value} aria-pressed={tier===value} onClick={()=>setTier(value)}>{label}</button>)}</div>
-          <label><CalendarDays size={15}/><select aria-label="季度筛选" value={q} onChange={e=>setQ(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label>
-          <label><select aria-label="搭建形式与体验模式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">搭建 / 体验</option>{options(FORM_FILTERS.filter(value=>PRIMARY_FORMS.some(primary=>primary===value)||EXPERIENCE_MODES.some(mode=>mode===value)||items.some(p=>p.primary===value||p.secondary===value)))}</select></label></div>
         {notice&&<p className="notice" role="status">{notice}<button className="icon" onClick={()=>setNotice('')} aria-label="关闭提示">×</button></p>}
-        <div className="cards">{shown.map(p=><Card key={p.id} p={p} edit={patch=>edit(p.id,patch)} copy={()=>add(p)} remove={()=>ask({title:'删除 '+p.code+'？',description:'将从年度计划移除「'+p.name+'」，预算会随之更新。',action:()=>store.change(items.filter(x=>x.id!==p.id))})}/>)}</div>
+        <ProjectCollection filters={<><div className="segmented" aria-label="级别筛选">{[['S','S 级'],['A','A 级'],['all','全部']].map(([value,label])=><button key={value} aria-pressed={tier===value} onClick={()=>setTier(value)}>{label}</button>)}</div>
+          <label><CalendarDays size={15}/><select aria-label="季度筛选" value={q} onChange={e=>setQ(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label>
+          <label><select aria-label="搭建形式与体验模式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">搭建 / 体验</option>{options(FORM_FILTERS.filter(value=>PRIMARY_FORMS.some(primary=>primary===value)||EXPERIENCE_MODES.some(mode=>mode===value)||items.some(p=>p.primary===value||p.secondary===value)))}</select></label></>}>
+
+        {shown.map(p=><Card key={p.id} p={p} edit={patch=>edit(p.id,patch)} copy={()=>add(p)} remove={()=>ask({title:'删除 '+p.code+'？',description:'将从年度计划移除「'+p.name+'」，预算会随之更新。',action:()=>store.change(items.filter(x=>x.id!==p.id))})}/>)}</ProjectCollection>
         {!shown.length&&<div className="empty panel">当前筛选下没有项目。<button onClick={()=>{setTier('all');setQ('all');setForm('all');}}>清除筛选</button></div>}
       </section>
       <ResourceAnalysis items={items} financial={{items,weekday}} hidden={pane!=='resources'}/>

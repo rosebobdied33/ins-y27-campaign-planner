@@ -1197,3 +1197,232 @@ button.calendar-bar{min-height:0;padding:0 2px}
 }
 :root[data-theme=dark] #budget .budget-paid{background:linear-gradient(140deg,#364640,#2c292b 74%)}
 :root[data-theme=dark] #budget .budget-pending{background:linear-gradient(140deg,#503b35,#30262a 74%)}
+
+/* INS LAND / 2027 · Edition workspace */
+.shell.edition-shell{
+  --edition-rose:#f1acbb;--edition-gold:#e1b79a;--edition-moss:#92b6aa;
+  --edition-rule:var(--project-line,var(--line));--edition-muted:var(--project-note,var(--muted));
+  display:block;min-height:100dvh;
+}
+.edition-nav{
+  position:sticky;top:0;z-index:9;display:grid;grid-template-columns:auto minmax(0,1fr) auto;
+  gap:clamp(12px,2.6vw,45px);align-items:center;padding:9px var(--workspace-gutter);
+  background:color-mix(in srgb,var(--panel) 85%,transparent);
+  backdrop-filter:blur(22px) saturate(1.1);border-bottom:1px solid var(--line);
+}
+:root[data-theme=dark] .edition-nav{background:rgb(39 29 35 / .87)}
+.edition-brand{display:flex;align-items:center;gap:9px;color:var(--accent);white-space:nowrap}
+.edition-brand .brand{font-size:32px}
+.edition-brand small,.edition-nav-number{
+  font-size:9px;letter-spacing:.14em;font-weight:650;font-variant-numeric:tabular-nums;color:var(--muted)
+}
+.edition-nav nav{display:flex;gap:4px;justify-self:center;padding:0;margin:0;min-width:0}
+.edition-nav nav a{
+  display:flex;align-items:center;gap:7px;padding:8px clamp(7px,1.2vw,16px);
+  border:1px solid transparent;border-radius:7px;color:var(--muted);white-space:nowrap;font-size:13px
+}
+.edition-nav nav a:hover{background:var(--soft);color:var(--text)}
+.edition-nav nav a[aria-current=page]{
+  background:color-mix(in srgb,var(--accent) 18%,var(--panel));
+  border-color:color-mix(in srgb,var(--accent) 38%,var(--line));color:var(--text);box-shadow:none;
+}
+.edition-nav nav a[aria-current=page] .edition-nav-number{color:var(--accent)}
+.edition-account{justify-content:flex-end;min-width:0;flex-wrap:nowrap}
+.edition-account .icon{border:1px solid var(--line);border-radius:7px;background:var(--soft)}
+.edition-content{padding:clamp(17px,2.5vw,42px) var(--workspace-gutter) 0}
+.edition-content [tabindex="-1"]{scroll-margin-top:100px}
+
+.edition-chapter{
+  --chapter-wash:#b66f81;
+  position:relative;isolation:isolate;display:flex;justify-content:space-between;align-items:flex-end;
+  gap:16px;margin-bottom:18px;padding:clamp(17px,2.4vw,34px);
+  border:1px solid var(--edition-rule);border-radius:14px;
+  background:linear-gradient(112deg,var(--panel) 22%,color-mix(in srgb,var(--chapter-wash) 21%,var(--panel)));
+}
+.edition-chapter[data-chapter=budget]{--chapter-wash:#bb866c}
+.edition-chapter[data-chapter=projects]{--chapter-wash:#9b7cab}
+.edition-chapter[data-chapter=resources]{--chapter-wash:#7b9c91}
+.edition-chapter::before{
+  content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 80% 0%,color-mix(in srgb,var(--chapter-wash) 45%,transparent),transparent 68%),
+    repeating-linear-gradient(126deg,transparent 0 11px,color-mix(in srgb,var(--chapter-wash) 19%,transparent) 11px 12px);
+  mask-image:linear-gradient(90deg,transparent 31%,#000 87%);
+}
+.edition-chapter-copy{min-width:0}
+.edition-index{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:10px;letter-spacing:.15em}
+.edition-index>span{padding:3px 6px;border:1px solid var(--edition-rule);border-radius:4px;font-variant-numeric:tabular-nums;color:var(--accent)}
+.edition-index small{font-size:9px}
+.edition-display{
+  margin:8px 0 4px;color:var(--text);font:italic 400 clamp(46px,6.1vw,99px)/1.02 "Bodoni Moda","Didot",Georgia,serif;
+  letter-spacing:-.058em;text-wrap:balance;
+}
+.edition-chapter h1{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;font-size:17px;font-weight:670;color:var(--text)}
+.edition-chapter h1 small{font-size:11px;font-weight:550;color:var(--edition-muted)}
+.edition-caption{margin-top:2px;color:var(--edition-muted);font-size:12px}
+.edition-chapter-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.edition-chapter-actions .actions{flex-wrap:wrap}
+.edition-jump{
+  min-height:34px;padding:5px 9px;border-color:var(--edition-rule);color:var(--text);font-size:12px;
+  background:color-mix(in srgb,var(--panel) 71%,transparent)
+}
+.edition-jump:hover{border-color:var(--accent)}
+.edition-section-kicker,.edition-section-label>span{font-size:10px;letter-spacing:.14em;color:var(--edition-muted);font-weight:650}
+.edition-section-label{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:5px 10px}
+.edition-section-label>b{font-size:15px;color:var(--text)}
+
+.edition-gallery{margin-bottom:14px}
+.campaign-gallery.edition-screening{
+  display:grid;grid-template-columns:minmax(0,1.76fr) minmax(230px,1fr);gap:0;margin:0;padding:0;overflow:hidden;
+  border:1px solid var(--line);border-radius:14px;background:var(--panel);
+}
+.edition-screen{min-width:0;aspect-ratio:16/9;touch-action:pan-y;position:relative;overflow:hidden;background:#201720}
+.edition-screen img{display:block;width:100%;height:100%;object-fit:contain}
+.edition-screen-fallback{
+  display:grid;place-items:center;width:100%;height:100%;
+  font:italic 400 clamp(40px,7vw,105px)/1 "Bodoni Moda","Didot",serif;
+  color:#ffe6ee;background:radial-gradient(ellipse at 65% 42%,color-mix(in srgb,var(--screen-wash) 42%,#382334),#201720 69%)
+}
+.edition-screen-guide{
+  display:flex;flex-direction:column;justify-content:space-between;min-width:0;gap:15px;padding:clamp(16px,2.3vw,36px);
+  background:linear-gradient(140deg,color-mix(in srgb,var(--screen-wash) 25%,var(--panel)),var(--panel) 78%);
+}
+.edition-screen-index{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--line);font-size:12px}
+.edition-screen-index small,.edition-screen-text small,.edition-screen-dates{color:var(--muted);font-size:11px}
+.edition-screen-text p{
+  font:italic 400 clamp(30px,5.3vw,84px)/1.03 "Bodoni Moda","Didot",Georgia,serif;letter-spacing:-.055em;text-wrap:balance;
+}
+.edition-screen-text h2{font-size:15px;margin-top:4px}
+.edition-screen-dates{display:flex;flex-wrap:wrap;gap:7px;font-variant-numeric:tabular-nums}
+.edition-screen-actions{display:flex;flex-wrap:wrap;gap:6px}
+.edition-screen-actions button{min-height:36px;font-size:12px}
+.edition-screen-actions .edition-screen-open{margin-right:auto;background:var(--accent);color:var(--panel);border-color:var(--accent)}
+.edition-screen-rail{
+  grid-column:1/-1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;padding:6px;background:var(--soft);
+}
+.edition-screen-rail button{
+  min-height:34px;min-width:0;padding:3px 0;font-size:11px;letter-spacing:.1em;
+  background:color-mix(in srgb,var(--edition-swatch) 11%,var(--panel));border-color:transparent;
+}
+.edition-screen-rail button[aria-pressed=true]{border-color:var(--edition-swatch);background:color-mix(in srgb,var(--edition-swatch) 25%,var(--panel))}
+.edition-shell .year-summary{gap:0;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--panel)}
+.edition-shell .year-summary .year-metric{
+  border:0;border-radius:0;box-shadow:none;background:transparent;padding:15px 17px;align-content:start
+}
+.edition-shell .year-summary .year-metric+.year-metric{border-left:1px solid var(--line)}
+.edition-shell .quarter-map{gap:0;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.edition-shell .quarter-map .quarter-tile{border:0;border-radius:0;box-shadow:none;background:var(--panel)}
+.edition-shell .quarter-map .quarter-tile+.quarter-tile{border-left:1px solid var(--line)}
+.edition-shell .quarter-open strong{font-family:"Bodoni Moda","Didot",Georgia,serif;font-style:italic;font-weight:400}
+.edition-shell .calendar-panel{border:1px solid var(--line);border-radius:11px;box-shadow:none}
+.edition-shell .calendar-months,.edition-shell .calendar-quarters>div{background:var(--soft)}
+
+.edition-collection-toolbar{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;
+  margin-bottom:15px;padding:7px 8px;border:1px solid var(--edition-rule);border-radius:9px;
+  background:color-mix(in srgb,var(--panel) 82%,transparent);
+}
+#projects .edition-collection-toolbar .filters{margin:0}
+#projects .edition-projects[data-layout=folio]{grid-template-columns:repeat(auto-fill,minmax(min(100%,292px),1fr))}
+.edition-projects[data-layout=list]{grid-template-columns:minmax(0,1fr)}
+.edition-projects[data-layout=list] .project{
+  display:grid;grid-template-columns:minmax(165px,.58fr) minmax(0,1.25fr) minmax(176px,.65fr);align-items:start
+}
+.edition-projects[data-layout=list] .project-cover{min-height:92px;border-radius:11px 0 0 11px;padding:8px 12px 10px;gap:9px}
+.edition-projects[data-layout=list] .project-cover-title{font-size:clamp(21px,10.5cqi,38px)}
+.edition-projects[data-layout=list] .project-editor{margin:10px 13px 0 0;border:0}
+.edition-projects[data-layout=list] .project-editor[open]{grid-column:1/-1;margin:0 15px}
+.edition-projects[data-layout=list] .viewer-categories{margin-top:10px}
+.edition-projects[data-layout=list] .viewer-budget{grid-column:2/-1}
+.edition-shell .project-cover{
+  min-height:176px;border-bottom:1px solid color-mix(in srgb,var(--cover-light) 48%,var(--cover-deep));
+  background:
+    radial-gradient(ellipse at 85% 8%,color-mix(in srgb,var(--cover-light) 57%,transparent),transparent 46%),
+    linear-gradient(125deg,var(--cover-deep) 10%,var(--cover-mid) 71%,var(--cover-light) 134%);
+}
+.edition-shell .project-cover::after{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:repeating-linear-gradient(122deg,transparent 0 8px,rgb(255 227 241 / .08) 8px 9px);
+  mask-image:linear-gradient(120deg,transparent 44%,#000 92%);
+}
+.project-cover-meta small{float:right;color:#fff1fa;font-size:8px;letter-spacing:.1em}
+.edition-shell .project-summary h3{font-weight:650}
+.edition-shell .project-status{
+  padding:2px 7px;border:1px solid var(--edition-rule);border-radius:999px;background:var(--project-control)
+}
+.edition-shell .project-edit-trigger{background:var(--project-control);border-color:var(--edition-rule)}
+.edition-shell .project-editor[open] .project-edit-trigger{border-color:var(--accent)}
+
+.edition-shell .budget-tiles{grid-template-rows:auto}
+.edition-shell #budget .budget-feature{grid-row:auto;min-height:280px}
+.edition-shell .budget-feature .budget-orbit{opacity:.36;transform:rotate(-8deg)}
+.edition-finance-mix{display:grid;gap:8px;margin-bottom:12px}
+.edition-finance-mix .ratio{height:9px}
+.edition-finance-mix .budget-program-split{margin:0;gap:5px 7px}
+.edition-finance-mix .budget-program-split span{background:rgb(255 240 247 / .15);border:1px solid rgb(255 225 237 / .21)}
+.edition-shell #budget .edition-settlement{display:grid;grid-template-rows:auto 1fr 1fr;gap:8px;padding:12px}
+.edition-settlement>.edition-section-label{padding:2px 5px 4px}
+.edition-shell #budget .edition-settlement .budget-snapshot{
+  border:1px solid var(--edition-rule);border-radius:8px;background:var(--project-control);
+}
+:root[data-theme=dark] .edition-shell #budget .edition-settlement .budget-paid{background:linear-gradient(145deg,#364943,#2c2b2c 80%)}
+:root[data-theme=dark] .edition-shell #budget .edition-settlement .budget-pending{background:linear-gradient(145deg,#553e39,#32282b 80%)}
+.edition-shell .budget-structure{grid-template-rows:auto 1fr 1fr}
+.edition-shell .budget-column-track i{border-radius:4px 4px 0 0}
+.edition-shell .spend-compare-row{min-height:52px}
+.edition-shell .spend-compare-track{height:9px}
+
+.edition-quarter-band{
+  padding:14px clamp(12px,1.6vw,23px);margin-bottom:14px;border:1px solid var(--edition-rule);border-radius:11px;
+  background:linear-gradient(120deg,color-mix(in srgb,var(--edition-moss) 12%,var(--project-paper)),var(--project-paper) 65%);
+}
+.edition-quarter-band>p{margin-top:7px;font-size:11px;color:var(--edition-muted)}
+.edition-quarter-band .resource-quarter-grid{margin-top:8px;gap:6px}
+.edition-quarter-band .resource-quarter-grid section{
+  padding:9px 12px;border:0;border-radius:0;background:transparent
+}
+.edition-quarter-band .resource-quarter-grid section+section{border-left:1px solid var(--edition-rule)}
+.edition-quarter-band .resource-quarter-grid h4{font:italic 400 28px/1.08 "Bodoni Moda","Didot",Georgia,serif}
+.edition-quarter-band .resource-quarter-grid h4 small{font-family:Arial,sans-serif;font-style:normal}
+.edition-quarter-band .resource-quarter-track{font-size:11px}
+.edition-shell .resource-grid{grid-template-columns:minmax(0,1.67fr) minmax(270px,1fr)}
+.edition-shell .resource-matrix tbody tr:hover th,.edition-shell .resource-matrix tbody tr:hover td{background:var(--project-control)}
+.edition-shell .resource-budget-total strong{font-size:clamp(26px,4vw,56px)}
+.edition-shell .resource-matrix-scroll{max-height:min(63vh,650px)}
+
+@media(max-width:1080px){
+  .edition-nav-number,.edition-brand small{display:none}
+  .edition-nav nav a{gap:5px}
+}
+@media(max-width:800px){
+  .edition-nav{grid-template-columns:minmax(0,1fr) auto;gap:6px;padding:7px 11px}
+  .edition-nav nav{grid-row:2;grid-column:1/-1;justify-self:stretch;display:grid;grid-auto-columns:minmax(0,1fr);grid-auto-flow:column}
+  .edition-nav nav a{justify-content:center;padding:6px 3px;font-size:12px}
+  .edition-nav nav a svg{width:12px;height:12px}
+  .edition-nav .brand{font-size:27px}
+  .edition-chapter{align-items:flex-start;flex-wrap:wrap}
+  .edition-chapter-actions{justify-content:flex-start}
+  .edition-shell .resource-grid{grid-template-columns:minmax(0,1fr)}
+  .edition-shell #budget .budget-feature{min-height:214px}
+  .edition-shell #budget .edition-settlement{grid-column:1/-1;grid-template: auto 1fr / repeat(2,minmax(0,1fr))}
+  .edition-settlement>.edition-section-label{grid-column:1/-1}
+  .edition-projects[data-layout=list] .project{grid-template-columns:minmax(105px,.58fr) minmax(0,1.25fr)}
+  .edition-projects[data-layout=list] .project-editor,.edition-projects[data-layout=list] .viewer-budget,.edition-projects[data-layout=list] .viewer-categories{grid-column:1/-1;margin:0 12px}
+  .edition-projects[data-layout=list] .project-editor{border-top:1px solid var(--edition-rule)}
+}
+@media(max-width:620px){
+  .edition-display{font-size:clamp(36px,11vw,60px)}
+  .edition-chapter{gap:11px}
+  .campaign-gallery.edition-screening{grid-template-columns:minmax(0,1fr)}
+  .edition-screen-guide{gap:8px}
+  .edition-screen-text p{font-size:clamp(35px,10vw,56px)}
+  .edition-shell .year-summary .year-metric{padding:10px 8px}
+  .edition-shell .year-summary .year-metric>span{font-size:10px;gap:3px}
+  .edition-shell .year-summary .year-metric>span svg{display:none}
+  .edition-shell .year-summary .year-metric>strong{font-size:clamp(14px,4.7vw,26px)}
+  .edition-shell .quarter-map{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .edition-shell .quarter-map .quarter-tile:nth-child(n+3){border-top:1px solid var(--line)}
+  .edition-shell .quarter-map .quarter-tile:nth-child(odd){border-left:0}
+  .edition-quarter-band .resource-quarter-grid section:nth-child(odd){border-left:0}
+  .edition-quarter-band .resource-quarter-grid section:nth-child(n+3){border-top:1px solid var(--edition-rule)}
+}

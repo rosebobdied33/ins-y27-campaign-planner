@@ -60,7 +60,7 @@ export function PlanOverview({items,budget,weekday,openQuarter,openProject}:{
       </article>
     </div>
     <section className="year-section" aria-labelledby="quarter-map-heading">
-      <div className="section-heading"><h2 id="quarter-map-heading">年度版图</h2><p>按项目开始日期归入季度。点季度卡片查看对应项目。</p></div>
+      <div className="section-heading"><span className="edition-section-kicker">01 / PROGRAM MAP</span><h2 id="quarter-map-heading">年度版图</h2><p>按项目开始日期归入季度。点季度卡片查看对应项目。</p></div>
       <div className="quarter-map">
         {groups.map((group,i)=>{
           const q=QUARTERS[i], s=group.filter(p=>p.tier==='S').length;
@@ -75,8 +75,8 @@ export function PlanOverview({items,budget,weekday,openQuarter,openProject}:{
         })}
       </div>
     </section>
-    <section className="year-section" aria-labelledby="calendar-heading">
-      <div className="section-heading calendar-heading"><div><h2 id="calendar-heading">全年活动时间线</h2><p>按季度和月份对照 S 级、A 级与周中窗口。跨年的色带在年底保留续接标记。</p></div>
+    <section id="annual-schedule" className="year-section" aria-labelledby="calendar-heading" tabIndex={-1}>
+      <div className="section-heading calendar-heading"><div><span className="edition-section-kicker">02 / SCHEDULE</span><h2 id="calendar-heading">全年活动时间线</h2><p>按季度和月份对照 S 级、A 级与周中窗口。跨年的色带在年底保留续接标记。</p></div>
         <div className="calendar-filters">
           <div className="segmented" aria-label="排期视图"><button aria-pressed={view==='calendar'} onClick={()=>setView('calendar')}>日历总表</button><button aria-pressed={view==='timeline'} onClick={()=>setView('timeline')}>全年时间线</button></div>
           <select aria-label="排期级别" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部级别</option><option value="S">S 级</option><option value="A">A 级</option></select>

@@ -3,6 +3,7 @@ import {useState,type CSSProperties} from 'react';
 import {experienceModeLabel,percent,primaryFormLabel,QUARTERS,summary,yuan,type Project} from '../lib/planner';
 import {coverageDays,monthBounds,monthlyTotal,weekdayWindows,type ScheduleProject,type WeekdayPlan} from '../lib/weekday';
 import type {ViewerData} from '../lib/storage';
+import {ChapterJump,WorkspaceChapter} from './workspace-chapter';
 
 const short=(date:string)=>date.slice(5).replace('-','.');
 const sum=(values:number[])=>values.reduce((total,value)=>total+value,0);
@@ -15,7 +16,7 @@ export function WeekdayBudget({items,plan}:{items:Project[];plan:WeekdayPlan}) {
   const max=Math.max(...plan.monthly);
   const headroom=plan.max-total;
   const active=month===null?windows:windows.filter(window=>coverageDays([window],...monthBounds(month))>0);
-  return <section className="panel weekday-budget" aria-labelledby="weekday-budget-heading">
+  return <section id="weekday-budget" tabIndex={-1} className="panel weekday-budget" aria-labelledby="weekday-budget-heading">
     <header className="weekday-heading">
       <div><p className="project-index-kicker">WEEKDAY PROGRAM / 2027</p><h3 id="weekday-budget-heading">周中活动预算与周期</h3></div>
       <div className="weekday-total"><strong>{yuan(total)}</strong><span>年度目标 {yuan(plan.min)}–{yuan(plan.max)}</span></div>
@@ -75,13 +76,9 @@ export function ResourceAnalysis({items,financial,approx,hidden}:{
   const types=distribution(items,type==='build'?primaryFormLabel:experienceModeLabel,budgets);
 
   return <section id="resources" className="section pane resource-page" hidden={hidden}>
-    <header className="budget-heading project-index-heading">
-      <span className="project-index-kicker">RESOURCES / 2027</span>
-      <p className="project-index-display" lang="en" aria-hidden="true">Resources</p><h2>年度资源分析</h2>
-    </header>
-    <div className="resource-grid">
-      <article className="panel resource-panel resource-schedule">
-        <header><small>01 / SCHEDULE</small><h3>时间规划分析</h3><p>季度覆盖率以当季自然日为分母。同一类别重叠日期只计一次。</p></header>
+    <WorkspaceChapter pane="resources"><ChapterJump target="resource-periods">周期矩阵</ChapterJump><ChapterJump target="resource-allocation">预算构成</ChapterJump></WorkspaceChapter>
+    <section className="edition-quarter-band" aria-label="季度排期覆盖率">
+      <div className="edition-section-label"><span>2027 / COVERAGE</span><b>季度排期覆盖率</b></div>
         <div className="resource-quarter-grid">
           {quarterBounds.map(([start,end],i)=><section key={QUARTERS[i]}>
             <h4>{QUARTERS[i]} <small>{end-start} 天</small></h4>
@@ -94,7 +91,12 @@ export function ResourceAnalysis({items,financial,approx,hidden}:{
             })}
           </section>)}
         </div>
-        <div className="resource-matrix-heading">
+      <p>季度覆盖率以当季自然日为分母。同一类别重叠日期只计一次。</p>
+    </section>
+    <div className="resource-grid">
+      <article className="panel resource-panel resource-schedule">
+        <header><small>01 / SCHEDULE</small><h3>时间规划分析</h3></header>
+        <div id="resource-periods" tabIndex={-1} className="resource-matrix-heading">
           <div><h4>活动周期明细</h4><p>各格为项目落在该季度的天数与占比。</p></div>
           <div className="segmented" aria-label="周期明细范围">
             <button aria-pressed={scope==='campaigns'} onClick={()=>setScope('campaigns')}>S / A 项目</button>
@@ -120,7 +122,7 @@ export function ResourceAnalysis({items,financial,approx,hidden}:{
         <p className="resource-note">跨季、跨年按实际落入 2027 年的日期分摊。普通活动按周中窗口计算，各类别可能重叠。</p>
       </article>
       <div className="resource-sidebar">
-        <article className="panel resource-panel resource-allocation">
+        <article id="resource-allocation" tabIndex={-1} className="panel resource-panel resource-allocation">
           <header><small>02 / ALLOCATION</small><h3>年度预算构成</h3></header>
           <div className="resource-budget-total"><span>全年规划总额</span><strong>{t?yuan(overall):'****'}</strong></div>
           {t&&overall>0&&<div className="ratio resource-budget-ratio" role="img" aria-label={amounts.map((amount,i)=>categories[i]+' '+share(amount,overall)).join('，')}>
