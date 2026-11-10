@@ -35,3 +35,5 @@ GitHub Pages 项目站点用 `PLANNER_BASE_PATH=/ins-y27-campaign-planner pnpm b
 登录页封面轮播素材可选。执行 `supabase/006_login_backdrop.sql`、`supabase/007_login_reel.sql` 后，由管理员将登录页专用 WebP 图集以 Base64 写入 `public.y27_login_backdrop` 的 `campaign-collage` 行的 `reel_base64` 列。图集按 S01–S07 顺序排在 3×3 网格，单格宽高比 336:440。该图集允许访客读取。登录后的七张完整封面继续走会话验证。
 
 执行 `supabase/009_weekday_plan.sql` 后，可由管理员在私有 `y27_private.settings.weekday_plan` 中配置周中预算。字段为 `monthly`（12 个按月排序的金额）、`min` 和 `max`（年度目标区间），均用整数分。此配置只返回给管理者。排期按 S 级开始日期加七天，结束日期与 S 级一致。
+
+新版开屏使用 `supabase/010_login_print_atlas.sql` 新增的 `print_base64` 列，保存登录页公开缩略图集。S01–S07 按行排在 3×3 网格中，单格宽高比 16:9。

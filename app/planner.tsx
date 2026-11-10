@@ -473,12 +473,12 @@ export default function Planner() {
   const pane=usePane(true);
   const jumpToProject=useProjectJump(pane);
   const [tier,setTier]=useState('S'),[q,setQ]=useState('all'),[form,setForm]=useState('all');
-  const [dark,setDark]=useState(false),[notice,setNotice]=useState('');
+  const [dark,setDark]=useState(true),[notice,setNotice]=useState('');
   const [confirm,setConfirm]=useState<Confirmation|null>(null);
   const [resetStep,setResetStep]=useState(false);
   const input=useRef<HTMLInputElement>(null),dialog=useRef<HTMLDialogElement>(null),menu=useRef<HTMLDetailsElement>(null);
   const [excelBusy,setExcelBusy]=useState(false);
-  useEffect(()=>{try{setDark(localStorage.getItem('ins-y27-theme')==='dark');}catch{}},[]);
+  useEffect(()=>{try{setDark(localStorage.getItem('ins-y27-theme')!=='light');}catch{}},[]);
   useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';},[dark]);
   useEffect(()=>{if(confirm&&!dialog.current?.open)dialog.current?.showModal();else if(!confirm&&dialog.current?.open)dialog.current.close();},[confirm]);
   const ask=(value:Confirmation)=>{setResetStep(false);setConfirm(value);};

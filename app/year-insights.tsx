@@ -1,6 +1,6 @@
 'use client';
-import {useState} from 'react';
-import {durationDays,experienceModeLabel,percent,primaryFormLabel,quarter,QUARTERS,summary,yuan,type Project} from '../lib/planner';
+import {useState,type CSSProperties} from 'react';
+import {experienceModeLabel,percent,primaryFormLabel,QUARTERS,summary,yuan,type Project} from '../lib/planner';
 import {coverageDays,monthBounds,monthlyTotal,weekdayWindows,type ScheduleProject,type WeekdayPlan} from '../lib/weekday';
 import type {ViewerData} from '../lib/storage';
 
@@ -43,81 +43,104 @@ export function WeekdayBudget({items,plan}:{items:Project[];plan:WeekdayPlan}) {
 }
 
 type AnalysisProject=ScheduleProject & Pick<ViewerData['projects'][number],'primary'|'primaryDetail'|'secondary'|'secondaryDetail'>;
-function track(label:string,value:number,max:number,caption:string,color='var(--tier-s)') {
-  return <div className="insight-track" key={label}>
-    <div><span>{label}</span><b>{caption}</b></div>
-    <div className="ratio" role="img" aria-label={label+' '+caption}><span style={{width:percent(value,max)+'%',background:color}}/></div>
-  </div>;
-}
-function distribution(items:AnalysisProject[],label:(item:AnalysisProject)=>string) {
-  const counts=new Map<string,number>();
-  for(const item of items){const key=label(item);counts.set(key,(counts.get(key)??0)+1);}
-  return [...counts].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'zh'));
+const colors=['var(--tier-s)','var(--tier-a)','var(--weekday-color)'];
+const categories=['S 级','A 级','普通活动'];
+const quarterBounds=QUARTERS.map((_,i)=>[monthBounds(i*3)[0],monthBounds(i*3+2)[1]] as const);
+
+function distribution(items:AnalysisProject[],label:(item:AnalysisProject)=>string,budgets:Map<string,number>) {
+  const groups=new Map<string,{count:number;budget:number}>();
+  for(const item of items){
+    const name=label(item);
+    const entry=groups.get(name)??{count:0,budget:0};
+    entry.count++;entry.budget+=budgets.get(item.id)??0;
+    groups.set(name,entry);
+  }
+  return [...groups].sort((a,b)=>b[1].count-a[1].count||a[0].localeCompare(b[0],'zh'));
 }
 export function ResourceAnalysis({items,financial,approx,hidden}:{
   items:AnalysisProject[];financial?:{items:Project[];weekday?:WeekdayPlan|null};
   approx?:ViewerData['charts'];hidden:boolean;
 }) {
+  const [scope,setScope]=useState<'campaigns'|'ordinary'>('campaigns');
+  const [type,setType]=useState<'build'|'experience'>('build');
   const t=financial?summary(financial.items):null;
-  const week=monthlyTotal(financial?.weekday);
-  const overall=(t?.total??0)+week;
+  const amounts=[t?.S??0,t?.A??0,monthlyTotal(financial?.weekday)];
+  const overall=sum(amounts);
   const windows=weekdayWindows(items);
-  const monthly=Array.from({length:12},(_,i)=>coverageDays(items,...monthBounds(i)));
-  const weekdayMonthly=Array.from({length:12},(_,i)=>coverageDays(windows,...monthBounds(i)));
-  const maxMonth=Math.max(0,...monthly,...weekdayMonthly);
-  const activeDays=sum(monthly);
-  const builds=distribution(items,primaryFormLabel);
-  const experiences=distribution(items,experienceModeLabel);
+  const ordered=[...items].sort((a,b)=>a.start.localeCompare(b.start)||a.code.localeCompare(b.code));
+  const rows=scope==='campaigns'?ordered.map(project=>({project,start:project.start,end:project.end})):windows;
+  const rowsInYear=rows.filter(row=>coverageDays([row])>0);
+  const tiers=[ordered.filter(p=>p.tier==='S'),ordered.filter(p=>p.tier==='A'),windows];
+  const budgets=new Map(financial?.items.map(p=>[p.id,p.budget]));
+  const types=distribution(items,type==='build'?primaryFormLabel:experienceModeLabel,budgets);
+
   return <section id="resources" className="section pane resource-page" hidden={hidden}>
     <header className="budget-heading project-index-heading">
       <span className="project-index-kicker">RESOURCES / 2027</span>
       <p className="project-index-display" lang="en" aria-hidden="true">Resources</p><h2>年度资源分析</h2>
     </header>
     <div className="resource-grid">
-      <article className="panel resource-panel">
-        <header><small>01 / SCHEDULE</small><h3>时间规划分析</h3></header>
-        <div className="resource-kpis"><div><strong>{activeDays}</strong><span>S / A 有排期天数</span></div><div><strong>{coverageDays(windows)}</strong><span>周中窗口覆盖天数</span></div></div>
-        <div className="resource-months" role="img" aria-label={monthly.map((n,i)=>i+1+'月，项目 '+n+' 天，周中窗口 '+weekdayMonthly[i]+' 天').join('；')}>
-          {monthly.map((value,i)=><span key={i} title={'项目 '+value+' 天 / 周中 '+weekdayMonthly[i]+' 天'}><b>{value}</b><span className="resource-month-bars">
-            <i style={{height:percent(value,maxMonth)*.55+'px'}}/><i style={{height:percent(weekdayMonthly[i],maxMonth)*.55+'px'}}/>
-          </span><small>{i+1}月</small></span>)}
-        </div>
-        <div className="budget-program-legend"><span>▰ S / A 项目</span><span>▰ 周中窗口</span></div>
-        <p>重叠日期只计一次。周中统计窗口覆盖区间，跨年仅计入 2027 年内。</p>
-      </article>
-      <article className="panel resource-panel">
-        <header><small>02 / ALLOCATION</small><h3>预算拆解分析</h3></header>
-        {t?<><div className="resource-kpis"><div><strong>{yuan(overall)}</strong><span>全年规划合计</span></div></div>
-          {track('S / A 项目',t.total,overall,yuan(t.total))}
-          {financial?.weekday&&track('周中活动',week,overall,yuan(week),'var(--weekday-color)')}
-          <div className="resource-amounts"><span>搭建 <b>{yuan(t.build)}</b></span><span>体验 <b>{yuan(t.experience)}</b></span><span>项目待分配 <b>{yuan(t.unallocated)}</b></span>{t.over>0&&<span className="danger">项目分配超额 <b>{yuan(t.over)}</b></span>}</div></>:
-          <><div className="resource-kpis"><div><strong>****</strong><span>金额仅管理者可见</span></div></div>
-          {approx?.build!=null&&<>{track('搭建',approx.build,100,'约 '+approx.build+'%')}{track('体验',100-approx.build,100,'约 '+(100-approx.build)+'%','var(--experience)')}</>}</>}
-      </article>
-      <article className="panel resource-panel">
-        <header><small>03 / PROGRAM MIX</small><h3>项目类型分析</h3></header>
-        <div className="resource-type-grid">
-          {([['搭建形式',builds],['体验模式',experiences]] as const).map(([label,groups])=><section key={label}>
-            <h4>{label}</h4>{groups.map(([name,count])=>track(name,count,items.length,count+' 项',label==='搭建形式'?'var(--tier-s)':'var(--experience)'))}
+      <article className="panel resource-panel resource-schedule">
+        <header><small>01 / SCHEDULE</small><h3>时间规划分析</h3><p>季度覆盖率以当季自然日为分母。同一类别重叠日期只计一次。</p></header>
+        <div className="resource-quarter-grid">
+          {quarterBounds.map(([start,end],i)=><section key={QUARTERS[i]}>
+            <h4>{QUARTERS[i]} <small>{end-start} 天</small></h4>
+            {tiers.map((group,j)=>{
+              const days=coverageDays(group,start,end);
+              return <div className="resource-quarter-track" key={categories[j]}>
+                <span>{categories[j]}</span><b title={days+' 天'}>{share(days,end-start)}</b>
+                <div className="ratio" aria-label={categories[j]+' '+days+' 天'} role="img"><span style={{width:percent(days,end-start)+'%',background:colors[j]}}/></div>
+              </div>;
+            })}
           </section>)}
         </div>
-      </article>
-      <article className="panel resource-panel">
-        <header><small>04 / S & A CAMPAIGNS</small><h3>S 级与 A 级分析</h3></header>
-        <div className="resource-tier-grid">
-          {(['S','A'] as const).map(tier=>{
-            const group=items.filter(item=>item.tier===tier);
-            const days=coverageDays(group);
-            const average=group.length?sum(group.map(item=>durationDays(item.start,item.end)??0))/group.length:0;
-            const launches=QUARTERS.map(q=>group.filter(item=>item.start.startsWith('2027-')&&quarter(item.start)===q).length);
-            return <section key={tier}><h4>{tier} 级 <small>{group.length} 项</small></h4>
-              <strong>{days}<small> 天</small></strong><p>年内有排期天数 · 单项平均 {average.toFixed(1)} 天</p>
-              <div className="resource-tier-quarters">{launches.map((n,i)=><span key={i}>Q{i+1} <b>{n}</b></span>)}</div>
-              {t?<p className="resource-tier-amount">{yuan(t[tier])} · {share(t[tier],t.total)}</p>:approx?.tier!=null?<p>预算约 {tier==='S'?approx.tier:100-approx.tier}%</p>:null}
-            </section>;
-          })}
+        <div className="resource-matrix-heading">
+          <div><h4>活动周期明细</h4><p>各格为项目落在该季度的天数与占比。</p></div>
+          <div className="segmented" aria-label="周期明细范围">
+            <button aria-pressed={scope==='campaigns'} onClick={()=>setScope('campaigns')}>S / A 项目</button>
+            <button aria-pressed={scope==='ordinary'} onClick={()=>setScope('ordinary')}>普通活动</button>
+          </div>
         </div>
+        <div className="resource-matrix-scroll" tabIndex={0} role="region" aria-label="按季度查看活动周期">
+          <table className="resource-matrix">
+            <thead><tr><th scope="col">活动 / 日期</th>{QUARTERS.map(q=><th key={q} scope="col">{q}</th>)}</tr></thead>
+            <tbody>{rowsInYear.map(({project,start,end})=><tr key={project.id}>
+              <th scope="row"><strong>{project.name||project.code}</strong><small>{project.code} · {short(start)}–{end.startsWith('2027-')?short(end):end.replaceAll('-','.')}</small></th>
+              {quarterBounds.map(([from,to],i)=>{
+                const days=coverageDays([{start,end}],from,to);
+                const value=percent(days,to-from);
+                return <td key={QUARTERS[i]}>{days?<span className="resource-period" style={{'--period-color':colors[scope==='ordinary'?2:project.tier==='S'?0:1],'--period-fill':value+'%'} as CSSProperties}>
+                  <b>{days} 天</b><small>{share(days,to-from)}</small>
+                </span>:<span className="resource-period-empty" aria-label="无排期">—</span>}</td>;
+              })}
+            </tr>)}</tbody>
+          </table>
+          {!rowsInYear.length&&<p>当前没有落在 2027 年的排期。</p>}
+        </div>
+        <p className="resource-note">跨季、跨年按实际落入 2027 年的日期分摊。普通活动按周中窗口计算，各类别可能重叠。</p>
       </article>
+      <div className="resource-sidebar">
+        <article className="panel resource-panel resource-allocation">
+          <header><small>02 / ALLOCATION</small><h3>年度预算构成</h3></header>
+          <div className="resource-budget-total"><span>全年规划总额</span><strong>{t?yuan(overall):'****'}</strong></div>
+          {t&&overall>0&&<div className="ratio resource-budget-ratio" role="img" aria-label={amounts.map((amount,i)=>categories[i]+' '+share(amount,overall)).join('，')}>
+            {amounts.map((amount,i)=><span key={i} style={{width:percent(amount,overall)+'%',background:colors[i]}}/>)}
+          </div>}
+          <dl className="resource-budget-breakdown">{categories.map((label,i)=><div key={label}>
+            <dt><i style={{background:colors[i]}}/>{label}</dt><dd>{t?yuan(amounts[i]):'****'} <small>{t?share(amounts[i],overall):i<2&&approx?.tier!=null?'约 '+(i===0?approx.tier:100-approx.tier)+'%*':'—'}</small></dd>
+          </div>)}</dl>
+          <p className="resource-note">{t?'普通活动按周中预算计入全年大盘。':'* 浏览模式仅显示 S/A 项目内部的估算占比。'}</p>
+        </article>
+        <article className="panel resource-panel resource-types">
+          <header><small>03 / PROGRAM MIX</small><h3>项目类型分析</h3><p>按已录入分类看项目数量{t?'与规划预算':''}。</p></header>
+          <div className="segmented" aria-label="项目类型维度"><button aria-pressed={type==='build'} onClick={()=>setType('build')}>搭建形式</button><button aria-pressed={type==='experience'} onClick={()=>setType('experience')}>体验模式</button></div>
+          <div className="resource-type-list">{types.map(([name,group])=><div className="insight-track" key={name}>
+            <div><span>{name}</span><b>{group.count} 项 · {share(group.count,items.length)}</b></div>
+            <div className="ratio" role="img" aria-label={name+' '+group.count+' 项'}><span style={{width:percent(group.count,items.length)+'%',background:type==='build'?colors[0]:'var(--experience)'}}/></div>
+            {t&&<small>对应预算 {yuan(group.budget)}</small>}
+          </div>)}{!types.length&&<p>暂无项目</p>}</div>
+        </article>
+      </div>
     </div>
   </section>;
 }
