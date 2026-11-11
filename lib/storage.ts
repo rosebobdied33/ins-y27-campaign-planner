@@ -60,6 +60,22 @@ export function useCampaignArtwork(role:Snapshot['role']|undefined) {
   },[role]);
   return images;
 }
+export function useFullCampaignArtwork(projectId:string|undefined) {
+  const [loaded,setLoaded]=useState<{id:string;image:string}|null>(null);
+  useEffect(()=>{
+    if(!projectId)return;
+    const token=sessionStorage.getItem(SESSION);
+    if(!token)return;
+    let cancelled=false;
+    void rpc<{image:string|null}>('artwork',{token,projectId,quality:'full'})
+      .then(data=>{
+        if(data.image&&!cancelled)setLoaded({id:projectId,image:'data:image/webp;base64,'+data.image.replace(/\s/g,'')});
+      })
+      .catch(()=>{ /* The optimized preview remains available. */ });
+    return ()=>{cancelled=true;};
+  },[projectId]);
+  return loaded?.id===projectId?loaded?.image:undefined;
+}
 export function usePlanner() {
   const [snapshot,setSnapshot]=useState<Snapshot|null>(null);
   const [loading,setLoading]=useState(true);

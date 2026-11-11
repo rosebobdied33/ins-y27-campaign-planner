@@ -10,11 +10,12 @@ import {useHorizontalWheel} from './use-horizontal-wheel';
 type GalleryProject=ScheduleProject;
 export type CampaignArtwork=Record<string,string>;
 
-export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,visible}:{
+export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,visible,fullArtwork}:{
   projects:GalleryProject[];
   artwork:CampaignArtwork;
   activeId:string|null;
   visible:boolean;
+  fullArtwork?:string;
   onSelect:(id:string)=>void;
   openProject:(id:string)=>void;
 }) {
@@ -26,7 +27,7 @@ export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,
   useHorizontalWheel(direction=>go(index+direction),visible&&Boolean(project));
   if(!project)return null;
   const palette=campaignTitles[project.id];
-  const image=artwork[project.id];
+  const image=fullArtwork??artwork[project.id];
   const window=weekdayWindows([project])[0];
   const neighbors=[{item:items[index-1],offset:-1},{item:items[index+1],offset:1}];
   const days=durationDays(project.start,project.end);
@@ -51,12 +52,12 @@ export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,
         const distance=e.clientX-swipe.current;swipe.current=null;
         if(Math.abs(distance)>35)go(index+(distance<0?1:-1));
       }}>
-      {image?<img key={project.id} src={image} alt={project.name+' 项目封面'} width={1120} height={630} decoding="async"/>:
+      {image?<img key={project.id} src={image} alt={project.name+' 项目封面'} width={1920} height={1080} decoding="async"/>:
         <div className="edition-screen-fallback" aria-hidden="true">{project.code}</div>}
     </div>
     {neighbors.map(({item,offset})=>item&&artwork[item.id]&&<button key={item.id} className="screening-neighbor" data-side={offset<0?'previous':'next'}
       aria-label={'预览 '+item.name} onClick={()=>go(index+offset)}>
-      <img src={artwork[item.id]} alt="" width={1120} height={630} decoding="async"/>
+      <img src={artwork[item.id]} alt="" width={1920} height={1080} decoding="async"/>
     </button>)}
     </div>
     <div className="edition-screen-guide">

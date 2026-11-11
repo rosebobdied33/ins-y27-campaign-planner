@@ -6,7 +6,7 @@ import {durationDays, experienceModeLabel, primaryFormLabel, percent, quarter, Q
 import {monthWeeks} from '../lib/calendar';
 import {monthlyTotal,weekdayWindows,type WeekdayPlan} from '../lib/weekday';
 import {CampaignGallery,campaignTitles,type CampaignArtwork} from './campaign-gallery';
-import type {ViewerData} from '../lib/storage';
+import {useFullCampaignArtwork,type ViewerData} from '../lib/storage';
 
 type ScheduleItem = Pick<ViewerData['projects'][number],'id'|'code'|'tier'|'name'|'start'|'end'|'status'|'color'|'primary'|'primaryDetail'|'secondary'|'secondaryDetail'>;
 type BudgetSummary = {total:number; S:number; A:number};
@@ -47,6 +47,9 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
   const allWindows=weekdayWindows(ordered);
   const featureIds=ordered.map(p=>p.id).filter(id=>/^S0[1-7]$/.test(id)).sort();
   const featured=activeId&&featureIds.includes(activeId)?activeId:featureIds[0];
+  const fullId=visible?(selected&&featureIds.includes(selected.id)?selected.id:featured):undefined;
+  const fullArtwork=useFullCampaignArtwork(fullId);
+  const detailArtwork=selected&&(selected.id===fullId?fullArtwork??artwork[selected.id]:artwork[selected.id]);
   const related=selected?.tier==='S'?ordered.filter(p=>p.tier==='A'&&p.start<=selected.end&&p.end>=selected.start):[];
   const counts={S:items.filter(p=>p.tier==='S').length,A:items.filter(p=>p.tier==='A').length};
   const completed=items.filter(p=>p.status==='已完成').length;
@@ -63,7 +66,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
   ].filter(group=>group.entries.length);
   return <>
     <div className="edition-gallery">
-      <CampaignGallery projects={items} artwork={artwork} visible={visible&&!showDetails} activeId={featured??null} onSelect={setActiveId} openProject={openProject}/>
+      <CampaignGallery projects={items} artwork={artwork} visible={visible&&!showDetails} fullArtwork={fullId===featured?fullArtwork:undefined} activeId={featured??null} onSelect={setActiveId} openProject={openProject}/>
     </div>
     <div className="year-summary">
       <article className="panel year-metric"><span><Layers3 size={17}/>年度项目</span><strong>{items.length}<small> 项</small></strong><p>已完成 {completed} 项</p></article>
@@ -89,7 +92,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
             <section className="theme-leads" aria-label={q+' S 级主线'}>
               {lead.map(p=><button key={p.id} className="theme-cover" data-current={p.id===featured} style={{'--theme-ink':themeColor(p)} as CSSProperties}
                 onClick={()=>{if(featureIds.includes(p.id))setActiveId(p.id);setSelectedId(p.id);}}>
-                {artwork[p.id]&&<img src={artwork[p.id]} alt="" loading="lazy" width={1120} height={630}/>}
+                {artwork[p.id]&&<img src={artwork[p.id]} alt="" loading="lazy" width={1920} height={1080}/>}
                 <span><strong>{p.name||p.code}</strong><small>{shortDate(p.start)} – {shortDate(p.end)}</small></span>
               </button>)}
               {!lead.length&&<p>本季无新上线主线</p>}
@@ -178,7 +181,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
     <dialog ref={dialog} className="calendar-detail" onClose={()=>setSelectedId(null)} aria-label="排期详情">
         {selected&&<>
           <div className="calendar-detail-head"><span className="eyebrow">{selected.code} · {selected.tier} 级</span><button className="icon" aria-label="关闭排期详情" onClick={()=>dialog.current?.close()}><X/></button></div>
-          {artwork[selected.id]&&<img className="theme-detail-image" src={artwork[selected.id]} alt={selected.name+' 概念图'} width={1120} height={630}/>}
+          {detailArtwork&&<img className="theme-detail-image" src={detailArtwork} alt={selected.name+' 概念图'} width={1920} height={1080}/>}
           <h3>{selected.name||'未命名项目'}</h3><p>{dateRange(selected)}</p>
           {weekdayWindows([selected]).map(window=><p key={window.start}>周中窗口 {window.start} 至 {window.end}</p>)}
           <dl className="theme-detail-formats"><div><dt>搭建形式</dt><dd>{primaryFormLabel(selected)}</dd></div><div><dt>体验模式</dt><dd>{experienceModeLabel(selected)}</dd></div></dl>
