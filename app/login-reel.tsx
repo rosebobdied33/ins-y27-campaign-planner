@@ -11,8 +11,8 @@ const cardDate=(date:string,year:EditionYear)=>date.startsWith(year+'-')?date.sl
 const sceneIndex=(index:number,count:number)=>(index+count)%count;
 const sparks=[[8,24,26],[16,43,15],[24,15,21],[34,31,13],[63,14,22],[76,35,15],[86,24,31],[93,43,21],[11,72,18],[89,80,24]];
 
-export function LoginReel({busy,error,onLogin}:{
-  busy:boolean;error:string;onLogin:(name:string,password:string,register:boolean)=>void;
+export function LoginReel({busy,error,onLogin,onResume}:{
+  busy:boolean;error:string;onResume?:()=>void;onLogin:(name:string,password:string,register:boolean)=>void;
 }) {
   const image=useLoginReel();
   const [year,setYear]=useState<EditionYear>(2027);
@@ -75,6 +75,7 @@ export function LoginReel({busy,error,onLogin}:{
     try{localStorage.setItem(yearPreference,String(next));}catch{}
   };
   const enter=()=>{
+    if(onResume){onResume();return;}
     dialog.current?.showModal();
     setOpen(true);
   };
@@ -148,7 +149,7 @@ export function LoginReel({busy,error,onLogin}:{
             }}>
             <span className="reel-paper" aria-hidden="true">
               <span className="reel-paper-front">
-                {item.poster?Math.abs(relative)<=1&&<img className="reel-poster" src={item.poster} alt="" draggable={false} fetchPriority={relative===0?'high':'auto'}/>:
+                {item.poster?<img className="reel-poster" src={item.poster} alt="" draggable={false} fetchPriority={relative===0?'high':'auto'} loading={Math.abs(relative)>1?'lazy':'eager'}/>:
                   <>
                     <span className="reel-card-code"><span>{item.code} / EDITION</span><span>{year}</span></span>
                     <span className="reel-card-art"/>

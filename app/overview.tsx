@@ -8,7 +8,7 @@ import {monthlyTotal,weekdayWindows,type WeekdayPlan} from '../lib/weekday';
 import {CampaignGallery,campaignTitles,type CampaignArtwork} from './campaign-gallery';
 import {useFullCampaignArtwork,type ViewerData} from '../lib/storage';
 
-type ScheduleItem = Pick<ViewerData['projects'][number],'id'|'code'|'tier'|'name'|'start'|'end'|'status'|'color'|'primary'|'primaryDetail'|'secondary'|'secondaryDetail'>;
+type ScheduleItem = Pick<ViewerData['projects'][number],'id'|'code'|'tier'|'name'|'start'|'end'|'status'|'color'|'primary'|'primaryDetail'|'secondary'|'secondaryDetail'|'planningBrief'>;
 type BudgetSummary = {total:number; S:number; A:number};
 const YEAR = 2027;
 const DAY = 86_400_000;
