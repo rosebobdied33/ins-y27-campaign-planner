@@ -2145,3 +2145,28 @@ button.calendar-bar{min-height:0;padding:0 2px}
 @media(max-width:650px){.planning-brief-fields :is(input,textarea){font-size:16px}}
 
 button.edition-brand{border:0;padding:0;background:none;justify-content:flex-start}
+
+/* Treat the right-hand guide as a campaign print, with quiet separation between captions. */
+.edition-screening .edition-screen-guide{gap:clamp(9px,1.1vw,16px)}
+.edition-screening .edition-screen-text p{color:var(--brief-accent);margin:1px 0 7px}
+.edition-screening .screening-chinese-title{
+  display:inline-block;margin:0;padding:3px 9px 4px;border:1px solid var(--brief-rule);border-radius:3px;
+  font-size:clamp(16px,1.4vw,23px);font-weight:650;line-height:1.35;letter-spacing:.055em;
+  background:color-mix(in srgb,var(--screen-deep) 28%,transparent);
+}
+.screening-editorial{padding-top:10px}
+.screening-editorial h3{line-height:1.52}
+.screening-editorial dl{gap:6px;margin-top:8px}
+.screening-editorial dl>div{
+  border-left:1px solid color-mix(in srgb,var(--brief-accent) 56%,transparent);border-radius:0 4px 4px 0;
+  padding:5px 8px 6px;background:color-mix(in srgb,var(--screen-glow) 12%,transparent);
+}
+.screening-editorial dl>.screening-difference{background:color-mix(in srgb,var(--screen-wash) 15%,transparent)}
+.screening-editorial dt{line-height:1.55}
+.screening-editorial dd{margin-top:2px;line-height:1.55}
+.screening-editorial ul{margin-top:9px;gap:5px 7px}
+.screening-editorial li{padding:3px 7px}
+:root:not([data-theme=dark]) .edition-screening .screening-chinese-title{background:#fffaf8a8}
+@media(max-width:700px){
+  .edition-screening .edition-screen-guide{gap:11px}
+}

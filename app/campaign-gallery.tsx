@@ -60,12 +60,12 @@ export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,
     </div>
     <div className="edition-screen-guide">
       <div className="edition-screen-index"><span id="campaign-gallery-title">S 级场景档案</span><small>{String(index+1).padStart(2,'0')} / {String(items.length).padStart(2,'0')}</small></div>
-      <div className="edition-screen-text" aria-live="polite"><small>{project.code} / {project.status}</small><p lang="en">{palette.title}</p><h2>{project.name||'未命名项目'}</h2></div>
+      <div className="edition-screen-text" aria-live="polite"><small>{project.code} / {project.status}</small><p lang="en">{palette.title}</p><h2 className="screening-chinese-title">{project.name||'未命名项目'}</h2></div>
       <div className="screening-editorial" aria-live="polite">
         <h3>{brief?.positioning.trim()||'主题定位待补充'}</h3>
         <dl>
           <div className="screening-direction"><dt lang="en">PRIMARY DIRECTION</dt><dd>{brief?.direction.trim()||'待补充'}</dd></div>
-          <div><dt lang="en">KEY DIFFERENCE</dt><dd>{brief?.difference.trim()||'待补充'}</dd></div>
+          <div className="screening-difference"><dt lang="en">KEY DIFFERENCE</dt><dd>{brief?.difference.trim()||'待补充'}</dd></div>
         </dl>
         {keywords.length>0&&<ul aria-label="内容关键词">{keywords.map((word,i)=><li key={i}>{word}</li>)}</ul>}
       </div>
