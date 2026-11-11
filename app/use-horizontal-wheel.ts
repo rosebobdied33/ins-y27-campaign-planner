@@ -1,25 +1,35 @@
-import {useEffect,useRef,type RefObject} from 'react';
+import {useEffect,useRef} from 'react';
 
-export function useHorizontalWheel(target:RefObject<HTMLElement|null>,onStep:(direction:number)=>void,enabled=true) {
+export function useHorizontalWheel(onStep:(direction:number)=>void,enabled=true) {
   const step=useRef(onStep);
   useEffect(()=>{step.current=onStep;},[onStep]);
 
   useEffect(()=>{
-    const surface=target.current;
-    if(!surface||!enabled)return;
-    let distance=0, moved=false, lastEvent=0;
+    if(!enabled)return;
+    let distance=0, lastEvent=0, direction=0, moved=false;
     const handleWheel=(event:WheelEvent)=>{
-      if(event.ctrlKey||Math.abs(event.deltaX)<=Math.abs(event.deltaY))return;
+      if(event.defaultPrevented||event.ctrlKey||Math.abs(event.deltaX)<=Math.abs(event.deltaY))return;
+      if(event.target instanceof Element){
+        if(event.target.closest('dialog,input,select,textarea,[contenteditable=true]'))return;
+        for(let element:Element|null=event.target;element;element=element.parentElement){
+          if(element.scrollWidth>element.clientWidth+2&&/auto|scroll/.test(getComputedStyle(element).overflowX))return;
+        }
+      }
       event.preventDefault();
-      if(event.timeStamp-lastEvent>160){distance=0;moved=false;}
+      const nextDirection=Math.sign(event.deltaX);
+      if(event.timeStamp-lastEvent>105||direction!==nextDirection){
+        distance=0;
+        moved=false;
+      }
       lastEvent=event.timeStamp;
+      direction=nextDirection;
       if(moved)return;
-      distance+=event.deltaX*(event.deltaMode===1?16:event.deltaMode===2?surface.clientWidth:1);
-      if(Math.abs(distance)<34)return;
+      distance+=Math.abs(event.deltaX)*(event.deltaMode===1?16:event.deltaMode===2?window.innerWidth:1);
+      if(distance<20)return;
       moved=true;
-      step.current(distance>0?1:-1);
+      step.current(direction);
     };
-    surface.addEventListener('wheel',handleWheel,{passive:false});
-    return ()=>surface.removeEventListener('wheel',handleWheel);
-  },[target,enabled]);
+    window.addEventListener('wheel',handleWheel,{passive:false});
+    return ()=>window.removeEventListener('wheel',handleWheel);
+  },[enabled]);
 }

@@ -30,12 +30,13 @@ export function LoginReel({busy,error,onLogin}:{
   const [open,setOpen]=useState(false);
   const [flipped,setFlipped]=useState(false);
   const [register,setRegister]=useState(false);
-  const stage=useRef<HTMLElement>(null);
+  const details=useRef<HTMLDialogElement>(null);
   const dialog=useRef<HTMLDialogElement>(null);
   const swipeStart=useRef<number|null>(null);
   const swiped=useRef(false);
   const scene=scenes[active];
   const palette=campaignTitles[scene];
+  const edition=publicEditions[scene];
 
   useEffect(()=>{
     const preference=window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -57,9 +58,9 @@ export function LoginReel({busy,error,onLogin}:{
     setPlaying(false);setFlipped(false);
     setActive(index=>sceneIndex(index+offset));
   },[]);
-  useHorizontalWheel(stage,step,!open);
+  useHorizontalWheel(step,!open&&!flipped);
   useEffect(()=>{
-    if(open)return;
+    if(open||flipped)return;
     const navigate=(event:KeyboardEvent)=>{
       if(event.altKey||event.ctrlKey||event.metaKey||event.target instanceof HTMLInputElement)return;
       if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
@@ -69,7 +70,7 @@ export function LoginReel({busy,error,onLogin}:{
     };
     window.addEventListener('keydown',navigate);
     return ()=>window.removeEventListener('keydown',navigate);
-  },[open,step]);
+  },[open,flipped,step]);
   const enter=()=>{
     dialog.current?.showModal();
     setOpen(true);
@@ -100,7 +101,7 @@ export function LoginReel({busy,error,onLogin}:{
       </button>
     </div>
 
-    <section ref={stage} className="reel-stage" aria-label="Seven campaign editions"
+    <section className="reel-stage" aria-label="Seven campaign editions"
       onPointerDown={event=>{
         swiped.current=false;
         if(event.button===0)swipeStart.current=event.clientX;
@@ -116,13 +117,10 @@ export function LoginReel({busy,error,onLogin}:{
         {scenes.map((item,index)=>{
           const relative=sceneIndex(index-active+3)-3;
           const colors=campaignTitles[item];
-          const edition=publicEditions[item];
-          const showingBack=relative===0&&flipped;
           return <button key={item} type="button" className="reel-card" data-position={relative}
             tabIndex={relative===0?0:-1}
-            aria-label={colors.title+(relative===0?(flipped?', show front':', flip edition'):', select edition')}
-            aria-pressed={showingBack}
-            aria-describedby={showingBack?'edition-details-'+item:undefined}
+            aria-label={colors.title+(relative===0?', open edition details':', select edition')}
+            aria-haspopup={relative===0?'dialog':undefined}
             style={{
               '--slot':relative,'--distance':Math.abs(relative),
               '--tile-x':(index%3)*50+'%','--tile-y':Math.floor(index/3)*50+'%',
@@ -130,33 +128,41 @@ export function LoginReel({busy,error,onLogin}:{
             } as CSSProperties}
             onClick={()=>{
               if(swiped.current){swiped.current=false;return;}
-              if(relative===0){setPlaying(false);setFlipped(!flipped);}else step(relative);
+              if(relative===0){
+                setPlaying(false);
+                setFlipped(true);
+                details.current?.showModal();
+              }else step(relative);
             }}>
-            <span className="reel-paper" data-flipped={relative===0&&flipped} aria-hidden="true">
+            <span className="reel-paper" aria-hidden="true">
               <span className="reel-paper-front">
                 <span className="reel-card-code"><span>{item} / EDITION</span><span>2027</span></span>
                 <span className="reel-card-art"/>
                 <span className="reel-card-title">{colors.title}</span>
                 <span className="reel-paper-imprint">INS LAND <span>ARCHIVE PRINT</span></span>
               </span>
-              <span className="reel-paper-back" lang="zh-CN">
-                <span className="reel-card-code"><span>INS LAND / {item}</span><span aria-hidden="true">✧</span></span>
-                <span className="reel-back-title"><span className="reel-card-title" lang="en">{colors.title}</span><strong>{edition.name}</strong></span>
-                <span className="reel-back-dates">
-                  <span>上线 <b>{cardDate(edition.start)}</b></span>
-                  <span>下线 <b>{cardDate(edition.end)}</b></span>
-                  <span>周期 <b>{durationDays(edition.start,edition.end)} 天</b></span>
-                </span>
-                <span className="reel-back-nodes"><span>同期节日及节点</span><span>{edition.nodes.map(node=><b key={node}>{node}</b>)}</span></span>
-              </span>
             </span>
-            {showingBack&&<span id={'edition-details-'+item} className="reel-sr-only" lang="zh-CN">
-              {edition.name}，上线 {edition.start}，下线 {edition.end}，共 {durationDays(edition.start,edition.end)} 天。同期节日及节点 {edition.nodes.join('、')}。
-            </span>}
           </button>;
         })}
       </div>
     </section>
+
+    <dialog ref={details} className="reel-edition-dialog" lang="zh-CN" aria-labelledby="reel-detail-title"
+      onClose={()=>setFlipped(false)}
+      onClick={event=>{if(event.target===event.currentTarget)details.current?.close();}}
+      style={{'--card-glow':palette.glow,'--card-wash':palette.wash,'--card-deep':palette.cover[0]} as CSSProperties}>
+      <div className="reel-paper-back reel-edition-detail">
+        <span className="reel-card-code">INS LAND / {scene}</span>
+        <button type="button" className="reel-detail-close" aria-label="关闭卡片详情" onClick={()=>details.current?.close()}><X size={19}/></button>
+        <h2 id="reel-detail-title" className="reel-back-title"><span className="reel-card-title" lang="en">{palette.title}</span><strong>{edition.name}</strong></h2>
+        <dl className="reel-back-dates">
+          <div><dt>上线</dt><dd>{cardDate(edition.start)}</dd></div>
+          <div><dt>下线</dt><dd>{cardDate(edition.end)}</dd></div>
+          <div><dt>周期</dt><dd>{durationDays(edition.start,edition.end)} 天</dd></div>
+        </dl>
+        <div className="reel-back-nodes"><span>同期节日及节点</span><span>{edition.nodes.map(node=><b key={node}>{node}</b>)}</span></div>
+      </div>
+    </dialog>
 
     <footer className="reel-footer">
       <div className="reel-caption" aria-live={playing?'off':'polite'}><span>{scene}</span><strong>{palette.title}</strong></div>

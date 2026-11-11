@@ -446,7 +446,7 @@ function Viewer({data,artwork,dark,toggle,logout,error}:{data:ViewerData;artwork
     <main><div className="content edition-content">
         <section id="overview" className="pane" hidden={pane!=='overview'}>
           <WorkspaceChapter pane="overview"><ChapterJump target="annual-schedule">查看全年排期</ChapterJump></WorkspaceChapter>
-          <PlanOverview items={data.projects} artwork={artwork} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
+          <PlanOverview visible={pane==='overview'} items={data.projects} artwork={artwork} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
         </section>
         {error&&<p className="banner" role="alert">{error}</p>}
         <section id="projects" className="section pane" hidden={pane!=='projects'}><WorkspaceChapter pane="projects" detail={projects.length+' / '+data.projects.length+' 项'}/>
@@ -525,7 +525,7 @@ export default function Planner() {
     <main><div className="content edition-content">
       <section id="overview" className="pane" hidden={pane!=='overview'}>
         <WorkspaceChapter pane="overview"><ChapterJump target="annual-schedule">查看全年排期</ChapterJump></WorkspaceChapter>
-        <PlanOverview items={items} artwork={artwork} budget={t} weekday={weekday} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
+        <PlanOverview visible={pane==='overview'} items={items} artwork={artwork} budget={t} weekday={weekday} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
         <WorkspaceChapter pane="budget">

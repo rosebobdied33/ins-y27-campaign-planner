@@ -1652,3 +1652,29 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .reel-back-nodes>span+span{display:flex;gap:4px;flex-wrap:wrap}
 .reel-back-nodes b{padding:2px 5px;border:1px solid #fff2ee38;border-radius:3px;font-weight:550}
 .reel-sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+.reel-edition-dialog{
+  position:fixed;inset:0;margin:auto;padding:0;
+  width:min(570px,calc(100% - 28px));max-height:calc(100dvh - 32px);
+  border:0;border-radius:12px;background:none;overflow:auto;color:#fff1ef;
+}
+.reel-edition-dialog::backdrop{background:#150c19b8;backdrop-filter:blur(6px)}
+.reel-edition-dialog[open]{animation:reel-edition-open .38s cubic-bezier(.21,.78,.25,1) both}
+@keyframes reel-edition-open{
+  from{opacity:0;transform:perspective(850px) rotateY(-65deg) scale(.76)}
+  to{opacity:1;transform:none}
+}
+.reel-edition-detail.reel-paper-back{
+  position:relative;inset:auto;transform:none;backface-visibility:visible;min-height:0;
+  padding:clamp(20px,4vw,42px);gap:clamp(15px,2.5vw,28px);border-radius:12px;
+}
+.reel-edition-detail .reel-card-code{font-size:11px}
+.reel-edition-detail .reel-card-title{font-size:clamp(32px,6.5vw,62px)}
+.reel-edition-detail .reel-back-title strong{font-size:clamp(16px,2.5vw,22px)}
+.reel-edition-detail .reel-back-dates{margin:0;padding:12px 0;gap:6px}
+.reel-edition-detail dt,.reel-edition-detail .reel-back-nodes{font-size:12px;color:#ecd9e1}
+.reel-edition-detail dd{margin:4px 0 0;font-weight:650;font-size:clamp(13px,2.4vw,22px);font-variant-numeric:tabular-nums}
+.reel-edition-detail .reel-back-nodes{gap:8px}
+.reel-edition-detail .reel-back-nodes b{padding:4px 8px}
+.reel-detail-close{position:absolute;right:12px;top:12px;color:#fff2ef;border-color:#fff2ef50;background:#291d2a}
+@media(prefers-reduced-motion:reduce){.reel-edition-dialog[open]{animation:none}}

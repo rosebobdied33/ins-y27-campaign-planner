@@ -26,8 +26,8 @@ const dateWithin=(item:{start:string;end:string},from:number,to:number)=>
   Date.parse(item.start+'T00:00:00Z')<to&&Date.parse(item.end+'T00:00:00Z')>=from;
 const themeColor=(item:ScheduleItem)=>campaignTitles[item.id]?.glow??item.color;
 
-export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProject}:{
-  items:ScheduleItem[];artwork:CampaignArtwork;budget?:BudgetSummary;weekday?:WeekdayPlan|null;openQuarter:(q:string)=>void;openProject:(id:string)=>void;
+export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProject,visible}:{
+  visible:boolean;items:ScheduleItem[];artwork:CampaignArtwork;budget?:BudgetSummary;weekday?:WeekdayPlan|null;openQuarter:(q:string)=>void;openProject:(id:string)=>void;
 }) {
   const [filter,setFilter]=useState('all');
   const [status,setStatus]=useState('all');
@@ -63,7 +63,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
   ].filter(group=>group.entries.length);
   return <>
     <div className="edition-gallery">
-      <CampaignGallery projects={items} artwork={artwork} activeId={featured??null} onSelect={setActiveId} openProject={openProject}/>
+      <CampaignGallery projects={items} artwork={artwork} visible={visible&&!showDetails} activeId={featured??null} onSelect={setActiveId} openProject={openProject}/>
     </div>
     <div className="year-summary">
       <article className="panel year-metric"><span><Layers3 size={17}/>年度项目</span><strong>{items.length}<small> 项</small></strong><p>已完成 {completed} 项</p></article>
