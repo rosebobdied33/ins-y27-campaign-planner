@@ -107,13 +107,12 @@ function useProjectJump(pane:Pane) {
 function Brand() {return <span className="brand">INS<sup>®</sup></span>;}
 function WorkspaceNavigation({pane,owner,children}:{pane:Pane;owner:boolean;children:ReactNode}) {
   const links:Pane[]=owner?['overview','budget','projects','resources']:['overview','projects','resources'];
-  const order:Pane[]=['overview','budget','projects','resources'];
   return <header className="edition-nav">
     <a className="edition-brand" href="#overview" aria-label="INS LAND 年度总览"><Brand/><small>LAND / Y27</small></a>
     <nav aria-label="工作台导航">{links.map(key=>{
       const {icon:Icon,label}=PANE_INFO[key];
       return <a href={'#'+key} key={key} aria-current={pane===key?'page':undefined}>
-        <span className="edition-nav-number">0{order.indexOf(key)+1}</span><Icon aria-hidden="true"/><span>{label}</span>
+        <Icon aria-hidden="true"/><span>{label}</span>
       </a>;
     })}</nav>
     <div className="actions edition-account">{children}</div>
@@ -153,14 +152,14 @@ function ProjectCover({project}:{project:Pick<Project,'id'|'code'|'start'|'color
     ...(art?{'--cover-deep':art.cover[0],'--cover-mid':art.cover[1]}:{}),
   } as CSSProperties}>
     <CoverOrbit className="project-cover-orbit"/>
-    <p className="project-cover-meta">{project.code} <span>/</span> {quarter(project.start)}<small>2027 COLLECTION</small></p>
+    <p className="project-cover-meta">{project.code} <span>/</span> {quarter(project.start)}</p>
     <p className="project-cover-title" lang="en">{art?.title??project.code}</p>
   </header>;
 }
-function ProjectSummary({project}:{project:Pick<Project,'name'|'status'|'start'|'end'>}) {
+function ProjectSummary({project}:{project:Pick<ViewerData['projects'][number],'code'|'name'|'status'|'start'|'end'|'primary'|'primaryDetail'|'secondary'|'secondaryDetail'>}) {
   return <div className="project-summary">
-    <div className="project-summary-heading"><h3>{project.name||'未命名项目'}</h3><span className="project-status">{project.status}</span></div>
-    <CampaignDates start={project.start} end={project.end}/>
+    <div className="project-summary-heading"><small className="project-list-code">{project.code}</small><h3>{project.name||'未命名项目'}</h3><span className="project-status">{project.status}</span></div>
+    <CampaignDates start={project.start} end={project.end}/><p className="project-list-form">{primaryFormLabel(project)} · {experienceModeLabel(project)}</p>
   </div>;
 }
 function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
@@ -230,10 +229,8 @@ function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];bas
   const settledQuarters=QUARTERS.map((_,i)=>settledMonths.slice(i*3,i*3+3).reduce((sum,amount)=>sum+amount,0));
   const week=monthlyTotal(weekday);
   const weekQuarters=QUARTERS.map((_,i)=>weekday?.monthly.slice(i*3,i*3+3).reduce((sum,value)=>sum+value,0)??0);
-  const values=series==='plan'?plan.quarters.map((value,i)=>value+weekQuarters[i]):settledQuarters;
-  const total=values.reduce((sum,amount)=>sum+amount,0);
-  const peak=Math.max(...values);
-  const peakLabels=QUARTERS.filter((_,i)=>peak>0&&values[i]===peak).join('、');
+  const plannedQuarters=plan.quarters.map((value,i)=>value+weekQuarters[i]);
+  const peak=Math.max(...plannedQuarters,...settledQuarters);
   const coverage=totals.paid+totals.pending;
   const allocated=plan.build+plan.experience;
   const splitTotal=allocated+plan.unallocated;
@@ -251,8 +248,8 @@ function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];bas
     <div className="budget-tiles">
       <article className="panel budget-feature">
         <CoverOrbit className="budget-orbit"/>
-        <h3 className="budget-title">{weekday?'年度合计规划':'年度预算基准'}</h3>
-        <strong className="budget-number">{yuan(weekday?plan.total+week:baseline)}</strong>
+        <h3 className="budget-title">全年规划预算</h3>
+        <strong className="budget-number">{yuan(plan.total+week)}</strong>
         <div className="edition-finance-mix">
           <Ratio segments={[...tierSegments(plan.S,plan.A),{value:week,color:'var(--weekday-color)'}]} label={'S 级 '+yuan(plan.S)+'，A 级 '+yuan(plan.A)+'，周中 '+yuan(week)}/>
           <div className="budget-program-split"><span>S 级 <b>{yuan(plan.S)}</b></span><span>A 级 <b>{yuan(plan.A)}</b></span>{weekday&&<span>周中 <b>{yuan(week)}</b></span>}</div>
@@ -267,15 +264,15 @@ function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];bas
         </div>
       </article>
       <section className="panel edition-settlement" aria-label="项目结算状态">
-        <div className="edition-section-label"><span>01 / SETTLEMENT</span><b>项目结算状态</b></div>
+        <div className="edition-section-label"><b>S / A 项目结算</b><span>按项目汇总</span></div>
       <article className="budget-snapshot budget-paid">
-        <h3 className="budget-title">项目实际已支出</h3><strong className="budget-number">{paidLabel}</strong>
+        <h3 className="budget-title">已录入实际支出</h3><strong className="budget-number">{paidLabel}</strong>
         <Ratio segments={[{value:totals.paid,color:'var(--budget-teal)'}]} scale={coverage} label={'已支出占已支出与待结算预算合计 '+pct(totals.paid,coverage)}/>
         <p>{totals.recorded?`${totals.withPayment} 项已有支出`:'暂无支出记录'}{totals.over>0&&<b className="danger"> · 超支 {yuan(totals.over)}</b>}</p>
         {actualSplit.count>0&&<p>已结算搭建 {yuan(actualSplit.build)} · 体验 {yuan(actualSplit.experience)}</p>}
       </article>
       <article className="budget-snapshot budget-pending">
-        <h3 className="budget-title">项目待结算预算</h3><strong className="budget-number">{yuan(totals.pending)}</strong>
+        <h3 className="budget-title">待结算预算</h3><strong className="budget-number">{yuan(totals.pending)}</strong>
         <Ratio segments={[{value:totals.pending,color:'var(--budget-gold)'}]} scale={coverage} label={'待支出占已支出与待结算预算合计 '+pct(totals.pending,coverage)}/>
         <p>{totals.withBalance} 项有待结算预算 · {items.length-totals.recorded} 项未录入实际支出</p>
       </article>
@@ -284,24 +281,30 @@ function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];bas
 
     <div className="budget-modules">
       <article className="panel budget-quarter">
-        <div className="calendar-heading"><div><h3 className="budget-title">季度预算占比</h3></div>
-          <div className="segmented" aria-label="季度金额口径"><button aria-pressed={series==='plan'} onClick={()=>{setSeries('plan');setSelectedQuarter(null);}}>规划预算</button><button aria-pressed={series==='paid'} onClick={()=>{setSeries('paid');setSelectedQuarter(null);}}>实际支出</button></div>
+        <h3 className="budget-title">季度计划与实际</h3>
+        <div className="budget-pair-legend"><span><i/>规划预算</span><span><i/>实际支出</span></div>
+        <div className="budget-pairs" role="group" aria-label="季度预算比较">
+          {QUARTERS.map((q,i)=><div key={q} className="budget-pair">
+            <div className="budget-pair-bars">
+              {([{key:'plan',amount:plannedQuarters[i],label:'规划预算'},{key:'paid',amount:settledQuarters[i],label:'实际支出'}] as const).map(entry=><button
+                key={entry.key} type="button" className="budget-column" data-series={entry.key} data-quarter={q}
+                aria-pressed={selectedQuarter===q&&series===entry.key}
+                aria-label={q+' '+entry.label+' '+yuan(entry.amount)+'，查看项目明细'}
+                onClick={()=>{
+                  setSeries(entry.key);
+                  setSelectedQuarter(q);
+                  const ledger=document.getElementById('settlement-ledger');
+                  ledger?.scrollIntoView({block:'start'});
+                  ledger?.focus({preventScroll:true});
+                }}>
+                <span className="budget-pair-amount">{entry.amount?((entry.amount/1_000_000).toLocaleString('zh-CN',{maximumFractionDigits:2})+' 万'):'—'}</span>
+                <span className="budget-pair-track" aria-hidden="true"><i style={{height:pct(entry.amount,peak)}}/></span>
+              </button>)}
+            </div>
+            <strong>{q}</strong>
+          </div>)}
         </div>
-        <div className="budget-peak"><span className="budget-pill">{peakLabels?peakLabels+' 最高':'暂无金额'}</span>{peakLabels&&<strong>{yuan(peak)} · {pct(peak,total)}</strong>}</div>
-        <div className="budget-columns" role="group" aria-label="季度占全年比例，点击筛选下方明细">
-          {QUARTERS.map((q,i)=><button key={q} className="budget-column" data-quarter={q}
-            aria-pressed={selectedQuarter===q} aria-label={`${q} ${yuan(values[i])}，占全年 ${pct(values[i],total)}，筛选项目明细`}
-            onClick={()=>setSelectedQuarter(selectedQuarter===q?null:q)}>
-            <span className="budget-column-value">{total?pct(values[i],total):'—'}</span>
-            <span className="budget-column-track" aria-hidden="true">
-              {series==='plan'&&weekQuarters[i]>0&&<i className="budget-column-week" style={{height:pct(weekQuarters[i],peak)}}/>}
-              <i style={{height:pct(series==='plan'?plan.quarters[i]:values[i],peak)}}/>
-            </span>
-            <strong>{q}</strong><small>{yuan(values[i])}</small>
-          </button>)}
-        </div>
-        {series==='plan'&&weekday&&<div className="budget-program-legend"><span>▰ S / A 项目</span><span>▰ 周中活动</span></div>}
-        <p className="budget-hint">{series==='plan'?(weekday?'项目按开始季度，周中按预算月份':'按项目开始季度归集'):'按 2027 年项目结算季度归集'} · 点柱图筛选项目明细</p>
+        <p className="budget-hint">计划按项目开始季度和周中预算月份归集。实际按 2027 年结算日期归集，未录入日期的历史支出只计入项目汇总。</p>
       </article>
 
       <article className="panel budget-structure">
@@ -328,8 +331,8 @@ function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];bas
       </article>
     </div>
 
-    {weekday&&<WeekdayBudget items={items} plan={weekday}/>}
     <PaymentLedger items={items} selectedQuarter={selectedQuarter} bySettlement={series==='paid'} clearQuarter={()=>setSelectedQuarter(null)} openProject={openProject}/>
+    {weekday&&<WeekdayBudget items={items} plan={weekday}/>}
   </>;
 }
 
@@ -381,7 +384,7 @@ function PaymentLedger({items,selectedQuarter,bySettlement,clearQuarter,openProj
         <option value="all">全部结算状态</option>
         {Object.entries(SETTLEMENT_STATUS).map(([key,label])=><option key={key} value={key}>{label}</option>)}
       </select>
-      {selectedQuarter&&<button className="budget-pill" onClick={clearQuarter} aria-label="清除季度筛选">{selectedQuarter} ×</button>}
+      {selectedQuarter&&<button className="budget-pill" onClick={clearQuarter} aria-label="清除季度筛选">{selectedQuarter} · {bySettlement?'按结算日期':'按项目开始日期'} ×</button>}
       <span className="ledger-count" aria-live="polite">{visible.length} / {items.length} 项</span>
     </div>
     {visible.length>0?<div className="spend-explorer">
@@ -472,12 +475,12 @@ export default function Planner() {
   const pane=usePane(true);
   const jumpToProject=useProjectJump(pane);
   const [tier,setTier]=useState('S'),[q,setQ]=useState('all'),[form,setForm]=useState('all');
-  const [dark,setDark]=useState(true),[notice,setNotice]=useState('');
+  const [dark,setDark]=useState(false),[notice,setNotice]=useState('');
   const [confirm,setConfirm]=useState<Confirmation|null>(null);
   const [resetStep,setResetStep]=useState(false);
   const input=useRef<HTMLInputElement>(null),dialog=useRef<HTMLDialogElement>(null),menu=useRef<HTMLDetailsElement>(null);
   const [excelBusy,setExcelBusy]=useState(false);
-  useEffect(()=>{try{setDark(localStorage.getItem('ins-y27-theme')!=='light');}catch{}},[]);
+  useEffect(()=>{try{setDark(localStorage.getItem('ins-y27-theme')==='dark');}catch{}},[]);
   useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';},[dark]);
   useEffect(()=>{if(confirm&&!dialog.current?.open)dialog.current?.showModal();else if(!confirm&&dialog.current?.open)dialog.current.close();},[confirm]);
   const ask=(value:Confirmation)=>{setResetStep(false);setConfirm(value);};
