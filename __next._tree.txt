@@ -1,4 +1,4 @@
-:HL["/ins-y27-campaign-planner/_next/static/chunks/2ofrfhxeibk9f.css","style"]
+:HL["/ins-y27-campaign-planner/_next/static/chunks/43a-61lm4g972.css","style"]
 :HC["/",""]
 1:[["children",{"s":"__PAGE__","h":160}]]
-0:{"b":"XHH3LMK1n3cBPgImQ8H--","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"ZsmugwUFjKEiElPGJgEy5","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
