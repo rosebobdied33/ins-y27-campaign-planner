@@ -1775,3 +1775,68 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .calendar-detail.paper-planning .primary{color:#fff7f4;background:#74374f;border-color:#74374f}
 @media(max-width:720px){.calendar-quarter-sheet .month-masthead{min-height:104px}.annual-month .month-week{min-height:47px}}
 @media(max-width:410px){.calendar-quarter-tabs button{flex-direction:column;gap:2px;padding-inline:9px}}
+
+/* Calendar cards use the workspace's dark palette and pick up light from each campaign. */
+:root[data-theme=dark] .paper-planning{
+  --paper:#2b222b;--paper-ink:#fff0f2;--paper-muted:#d7c0c9;--paper-rule:#644d5b;
+  --paper-rose:#48303e;--paper-red:#f1adbf;
+  --paper-grain:repeating-linear-gradient(0deg,#fff1f304 0 1px,transparent 1px 4px);
+  --card-edge:#785568;--card-shadow:#110b13a6;
+}
+:root[data-theme=dark] .calendar-quarter-tabs button{
+  border-color:var(--card-edge);
+  background:var(--paper-grain),linear-gradient(155deg,#5d3e51,#382a36);
+  box-shadow:inset 0 1px #e4a5c238,0 3px 0 #21151f;
+}
+:root[data-theme=dark] .calendar-quarter-tabs button:is(:hover,:focus-visible){background:#684458;color:var(--paper-ink)}
+:root[data-theme=dark] .calendar-quarter-sheet{
+  background:var(--paper-grain),linear-gradient(148deg,#402e3b,#2c222c 66%);
+  border-color:#654654;border-radius:13px;
+  box-shadow:inset 0 1px #edb1cb27,0 4px 0 #221620,0 10px 22px #180f18a6;
+}
+:root[data-theme=dark] .calendar-quarter-heading{border-color:#775367}
+:root[data-theme=dark] .calendar-quarter-heading strong{color:var(--paper-red)}
+:root[data-theme=dark] .calendar-quarter-sheet .annual-month{
+  background:var(--paper-grain),radial-gradient(ellipse at 92% 0%,color-mix(in srgb,var(--month-color) 19%,transparent),transparent 68%),linear-gradient(145deg,#362a36,#261f29 76%);
+  border-color:var(--card-edge);border-radius:8px;
+  box-shadow:inset 0 1px #ffe2f333,0 3px 0 #3e2b3b,0 5px 0 #241924,0 9px 14px var(--card-shadow);
+}
+:root[data-theme=dark] .month-masthead .month-print{
+  border-color:#927386;background:#382c39;border-radius:3px;
+  box-shadow:inset 0 1px #ffe6f03d,2px 4px 7px #110a14a8;
+}
+:root[data-theme=dark] .month-masthead .month-print:is(:hover,:focus-visible){border-color:var(--paper-red)}
+:root[data-theme=dark] .annual-month :is(.month-weekdays,.month-week){border-color:#806575}
+:root[data-theme=dark] .annual-month .month-weekdays{background:#221b24}
+:root[data-theme=dark] .annual-month .month-day[data-weekend=true]{background:#d68ea21a}
+:root[data-theme=dark] .annual-month .month-day[data-outside=true]{background:#120c1566}
+:root[data-theme=dark] .month-day>span[data-launch=true]{outline-color:var(--paper-red)}
+:root[data-theme=dark] .annual-month .month-event{
+  border-left-color:var(--event-color);background:color-mix(in srgb,var(--event-color) 27%,#322634);
+}
+:root[data-theme=dark] .annual-month .month-event[data-kind=A]{background:color-mix(in srgb,var(--event-color) 17%,#322634)}
+:root[data-theme=dark] .annual-month .month-event[data-kind=weekday]{border-color:#b89477;background:#40322f}
+:root[data-theme=dark] .annual-month .month-event:is(:hover,:focus-visible){background:#77485e;color:#fff6f8}
+:root[data-theme=dark] .paper-calendar-key i{background:#644457;border-left-color:#f0a9c2}
+:root[data-theme=dark] .paper-calendar-key i[data-kind=A]{background:#48383e;border-left-color:#d7a58e}
+:root[data-theme=dark] .paper-calendar-key i[data-kind=weekday]{background:#40322f;border-color:#b89477}
+
+:root[data-theme=dark] .theme-atlas.paper-planning{gap:10px;padding:0 0 5px;background:none;overflow:visible}
+:root[data-theme=dark] .theme-atlas .theme-quarter{
+  border:1px solid var(--card-edge);border-radius:9px;
+  background:var(--paper-grain),linear-gradient(150deg,#3a2a36,#2b232d 55%);
+  box-shadow:inset 0 1px #f0b9d02b,0 4px 0 #211620,0 8px 16px var(--card-shadow);
+}
+:root[data-theme=dark] .theme-atlas .theme-quarter-heading{background:linear-gradient(145deg,#5b3e50,#402e3c);border-color:#8c6277}
+:root[data-theme=dark] .theme-atlas .theme-cover{
+  border-color:#564353;box-shadow:0 0 0 1px #8b6c7d,1px 3px 7px var(--card-shadow);
+}
+:root[data-theme=dark] .theme-atlas .theme-cover[data-current=true]{box-shadow:0 0 0 2px var(--theme-ink)}
+:root[data-theme=dark] .calendar-detail.paper-planning{
+  --text:#fff0f2;--muted:#d7c0c9;--line:#644d5b;--accent:#f1adbf;--panel:#2b222b;--soft:#48303e;
+  color-scheme:dark;border-color:var(--card-edge);border-radius:11px;
+  background:var(--paper-grain),linear-gradient(145deg,#3c2c3a,#261e29 74%);
+  box-shadow:inset 0 1px #ffddf13b,0 5px 0 #211522,0 18px 50px var(--card-shadow);
+}
+:root[data-theme=dark] .paper-planning .theme-detail-image{background:#483645;border-color:#7f5f73;box-shadow:2px 4px 0 #1a131e}
+:root[data-theme=dark] .calendar-detail.paper-planning .primary{background:#e9aac1;border-color:#e9aac1;color:#351f2d}
