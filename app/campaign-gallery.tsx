@@ -1,9 +1,9 @@
 'use client';
 import {useRef,useState,type CSSProperties} from 'react';
 import {ArrowLeft,ArrowRight,ArrowUpRight} from 'lucide-react';
-import {durationDays} from '../lib/planner';
+import {durationDays,QUARTERS} from '../lib/planner';
 
-import {monthBounds,weekdayWindows,type ScheduleProject} from '../lib/weekday';
+import {coverageDays,monthBounds,weekdayWindows,type ScheduleProject} from '../lib/weekday';
 
 type GalleryProject=ScheduleProject;
 export type CampaignArtwork=Record<string,string>;
@@ -24,7 +24,12 @@ export function CampaignGallery({projects,artwork,openProject}:{
   const image=artwork[project.id];
   const window=weekdayWindows([project])[0];
   const neighbors=[{item:items[index-1],offset:-1},{item:items[index+1],offset:1}];
-  const dates=project.start+' — '+project.end;
+  const days=durationDays(project.start,project.end);
+  const milestones=[
+    {label:'上线',date:project.start},
+    ...(window?[{label:'周中启动',date:window.start}]:[]),
+    {label:'下线',date:project.end},
+  ];
   return <section className="campaign-gallery edition-screening" aria-labelledby="campaign-gallery-title"
     onKeyDown={event=>{
       if(event.altKey||event.ctrlKey||event.metaKey)return;
@@ -33,7 +38,7 @@ export function CampaignGallery({projects,artwork,openProject}:{
         go(index+(event.key==='ArrowRight'?1:-1));
       }
     }}
-    style={{'--screen-wash':palette.wash,'--screen-glow':palette.glow} as CSSProperties}>
+    style={{'--screen-wash':palette.wash,'--screen-glow':palette.glow,'--screen-deep':palette.cover[0],'--screen-mid':palette.cover[1]} as CSSProperties}>
     <div className="screening-stage">
     <div className="edition-screen" onPointerDown={e=>{if(e.pointerType==='touch')swipe.current=e.clientX;}}
       onPointerCancel={()=>{swipe.current=null;}} onPointerUp={e=>{
@@ -52,7 +57,19 @@ export function CampaignGallery({projects,artwork,openProject}:{
     <div className="edition-screen-guide">
       <div className="edition-screen-index"><span id="campaign-gallery-title">S 级场景档案</span><small>{String(index+1).padStart(2,'0')} / {String(items.length).padStart(2,'0')}</small></div>
       <div className="edition-screen-text" aria-live="polite"><small>{project.code} / {project.status}</small><p lang="en">{palette.title}</p><h2>{project.name||'未命名项目'}</h2></div>
-      <p className="edition-screen-dates">{dates}<small>{durationDays(project.start,project.end)} 天</small></p>
+      <div className="screening-brief">
+        <div className="screening-brief-heading"><span>活动周期</span>{days!==null&&<strong>{days}<small> 天</small></strong>}</div>
+        <dl className="screening-milestones" style={{gridTemplateColumns:'repeat('+milestones.length+', minmax(0,1fr))'}}>
+          {milestones.map(({label,date})=><div key={label}><dt>{label}</dt><dd><time dateTime={date}>{date.slice(5).replace('-','.')}</time>{!date.startsWith('2027-')&&<small>{date.slice(0,4)}</small>}</dd></div>)}
+        </dl>
+        <div className="screening-quarter-load" aria-label="2027 年各季度占用天数">
+          {QUARTERS.map((label,i)=>{
+            const [start]=monthBounds(i*3), [,end]=monthBounds(i*3+2);
+            const occupied=coverageDays([project],start,end);
+            return <div key={label} data-active={occupied>0}><span>{label}</span><b>{occupied}<small> 天</small></b><i aria-hidden="true"><span style={{width:occupied/(end-start)*100+'%'}}/></i></div>;
+          })}
+        </div>
+      </div>
       <div className="edition-screen-actions">
         <button className="edition-screen-open" onClick={()=>openProject(project.id)}>打开项目 <ArrowUpRight size={15}/></button>
         <button type="button" aria-label="上一张封面" disabled={index===0} onClick={()=>go(index-1)}><ArrowLeft size={16}/></button>

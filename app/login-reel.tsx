@@ -66,7 +66,7 @@ export function LoginReel({busy,error,onLogin}:{
   };
 
   return <main className="login-reel" style={{
-    '--scene-glow':palette.glow,'--scene-wash':palette.wash,
+    '--scene-glow':palette.glow,'--scene-wash':palette.wash,'--scene-deep':palette.cover[0],
     '--scene-x':(active%3)*50+'%','--scene-y':Math.floor(active/3)*50+'%',
     ...(image?{'--reel-image':'url('+image+')'}:{}),
   } as CSSProperties} lang="en">
