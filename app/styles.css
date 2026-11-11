@@ -1678,3 +1678,100 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .reel-edition-detail .reel-back-nodes b{padding:4px 8px}
 .reel-detail-close{position:absolute;right:12px;top:12px;color:#fff2ef;border-color:#fff2ef50;background:#291d2a}
 @media(prefers-reduced-motion:reduce){.reel-edition-dialog[open]{animation:none}}
+
+/* Paper schedules, tabbed quarterly folders and framed campaign prints */
+.paper-planning{
+  --paper:#f6eee7;--paper-ink:#2c2328;--paper-muted:#624d55;--paper-rule:#bca7ab;
+  --paper-rose:#e9cbd1;--paper-red:#8a3554;
+  --paper-grain:repeating-linear-gradient(0deg,#40263505 0 1px,transparent 1px 4px);
+}
+.calendar-index{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 11px}
+.calendar-quarter-tabs{display:flex;gap:5px;max-width:100%;padding:3px 2px 0}
+.calendar-quarter-tabs button{
+  min-width:0;min-height:42px;padding:6px clamp(8px,1.7vw,23px);gap:6px;
+  border:1px solid #c5a0aa;border-radius:8px 8px 2px 2px;color:var(--paper-ink);
+  background:var(--paper-grain),linear-gradient(#f1d8dc,#d9afb9);box-shadow:0 2px 0 #84606d;
+}
+.calendar-quarter-tabs button:hover,.calendar-quarter-tabs button:focus-visible{background:#fae2e3;color:#532438}
+.calendar-quarter-tabs strong{font:italic 600 19px/1 "Bodoni Moda",Didot,Georgia,serif}
+.calendar-quarter-tabs span,.paper-calendar-key{font-size:11px;white-space:nowrap}
+.paper-calendar-key{display:flex;flex-wrap:wrap;gap:10px;color:var(--text);padding:5px 0}
+.paper-calendar-key span{display:flex;align-items:center;gap:5px}
+.paper-calendar-key i{width:13px;height:9px;background:#dcb4c3;border-left:2px solid #9a4568}
+.paper-calendar-key i[data-kind=A]{background:#f1deca;border-left-color:#a2684e}
+.paper-calendar-key i[data-kind=weekday]{background:#e9ded1;border:1px dashed #866046}
+
+.calendar-quarter-sheet{
+  background:var(--paper-grain),var(--paper-rose);border:1px solid #c5a1aa;color:var(--paper-ink);
+  border-radius:9px 9px 5px 5px;box-shadow:0 4px 0 #20131d3d;
+}
+.calendar-quarter-heading{border-bottom:1px solid #89636d;margin-bottom:9px}
+.calendar-quarter-heading strong{color:#72374e;font-size:clamp(30px,3.2vw,47px)}
+.calendar-quarter-heading h3{font-weight:650}
+.calendar-quarter-heading span{color:var(--paper-muted)}
+.calendar-quarter-sheet .annual-month-grid{gap:clamp(8px,1.05vw,16px)}
+.calendar-quarter-sheet .annual-month{
+  background:var(--paper-grain),linear-gradient(160deg,color-mix(in srgb,var(--month-color) 16%,var(--paper)),var(--paper) 42%);
+  border:1px solid #a58c94;border-radius:2px;color:var(--paper-ink);padding:clamp(8px,1vw,15px);
+  box-shadow:2px 3px 0 #9e778858;
+}
+.calendar-quarter-sheet .month-masthead{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(72px,46%);align-items:center;gap:7px;
+  padding:2px 2px 10px;min-height:97px;
+}
+.month-masthead h4{font-size:13px}
+.month-masthead h4 b{color:var(--paper-ink);font-size:clamp(31px,4.5vw,63px);font-weight:500}
+.month-masthead .month-english{display:block;color:var(--paper-ink);font:italic 600 clamp(14px,1.5vw,22px)/1.1 "Bodoni Moda",Didot,Georgia,serif}
+.month-masthead small{display:block;margin-top:4px;color:var(--paper-muted);font-size:11px}
+.month-masthead .month-print{
+  display:grid;gap:3px;padding:4px;min-height:0;min-width:0;align-self:center;text-align:left;transform:rotate(-2deg);
+  color:var(--paper-ink);border:1px solid #bdabb0;border-radius:1px;background:#fffbf5;box-shadow:2px 3px 4px #54334232;
+}
+.month-print:is(:hover,:focus-visible){transform:none;border-color:var(--paper-red)}
+.month-print img{display:block;aspect-ratio:2.35;object-fit:cover;object-position:center 67%;width:100%;height:auto}
+.month-masthead .month-print span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--paper-ink);font-size:10px}
+.annual-month .month-weekdays{
+  padding:5px 0;border:1px solid #8d7880;border-radius:0;background:#eee1dc;color:var(--paper-ink);font-weight:650;
+}
+.annual-month .month-weekdays span:nth-last-child(-n+2){color:var(--paper-red)}
+.annual-month .month-week{
+  position:relative;min-height:43px;grid-auto-rows:minmax(19px,auto);padding:0 0 4px;border:0;border-inline:1px solid #8d7880;border-bottom:1px solid #8d7880;
+  background:repeating-linear-gradient(to right,transparent 0 calc(100% / 7 - 1px),var(--paper-rule) calc(100% / 7 - 1px) calc(100% / 7));
+}
+.annual-month .month-day{
+  padding:2px 0 0 3px;text-align:left;color:var(--paper-ink);font-size:11px;font-weight:600;background:none;
+}
+.annual-month .month-day[data-weekend=true]{color:var(--paper-red);background:#c18b9d12}
+.annual-month .month-day[data-outside=true]{background:#84636e10}
+.month-day>span{display:inline-grid;place-items:center;min-width:16px;min-height:16px}
+.month-day>span[data-launch=true]{outline:1px solid #8a3554;border-radius:52% 43% 46% 50%;color:var(--paper-red)}
+.annual-month .month-event{
+  min-height:19px;margin:0;padding:1px 3px;font-size:10px;border-radius:2px;color:var(--paper-ink);
+  border-left:2px solid color-mix(in srgb,var(--event-color) 42%,#533749);
+  background:color-mix(in srgb,var(--event-color) 46%,#e9d8df);
+}
+.annual-month .month-event[data-kind=A]{background:color-mix(in srgb,var(--event-color) 24%,#f3e4d8)}
+.annual-month .month-event[data-kind=weekday]{border:1px dashed #866046;background:#f1e6da}
+.annual-month .month-event:is(:hover,:focus-visible){background:#e7bccb;color:#341c2b}
+
+.theme-atlas.paper-planning{background:#bda0aa;border-radius:7px;gap:1px}
+.paper-planning .theme-quarter{background:var(--paper-grain),var(--paper);color:var(--paper-ink)}
+.paper-planning .theme-quarter-heading{
+  padding:5px 8px;border:0;border-bottom:1px solid #a47d88;border-radius:7px 7px 0 0;
+  background:var(--paper-grain),var(--paper-rose);color:var(--paper-red);
+}
+.paper-planning :is(.theme-quarter-heading strong,.theme-quarter h3){color:var(--paper-red)}
+.paper-planning :is(.theme-quarter-heading span,.theme-quarter p,.theme-nodes time,.theme-windows small){color:var(--paper-muted)}
+.paper-planning :is(.theme-nodes,.theme-windows){border-color:var(--paper-rule)}
+.paper-planning :is(.theme-nodes button,.theme-windows button){color:var(--paper-ink)}
+.paper-planning .theme-cover{border:4px solid #fffaf4;border-radius:2px;box-shadow:0 0 0 1px #b8a0aa,1px 3px 4px #4a35402c}
+.paper-planning .theme-cover[data-current=true]{box-shadow:0 0 0 2px var(--paper-red)}
+.calendar-detail.paper-planning{
+  color-scheme:light;width:min(530px,calc(100% - 24px));color:var(--paper-ink);
+  --text:#2c2328;--muted:#624d55;--line:#bca7ab;--accent:#77314c;--panel:#f6eee7;--soft:#ead8dc;
+  border:1px solid #b796a3;border-radius:5px;background:var(--paper-grain),var(--paper);padding:clamp(14px,3vw,24px);
+}
+.paper-planning .theme-detail-image{background:#fffaf4;border:1px solid #baa5ac;border-radius:1px;padding:6px;box-shadow:2px 3px 0 #9d758449}
+.calendar-detail.paper-planning .primary{color:#fff7f4;background:#74374f;border-color:#74374f}
+@media(max-width:720px){.calendar-quarter-sheet .month-masthead{min-height:104px}.annual-month .month-week{min-height:47px}}
+@media(max-width:410px){.calendar-quarter-tabs button{flex-direction:column;gap:2px;padding-inline:9px}}

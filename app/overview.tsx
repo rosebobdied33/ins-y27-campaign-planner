@@ -22,6 +22,7 @@ const dayOffset=(date:number)=>(date-startOfYear)/DAY;
 const dateRange=(item:ScheduleItem)=>item.start+' 至 '+item.end;
 const shortDate=(date:string)=>date.startsWith(YEAR+'-')?date.slice(5).replace('-','.') :date.replaceAll('-','.');
 const seasons=['一季度','二季度','三季度','四季度'];
+const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const dateWithin=(item:{start:string;end:string},from:number,to:number)=>
   Date.parse(item.start+'T00:00:00Z')<to&&Date.parse(item.end+'T00:00:00Z')>=from;
 const themeColor=(item:ScheduleItem)=>campaignTitles[item.id]?.glow??item.color;
@@ -79,7 +80,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
     </div>
     <section className="year-section" aria-labelledby="quarter-map-heading">
       <div className="section-heading"><h2 id="quarter-map-heading">年度主题版图</h2></div>
-      <div className="theme-atlas">
+      <div className="theme-atlas paper-planning">
         {QUARTERS.map((q,i)=>{
           const group=ordered.filter(p=>quarter(p.start)===q&&p.start.startsWith(YEAR+'-'));
           const lead=group.filter(p=>p.tier==='S');
@@ -109,7 +110,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
         })}
       </div>
     </section>
-    <section id="annual-schedule" className="year-section" aria-labelledby="calendar-heading" tabIndex={-1}>
+    <section id="annual-schedule" className="year-section paper-planning" aria-labelledby="calendar-heading" tabIndex={-1}>
       <div className="section-heading calendar-heading"><div><h2 id="calendar-heading">全年活动日历</h2></div>
         <div className="calendar-filters">
           <div className="segmented" aria-label="排期视图"><button aria-pressed={view==='calendar'} onClick={()=>setView('calendar')}>日历总表</button><button aria-pressed={view==='timeline'} onClick={()=>setView('timeline')}>全年时间线</button></div>
@@ -118,8 +119,18 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
           <select aria-label="排期状态" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">全部状态</option>{STATUSES.map(s=><option key={s}>{s}</option>)}</select>
         </div>
       </div>
+      <div className="calendar-index">
+        {view==='calendar'&&<div className="calendar-quarter-tabs" role="group" aria-label="跳到季度">
+          {QUARTERS.map((q,i)=><button type="button" key={q} onClick={()=>{
+            const sheet=document.getElementById('calendar-quarter-'+q);
+            sheet?.scrollIntoView({block:'start'});
+            sheet?.focus({preventScroll:true});
+          }}><strong>{q}</strong><span>{3*i+1}–{3*i+3} 月</span></button>)}
+        </div>}
+        <div className="paper-calendar-key" aria-label="排期图例"><span><i data-kind="S"/>S 级</span><span><i data-kind="A"/>A 级</span>{showWeekday&&<span><i data-kind="weekday"/>周中窗口</span>}</div>
+      </div>
       {view==='calendar'?<div className="annual-quarter-calendar">
-        {QUARTERS.map((q,i)=><section key={q} className="calendar-quarter-sheet" aria-label={seasons[i]}>
+        {QUARTERS.map((q,i)=><section key={q} id={'calendar-quarter-'+q} tabIndex={-1} className="calendar-quarter-sheet" aria-label={seasons[i]}>
           <header className="calendar-quarter-heading"><strong>{q}</strong><h3>{seasons[i]}</h3><span>{3*i+1}–{3*i+3} 月</span></header>
           <div className="annual-month-grid">
             {months.slice(i*3,i*3+3).map((month,j)=>{
@@ -129,12 +140,21 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
                 ...visible.map(project=>({project,start:project.start,end:project.end,weekday:false})),
                 ...week.filter(item=>dateWithin(item,month.from,month.to)).map(item=>({...item,weekday:true})),
               ];
-              const tint=visible.find(p=>p.tier==='S');
+              const leads=visible.filter(p=>p.tier==='S');
+              const tint=leads.find(p=>Date.parse(p.start+'T00:00:00Z')>=month.from&&artwork[p.id])??leads.find(p=>artwork[p.id])??leads[0];
+              const datePrefix=YEAR+'-'+String(index+1).padStart(2,'0')+'-';
+              const launches=new Set(visible.filter(p=>p.start.startsWith(datePrefix)).map(p=>Number(p.start.slice(-2))));
               return <article className="annual-month" key={month.label} style={{'--month-color':tint?themeColor(tint):'var(--accent)'} as CSSProperties}>
-                <header><h4><b>{String(index+1).padStart(2,'0')}</b> 月</h4><span>{visible.length} 项活动</span></header>
+                <header className="month-masthead">
+                  <div><h4><b>{String(index+1).padStart(2,'0')}</b> 月</h4><span className="month-english" lang="en">{monthNames[index]}</span><small>{visible.length} 项活动</small></div>
+                  {tint&&<button type="button" className="month-print" onClick={()=>setSelectedId(tint.id)} aria-label={'查看 '+(tint.name||tint.code)}>
+                    {artwork[tint.id]&&<img src={artwork[tint.id]} alt="" loading="lazy" width={1920} height={1080}/>}
+                    <span>{tint.name||tint.code}</span>
+                  </button>}
+                </header>
                 <div className="month-weekdays" aria-hidden="true">{['一','二','三','四','五','六','日'].map(day=><span key={day}>{day}</span>)}</div>
                 {monthWeeks(YEAR,index,entries).map((row,weekIndex)=><div className="month-week" key={weekIndex}>
-                  {row.days.map((day,dayIndex)=><span className="month-day" data-weekend={dayIndex>=5} aria-hidden="true" key={dayIndex}>{day??''}</span>)}
+                  {row.days.map((day,dayIndex)=><span className="month-day" data-weekend={dayIndex>=5} data-outside={day===null} aria-hidden="true" key={dayIndex}><span data-launch={day!==null&&launches.has(day)}>{day??''}</span></span>)}
                   {row.segments.map(({project:entry,lane,start,end,continuesFrom,continuesTo})=>{
                     const {project}=entry;
                     const label=entry.weekday?project.name+' 周中窗口':project.name||project.code;
@@ -178,7 +198,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
         </div>
       </div>}
     </section>
-    <dialog ref={dialog} className="calendar-detail" onClose={()=>setSelectedId(null)} aria-label="排期详情">
+    <dialog ref={dialog} className="calendar-detail paper-planning" onClose={()=>setSelectedId(null)} aria-label="排期详情">
         {selected&&<>
           <div className="calendar-detail-head"><span className="eyebrow">{selected.code} · {selected.tier} 级</span><button className="icon" aria-label="关闭排期详情" onClick={()=>dialog.current?.close()}><X/></button></div>
           {detailArtwork&&<img className="theme-detail-image" src={detailArtwork} alt={selected.name+' 概念图'} width={1920} height={1080}/>}
