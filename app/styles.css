@@ -1563,7 +1563,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
 }
 .theme-cover:hover,.theme-cover[data-current=true]{border-color:var(--theme-ink);color:#fff4f4}
 .theme-cover::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#150e1aee 5%,transparent 85%);}
-.theme-cover img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:center 63%}
 .theme-cover span{display:grid;gap:3px}
 .theme-cover strong{font-size:15px;line-height:1.1}
 .theme-cover small,.theme-nodes time,.theme-windows small{font-size:10px;font-variant-numeric:tabular-nums}
@@ -1592,7 +1591,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .annual-month .month-day[data-weekend=true]{background:color-mix(in srgb,var(--month-color) 8%,transparent)}
 .annual-month .month-event{border:0;border-left:2px solid var(--event-color);background:color-mix(in srgb,var(--event-color) 28%,var(--panel));color:var(--text)}
 .annual-month .month-event[data-kind=A]{background:color-mix(in srgb,var(--event-color) 18%,var(--panel))}
-.annual-month .month-event[data-kind=weekday]{background:color-mix(in srgb,var(--event-color) 10%,var(--panel));border:1px dashed color-mix(in srgb,var(--event-color) 80%,var(--line))}
 .annual-month .month-event:is(:hover,:focus-visible){background:color-mix(in srgb,var(--event-color) 43%,var(--panel))}
 .calendar-weekday-toggle{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;color:var(--text);font-size:12px}
 .calendar-weekday-toggle input{width:15px;height:15px;min-height:0;accent-color:var(--accent)}
@@ -1751,7 +1749,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
   background:color-mix(in srgb,var(--event-color) 46%,#e9d8df);
 }
 .annual-month .month-event[data-kind=A]{background:color-mix(in srgb,var(--event-color) 24%,#f3e4d8)}
-.annual-month .month-event[data-kind=weekday]{border:1px dashed #866046;background:#f1e6da}
 .annual-month .month-event:is(:hover,:focus-visible){background:#e7bccb;color:#341c2b}
 
 .theme-atlas.paper-planning{background:#bda0aa;border-radius:7px;gap:1px}
@@ -1815,7 +1812,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
   border-left-color:var(--event-color);background:color-mix(in srgb,var(--event-color) 27%,#322634);
 }
 :root[data-theme=dark] .annual-month .month-event[data-kind=A]{background:color-mix(in srgb,var(--event-color) 17%,#322634)}
-:root[data-theme=dark] .annual-month .month-event[data-kind=weekday]{border-color:#b89477;background:#40322f}
 :root[data-theme=dark] .annual-month .month-event:is(:hover,:focus-visible){background:#77485e;color:#fff6f8}
 :root[data-theme=dark] .paper-calendar-key i{background:#644457;border-left-color:#f0a9c2}
 :root[data-theme=dark] .paper-calendar-key i[data-kind=A]{background:#48383e;border-left-color:#d7a58e}
@@ -1931,11 +1927,41 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .prior-budget :is(th,td){padding:5px 2px;border-top:1px solid var(--line);overflow-wrap:anywhere}
 .prior-budget thead th{font-size:10px;font-weight:550;color:var(--muted)}
 .prior-budget tbody td:last-child{font-weight:700;color:var(--accent)}
-.prior-budget .prior-budget-over{color:var(--danger);margin-top:4px}
 .prior-budget-summary{padding:13px 16px;margin-block:13px}
 .prior-budget-summary header a{font-size:12px;display:flex;gap:4px;align-items:center;white-space:nowrap}
-.prior-budget-summary dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0}
+.prior-budget-summary dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0}
 .prior-budget-summary dl>div{border-top:1px solid var(--line);padding:6px 0 0;min-width:0}
 .prior-budget-summary dt,.prior-budget-summary small{font-size:11px;color:var(--muted)}
 .prior-budget-summary dd{margin:2px 0 0;font-weight:680;font-size:clamp(15px,2.1vw,26px);overflow-wrap:anywhere}
 @media(max-width:650px){.prior-budget-summary dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Project glass in the annual theme atlas. */
+.paper-planning .theme-cover{
+  display:grid;align-content:space-between;justify-content:stretch;gap:8px;
+  min-height:clamp(72px,7vw,112px);padding:9px 10px;
+  --theme-glass:#f7e7ec;--theme-glass-ink:#3a2431;
+  border:1px solid color-mix(in srgb,var(--theme-wash) 53%,#bd9ead);border-radius:7px;color:var(--theme-glass-ink);
+  background:linear-gradient(135deg,#fff8f5b8,transparent 70%),var(--theme-glass);
+  box-shadow:inset 0 1px #fff9f9ae,0 3px 0 #a4768938,0 6px 9px #56374619;
+}
+.paper-planning .theme-cover::before{
+  content:"";position:absolute;z-index:-2;inset:-23%;filter:blur(17px);
+  background:radial-gradient(ellipse at 80% 23%,color-mix(in srgb,var(--theme-wash) 65%,transparent),transparent 49%),
+    radial-gradient(ellipse at 62% 86%,color-mix(in srgb,var(--theme-ink) 54%,transparent),transparent 62%);
+}
+.paper-planning .theme-cover::after{
+  inset:3px;border:1px solid #fff5f44d;border-radius:4px;
+  background:linear-gradient(125deg,#fff9f426 15%,transparent 64%);
+}
+.paper-planning .theme-cover small{color:inherit}
+.paper-planning .theme-cover-code{font-variant-numeric:tabular-nums;letter-spacing:.08em;font-weight:650}
+.theme-cover-link{position:absolute;top:9px;right:9px;opacity:.68}
+.paper-planning .theme-cover:is(:hover,:focus-visible){border-color:var(--paper-red)}
+:root[data-theme=dark] .theme-atlas .theme-cover{
+  --theme-glass:#302431;--theme-glass-ink:#fff0f5;
+  border-color:color-mix(in srgb,var(--theme-wash) 37%,#695062);
+  background:linear-gradient(135deg,#f6d8ee20,transparent 70%),var(--theme-glass);
+  box-shadow:inset 0 1px #ffecfb38,0 3px 0 #1f1521,0 6px 9px #110b14a0;
+}
+:root[data-theme=dark] .theme-atlas .theme-cover::before{opacity:.63}
+:root[data-theme=dark] .theme-atlas .theme-cover::after{border-color:#f9dcf129;background:linear-gradient(115deg,#18111d69,transparent 77%)}

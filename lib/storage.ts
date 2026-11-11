@@ -13,11 +13,8 @@ export type ViewerData={role:'viewer';name:string;projects:ViewerProject[];chart
 export type BudgetReference={
   name:string;
   plan:{total:number;build:number;experience:number};
-  adjusted:number;
-  actual:{total:number|null;build:number|null;experience:number|null};
-  status:'recorded'|'partial'|'unrecorded';
 };
-type OwnerData={role:'owner';name:string;projects:Project[];revision:number;baseline:number;weekdayPlan?:WeekdayPlan|null;budgetReference?:Record<string,BudgetReference>|null};
+type OwnerData={role:'owner';name:string;projects:Project[];revision:number;baseline:number;weekdayPlan?:WeekdayPlan|null;budgetPlanReference?:Record<string,BudgetReference>|null};
 type Snapshot=OwnerData|ViewerData;
 class AccessError extends Error { constructor(message:string, readonly code?:string){super(message);} }
 async function rpc<T>(action:string,payload:Record<string,unknown>={}) {

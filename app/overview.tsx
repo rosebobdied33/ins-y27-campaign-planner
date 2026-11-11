@@ -91,11 +91,16 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
               <strong>{q}</strong><span>{3*i+1}–{3*i+3} 月</span><ArrowUpRight size={15}/>
             </button>
             <section className="theme-leads" aria-label={q+' S 级主线'}>
-              {lead.map(p=><button key={p.id} className="theme-cover" data-current={p.id===featured} style={{'--theme-ink':themeColor(p)} as CSSProperties}
-                onClick={()=>{if(featureIds.includes(p.id))setActiveId(p.id);setSelectedId(p.id);}}>
-                {artwork[p.id]&&<img src={artwork[p.id]} alt="" loading="lazy" width={1920} height={1080}/>}
-                <span><strong>{p.name||p.code}</strong><small>{shortDate(p.start)} – {shortDate(p.end)}</small></span>
-              </button>)}
+              {lead.map(p=>{
+                const palette=campaignTitles[p.id];
+                return <button key={p.id} className="theme-cover" data-current={p.id===featured}
+                  style={{'--theme-ink':themeColor(p),'--theme-wash':palette?.wash??p.color} as CSSProperties}
+                  onClick={()=>{if(featureIds.includes(p.id))setActiveId(p.id);setSelectedId(p.id);}}>
+                  <small className="theme-cover-code">{p.code}</small>
+                  <span><strong>{p.name||p.code}</strong><small>{shortDate(p.start)} – {shortDate(p.end)}</small></span>
+                  <ArrowUpRight className="theme-cover-link" size={14} aria-hidden="true"/>
+                </button>;
+              })}
               {!lead.length&&<p>本季无新上线主线</p>}
             </section>
             <section className="theme-nodes"><h3>A 级节点</h3>
@@ -115,7 +120,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
         <div className="calendar-filters">
           <div className="segmented" aria-label="排期视图"><button aria-pressed={view==='calendar'} onClick={()=>setView('calendar')}>日历总表</button><button aria-pressed={view==='timeline'} onClick={()=>setView('timeline')}>全年时间线</button></div>
           <select aria-label="排期级别" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部级别</option><option value="S">S 级</option><option value="A">A 级</option></select>
-          <label className="calendar-weekday-toggle"><input type="checkbox" checked={showWeekday} onChange={e=>setShowWeekday(e.target.checked)}/>周中窗口</label>
+          {view==='timeline'&&<label className="calendar-weekday-toggle"><input type="checkbox" checked={showWeekday} onChange={e=>setShowWeekday(e.target.checked)}/>周中窗口</label>}
           <select aria-label="排期状态" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">全部状态</option>{STATUSES.map(s=><option key={s}>{s}</option>)}</select>
         </div>
       </div>
@@ -127,7 +132,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
             sheet?.focus({preventScroll:true});
           }}><strong>{q}</strong><span>{3*i+1}–{3*i+3} 月</span></button>)}
         </div>}
-        <div className="paper-calendar-key" aria-label="排期图例"><span><i data-kind="S"/>S 级</span><span><i data-kind="A"/>A 级</span>{showWeekday&&<span><i data-kind="weekday"/>周中窗口</span>}</div>
+        <div className="paper-calendar-key" aria-label="排期图例"><span><i data-kind="S"/>S 级</span><span><i data-kind="A"/>A 级</span>{view==='timeline'&&showWeekday&&<span><i data-kind="weekday"/>周中窗口</span>}</div>
       </div>
       {view==='calendar'?<div className="annual-quarter-calendar">
         {QUARTERS.map((q,i)=><section key={q} id={'calendar-quarter-'+q} tabIndex={-1} className="calendar-quarter-sheet" aria-label={seasons[i]}>
@@ -136,10 +141,6 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
             {months.slice(i*3,i*3+3).map((month,j)=>{
               const index=i*3+j;
               const visible=timeline.filter(p=>dateWithin(p,month.from,month.to));
-              const entries=[
-                ...visible.map(project=>({project,start:project.start,end:project.end,weekday:false})),
-                ...week.filter(item=>dateWithin(item,month.from,month.to)).map(item=>({...item,weekday:true})),
-              ];
               const leads=visible.filter(p=>p.tier==='S');
               const tint=leads.find(p=>Date.parse(p.start+'T00:00:00Z')>=month.from&&artwork[p.id])??leads.find(p=>artwork[p.id])??leads[0];
               const datePrefix=YEAR+'-'+String(index+1).padStart(2,'0')+'-';
@@ -153,17 +154,16 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
                   </button>}
                 </header>
                 <div className="month-weekdays" aria-hidden="true">{['一','二','三','四','五','六','日'].map(day=><span key={day}>{day}</span>)}</div>
-                {monthWeeks(YEAR,index,entries).map((row,weekIndex)=><div className="month-week" key={weekIndex}>
+                {monthWeeks(YEAR,index,visible).map((row,weekIndex)=><div className="month-week" key={weekIndex}>
                   {row.days.map((day,dayIndex)=><span className="month-day" data-weekend={dayIndex>=5} data-outside={day===null} aria-hidden="true" key={dayIndex}><span data-launch={day!==null&&launches.has(day)}>{day??''}</span></span>)}
-                  {row.segments.map(({project:entry,lane,start,end,continuesFrom,continuesTo})=>{
-                    const {project}=entry;
-                    const label=entry.weekday?project.name+' 周中窗口':project.name||project.code;
-                    const description=label+'，'+entry.start+' 至 '+entry.end;
-                    return <button key={project.id+(entry.weekday?'-weekday':'')} className="month-event" data-kind={entry.weekday?'weekday':project.tier}
-                      style={{gridColumn:`${start} / ${end}`,gridRow:lane+2,'--event-color':entry.weekday?'var(--weekday-color)':themeColor(project)} as CSSProperties}
+                  {row.segments.map(({project,lane,start,end,continuesFrom,continuesTo})=>{
+                    const label=project.name||project.code;
+                    const description=label+'，'+dateRange(project);
+                    return <button key={project.id} className="month-event" data-kind={project.tier}
+                      style={{gridColumn:`${start} / ${end}`,gridRow:lane+2,'--event-color':themeColor(project)} as CSSProperties}
                       aria-label={description} title={description} onClick={()=>setSelectedId(project.id)}>
                       {continuesFrom&&<i aria-hidden="true">‹</i>}
-                      <span>{end-start<=2?(entry.weekday?'周中':project.code):(entry.weekday?'周中 · '+project.name:label)}</span>
+                      <span>{end-start<=2?project.code:label}</span>
                       {continuesTo&&<i aria-hidden="true">›</i>}
                     </button>;
                   })}

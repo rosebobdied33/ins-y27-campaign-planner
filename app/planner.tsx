@@ -164,21 +164,17 @@ function ProjectSummary({project}:{project:Pick<ViewerData['projects'][number],'
 }
 function PriorBudget({project,reference}:{project:Project;reference:BudgetReference}) {
   const amounts=[
-    ['规划总额',project.budget,reference.plan.total,reference.actual.total],
-    ['搭建',project.build,reference.plan.build,reference.actual.build],
-    ['体验',project.experience,reference.plan.experience,reference.actual.experience],
+    ['规划总额',project.budget,reference.plan.total],
+    ['搭建',project.build,reference.plan.build],
+    ['体验',project.experience,reference.plan.experience],
   ] as const;
   return <section className="prior-budget" aria-label="2026 年同档预算对照">
-    <header><div><h4>2026 同档参考</h4><p>{project.id} · {reference.name}</p></div>
-      <span>{reference.status==='partial'?'部分录入':reference.status==='unrecorded'?'未录入':'有实际记录'}</span></header>
-    <table><thead><tr><th scope="col">费用</th><th scope="col">2027 规划</th><th scope="col">2026 规划</th><th scope="col">2026 实际</th></tr></thead>
-      <tbody>{amounts.map(([label,current,plan,actual])=><tr key={label}><th scope="row">{label}</th>
-        <td>{current===null?'—':yuan(current)}</td><td>{yuan(plan)}</td><td>{actual===null?'—':yuan(actual)}</td>
+    <header><div><h4>2026 同档预算参考</h4><p>{project.id} · {reference.name}</p></div></header>
+    <table><thead><tr><th scope="col">费用</th><th scope="col">2027 规划</th><th scope="col">2026 规划</th></tr></thead>
+      <tbody>{amounts.map(([label,current,plan])=><tr key={label}><th scope="row">{label}</th>
+        <td>{current===null?'—':yuan(current)}</td><td>{yuan(plan)}</td>
       </tr>)}</tbody>
     </table>
-    {reference.adjusted!==reference.plan.total&&<p>2026 调度预算 {yuan(reference.adjusted)}</p>}
-    {reference.status==='recorded'&&reference.actual.total!==null&&reference.actual.total>reference.adjusted&&
-      <p className="prior-budget-over">2026 超调度预算 {yuan(reference.actual.total-reference.adjusted)}</p>}
   </section>;
 }
 function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReference;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
@@ -262,12 +258,7 @@ function SpendingBoard({items,baseline,weekday,history,openProject}:{items:Proje
     }
     return split;
   },{build:0,experience:0,count:0});
-  const historyTotals=history.reduce((totals,entry)=>({
-    planned:totals.planned+entry.plan.total,
-    adjusted:totals.adjusted+entry.adjusted,
-    actual:totals.actual+(entry.actual.total??0),
-    recorded:totals.recorded+Number(entry.status==='recorded'),
-  }),{planned:0,adjusted:0,actual:0,recorded:0});
+  const historyPlan=history.reduce((total,entry)=>total+entry.plan.total,0);
   const paidLabel=totals.recorded?yuan(totals.paid):'—';
 
   return <>
@@ -308,9 +299,7 @@ function SpendingBoard({items,baseline,weekday,history,openProject}:{items:Proje
     {history.length>0&&<section className="panel prior-budget prior-budget-summary" aria-label="S / A 年度预算对照">
       <header><div><h3>S / A 年度对照</h3><p>两年同口径 · 仅 S / A</p></div><a href="#projects">项目规划 <ArrowUpRight size={14}/></a></header>
       <dl><div><dt>2027 规划</dt><dd>{yuan(plan.total)}</dd></div>
-        <div><dt>2026 原规划</dt><dd>{yuan(historyTotals.planned)}</dd></div>
-        <div><dt>2026 调度预算</dt><dd>{yuan(historyTotals.adjusted)}</dd></div>
-        <div><dt>2026 已录入支出</dt><dd>{yuan(historyTotals.actual)}</dd><small>{historyTotals.recorded} 项完整记录 / {history.length} 项，含部分录入支出</small></div></dl>
+        <div><dt>2026 规划</dt><dd>{yuan(historyPlan)}</dd></div></dl>
     </section>}
     <div className="budget-modules">
       <article className="panel budget-quarter">
@@ -524,7 +513,7 @@ export default function Planner() {
   const toggle=()=>setDark(current=>!current);
   const items=store.items??[], shown=filterProjects(items,tier,q,form), baseline=store.snapshot?.role==='owner'?store.snapshot.baseline:0, t=summary(items,baseline);
   const weekday=store.snapshot?.role==='owner'?store.snapshot.weekdayPlan:undefined;
-  const budgetReference=store.snapshot?.role==='owner'?store.snapshot.budgetReference:null;
+  const budgetReference=store.snapshot?.role==='owner'?store.snapshot.budgetPlanReference:null;
   const edit=(id:string,patch:Partial<Project>)=>{
     const active=items.find(x=>x.id===id);
     if(active&&patch.tier&&active.tier!==patch.tier){patch.code=nextCode(items,patch.tier);setTier(patch.tier);}
