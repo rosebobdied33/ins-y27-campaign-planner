@@ -157,7 +157,7 @@ export function ResourceAnalysis({items,financial,approx,hidden}:{
           <p className="resource-note">{t?'普通活动按周中预算计入全年大盘。':'* 浏览模式仅显示 S/A 项目内部的估算占比。'}</p>
         </article>
         <article className="panel resource-panel resource-types">
-          <header><h3>项目类型分析</h3><p>按已录入分类看项目数量{t?'与规划预算':''}。</p></header>
+          <header><h3>项目类型分析</h3></header>
           <div className="segmented" aria-label="项目类型维度"><button aria-pressed={type==='build'} onClick={()=>setType('build')}>搭建形式</button><button aria-pressed={type==='experience'} onClick={()=>setType('experience')}>体验模式</button></div>
           <div className="resource-type-list">{types.map(([name,group])=><div className="insight-track" key={name}>
             <div><span>{name}</span><b>{group.count} 项 · {share(group.count,items.length)}</b></div>

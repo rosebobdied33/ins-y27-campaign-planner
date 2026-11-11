@@ -75,7 +75,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
       </article>
     </div>
     <section className="year-section" aria-labelledby="quarter-map-heading">
-      <div className="section-heading"><h2 id="quarter-map-heading">年度主题版图</h2><p>按上线季度排列主线与节点，周中窗口跟随对应的 S 级主题。</p></div>
+      <div className="section-heading"><h2 id="quarter-map-heading">年度主题版图</h2></div>
       <div className="theme-atlas">
         {QUARTERS.map((q,i)=>{
           const group=ordered.filter(p=>quarter(p.start)===q&&p.start.startsWith(YEAR+'-'));
@@ -107,7 +107,7 @@ export function PlanOverview({items,artwork,budget,weekday,openQuarter,openProje
       </div>
     </section>
     <section id="annual-schedule" className="year-section" aria-labelledby="calendar-heading" tabIndex={-1}>
-      <div className="section-heading calendar-heading"><div><h2 id="calendar-heading">全年活动日历</h2><p>按自然日显示活动周期。点色带查看完整日期与同期节点。</p></div>
+      <div className="section-heading calendar-heading"><div><h2 id="calendar-heading">全年活动日历</h2></div>
         <div className="calendar-filters">
           <div className="segmented" aria-label="排期视图"><button aria-pressed={view==='calendar'} onClick={()=>setView('calendar')}>日历总表</button><button aria-pressed={view==='timeline'} onClick={()=>setView('timeline')}>全年时间线</button></div>
           <select aria-label="排期级别" value={filter} onChange={e=>setFilter(e.target.value)}><option value="all">全部级别</option><option value="S">S 级</option><option value="A">A 级</option></select>

@@ -1608,3 +1608,47 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .theme-detail-formats>div{border-top:1px solid var(--line);padding:6px 0;min-width:0}
 .theme-detail-formats dt{font-size:11px;color:var(--muted)}
 .theme-detail-formats dd{margin:2px 0 0;overflow-wrap:anywhere;font-size:13px}
+
+.edition-shell .edition-chapter h1.overview-wordmark{
+  display:block;
+  padding:2px .08em .1em 0;
+  color:var(--text);
+  font:italic 400 clamp(37px,6.3vw,94px)/1 "Bodoni Moda",Didot,Georgia,serif;
+  letter-spacing:-.055em;
+  text-wrap:balance;
+}
+.overview-wordmark span{color:var(--accent)}
+@media(max-width:600px){
+  .edition-shell .edition-chapter[data-chapter=overview]{align-items:center;flex-wrap:wrap;gap:7px}
+}
+
+.reel-paper-back{
+  isolation:isolate;overflow:hidden;justify-content:space-between;
+  gap:4px;padding:clamp(10px,1.4vw,20px);
+  color:#fff1ef;border-color:color-mix(in srgb,var(--card-glow) 75%,#5e4558);
+  background:
+    radial-gradient(ellipse at 100% 0%,color-mix(in srgb,var(--card-wash) 45%,transparent),transparent 59%),
+    linear-gradient(143deg,var(--card-deep),#201621 87%);
+}
+.reel-paper-back::before,.reel-paper-back::after{content:"";position:absolute;pointer-events:none;z-index:-1}
+.reel-paper-back::before{inset:5px;border:1px solid color-mix(in srgb,var(--card-glow) 35%,transparent);border-radius:4px}
+.reel-paper-back::after{
+  inset:0;opacity:.35;
+  background:repeating-radial-gradient(ellipse at 98% 0%,transparent 0 17px,color-mix(in srgb,var(--card-glow) 48%,transparent) 18px 19px);
+  mask-image:linear-gradient(136deg,transparent 29%,#000);
+}
+.reel-paper-back .reel-card-code{color:var(--card-glow)}
+.reel-back-title{display:grid;gap:3px}
+.reel-back-title strong{font-size:clamp(11px,1.15vw,16px)}
+.reel-back-title .reel-card-title{font-size:clamp(21px,3vw,43px);color:var(--card-glow)}
+.reel-back-dates{
+  display:grid;grid-template-columns:1fr 1.35fr .8fr;gap:5px;
+  padding:6px 0;border-block:1px solid #fff2ee37;
+}
+.reel-back-dates>span{display:grid;gap:3px;color:#ecd9e1;font-size:clamp(9px,.78vw,11px)}
+.reel-back-dates b{color:#fff1ef;font-size:clamp(10px,1.1vw,16px);font-variant-numeric:tabular-nums}
+.reel-back-nodes{display:grid;gap:4px;font-size:clamp(9px,.85vw,12px)}
+.reel-back-nodes>span:first-child{color:#ecd9e1}
+.reel-back-nodes>span+span{display:flex;gap:4px;flex-wrap:wrap}
+.reel-back-nodes b{padding:2px 5px;border:1px solid #fff2ee38;border-radius:3px;font-weight:550}
+.reel-sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}

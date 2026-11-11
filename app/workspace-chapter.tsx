@@ -18,7 +18,9 @@ export function ChapterJump({target,children}:{target:string;children:ReactNode}
 export function WorkspaceChapter({pane,detail,children}:{pane:keyof typeof chapters;detail?:string;children?:ReactNode}) {
   return <header className="edition-chapter" data-chapter={pane}>
     <div className="edition-chapter-copy">
-      <h1>{chapters[pane]}{detail&&<small>{detail}</small>}</h1>
+      {pane==='overview'
+        ? <h1 className="overview-wordmark" lang="en" aria-label="年度总览"><span>Annual</span> Overview</h1>
+        : <h1>{chapters[pane]}{detail&&<small>{detail}</small>}</h1>}
     </div>
     {children&&<div className="edition-chapter-actions">{children}</div>}
   </header>;

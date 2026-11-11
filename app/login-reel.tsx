@@ -1,10 +1,23 @@
 'use client';
 import {useCallback,useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react';
 import {ArrowLeft,ArrowRight,ArrowUpRight,Pause,Play,X} from 'lucide-react';
+import {durationDays} from '../lib/planner';
 import {useLoginReel} from '../lib/storage';
 import {campaignTitles} from './campaign-gallery';
+import {useHorizontalWheel} from './use-horizontal-wheel';
 
 const scenes=['S01','S02','S03','S04','S05','S06','S07'] as const;
+// Public opening cards use the dates and named nodes from the supplied planning table.
+const publicEditions:Record<typeof scenes[number],{name:string;start:string;end:string;nodes:string[]}>={
+  S01:{name:'小羊牧场',start:'2027-01-22',end:'2027-03-15',nodes:['02.06 春节','02.14 情人节','02.20 元宵','03.08 女神月']},
+  S02:{name:'春日市场',start:'2027-03-26',end:'2027-05-24',nodes:['05.01 五一','05.20 520']},
+  S03:{name:'游戏世界4',start:'2027-06-04',end:'2027-07-26',nodes:['06.09 端午']},
+  S04:{name:'夏夜泳池',start:'2027-07-30',end:'2027-08-30',nodes:['08.08 七夕']},
+  S05:{name:'枫林假日',start:'2027-09-03',end:'2027-10-18',nodes:['09.15 中秋','10.01 国庆']},
+  S06:{name:'迷雾剧场',start:'2027-10-29',end:'2027-11-15',nodes:['11.11 双11']},
+  S07:{name:'冬博物馆',start:'2027-11-26',end:'2028-01-17',nodes:['12.25 圣诞','12.31 跨年','01.01 元旦']},
+};
+const cardDate=(date:string)=>date.startsWith('2027-')?date.slice(5).replace('-','.'):date.replaceAll('-','.');
 const sceneIndex=(index:number)=>(index+scenes.length)%scenes.length;
 const sparks=[[9,22],[19,44],[28,16],[39,32],[59,19],[72,38],[84,25],[93,43]];
 
@@ -17,6 +30,7 @@ export function LoginReel({busy,error,onLogin}:{
   const [open,setOpen]=useState(false);
   const [flipped,setFlipped]=useState(false);
   const [register,setRegister]=useState(false);
+  const stage=useRef<HTMLElement>(null);
   const dialog=useRef<HTMLDialogElement>(null);
   const swipeStart=useRef<number|null>(null);
   const swiped=useRef(false);
@@ -43,6 +57,7 @@ export function LoginReel({busy,error,onLogin}:{
     setPlaying(false);setFlipped(false);
     setActive(index=>sceneIndex(index+offset));
   },[]);
+  useHorizontalWheel(stage,step,!open);
   useEffect(()=>{
     if(open)return;
     const navigate=(event:KeyboardEvent)=>{
@@ -85,7 +100,7 @@ export function LoginReel({busy,error,onLogin}:{
       </button>
     </div>
 
-    <section className="reel-stage" aria-label="Seven campaign editions"
+    <section ref={stage} className="reel-stage" aria-label="Seven campaign editions"
       onPointerDown={event=>{
         swiped.current=false;
         if(event.button===0)swipeStart.current=event.clientX;
@@ -101,14 +116,17 @@ export function LoginReel({busy,error,onLogin}:{
         {scenes.map((item,index)=>{
           const relative=sceneIndex(index-active+3)-3;
           const colors=campaignTitles[item];
+          const edition=publicEditions[item];
+          const showingBack=relative===0&&flipped;
           return <button key={item} type="button" className="reel-card" data-position={relative}
             tabIndex={relative===0?0:-1}
             aria-label={colors.title+(relative===0?(flipped?', show front':', flip edition'):', select edition')}
-            aria-pressed={relative===0&&flipped}
+            aria-pressed={showingBack}
+            aria-describedby={showingBack?'edition-details-'+item:undefined}
             style={{
               '--slot':relative,'--distance':Math.abs(relative),
               '--tile-x':(index%3)*50+'%','--tile-y':Math.floor(index/3)*50+'%',
-              '--card-glow':colors.glow,'--card-wash':colors.wash,
+              '--card-glow':colors.glow,'--card-wash':colors.wash,'--card-deep':colors.cover[0],
             } as CSSProperties}
             onClick={()=>{
               if(swiped.current){swiped.current=false;return;}
@@ -121,13 +139,20 @@ export function LoginReel({busy,error,onLogin}:{
                 <span className="reel-card-title">{colors.title}</span>
                 <span className="reel-paper-imprint">INS LAND <span>ARCHIVE PRINT</span></span>
               </span>
-              <span className="reel-paper-back">
-                <span className="reel-card-code">{item} / INS LAND</span>
-                <span className="reel-back-stamp">✧</span>
-                <span className="reel-card-title">{colors.title}</span>
-                <span className="reel-paper-imprint">CAMPAIGN ARCHIVE <span>2027</span></span>
+              <span className="reel-paper-back" lang="zh-CN">
+                <span className="reel-card-code"><span>INS LAND / {item}</span><span aria-hidden="true">✧</span></span>
+                <span className="reel-back-title"><span className="reel-card-title" lang="en">{colors.title}</span><strong>{edition.name}</strong></span>
+                <span className="reel-back-dates">
+                  <span>上线 <b>{cardDate(edition.start)}</b></span>
+                  <span>下线 <b>{cardDate(edition.end)}</b></span>
+                  <span>周期 <b>{durationDays(edition.start,edition.end)} 天</b></span>
+                </span>
+                <span className="reel-back-nodes"><span>同期节日及节点</span><span>{edition.nodes.map(node=><b key={node}>{node}</b>)}</span></span>
               </span>
             </span>
+            {showingBack&&<span id={'edition-details-'+item} className="reel-sr-only" lang="zh-CN">
+              {edition.name}，上线 {edition.start}，下线 {edition.end}，共 {durationDays(edition.start,edition.end)} 天。同期节日及节点 {edition.nodes.join('、')}。
+            </span>}
           </button>;
         })}
       </div>

@@ -5,6 +5,8 @@ import {durationDays,QUARTERS} from '../lib/planner';
 
 import {coverageDays,monthBounds,weekdayWindows,type ScheduleProject} from '../lib/weekday';
 
+import {useHorizontalWheel} from './use-horizontal-wheel';
+
 type GalleryProject=ScheduleProject;
 export type CampaignArtwork=Record<string,string>;
 
@@ -15,12 +17,14 @@ export function CampaignGallery({projects,artwork,activeId,onSelect,openProject}
   onSelect:(id:string)=>void;
   openProject:(id:string)=>void;
 }) {
+  const stage=useRef<HTMLDivElement>(null);
   const swipe=useRef<number|null>(null);
   const items=projects.filter(project=>/^S0[1-7]$/.test(project.id)).sort((a,b)=>a.id.localeCompare(b.id));
   const index=Math.max(0,items.findIndex(item=>item.id===activeId));
   const project=items[index];
-  if(!project)return null;
   const go=(next:number)=>onSelect(items[Math.max(0,Math.min(items.length-1,next))].id);
+  useHorizontalWheel(stage,direction=>go(index+direction),Boolean(project));
+  if(!project)return null;
   const palette=campaignTitles[project.id];
   const image=artwork[project.id];
   const window=weekdayWindows([project])[0];
@@ -40,7 +44,7 @@ export function CampaignGallery({projects,artwork,activeId,onSelect,openProject}
       }
     }}
     style={{'--screen-wash':palette.wash,'--screen-glow':palette.glow,'--screen-deep':palette.cover[0],'--screen-mid':palette.cover[1]} as CSSProperties}>
-    <div className="screening-stage">
+    <div ref={stage} className="screening-stage">
     <div className="edition-screen" onPointerDown={e=>{if(e.pointerType==='touch')swipe.current=e.clientX;}}
       onPointerCancel={()=>{swipe.current=null;}} onPointerUp={e=>{
         if(swipe.current===null)return;

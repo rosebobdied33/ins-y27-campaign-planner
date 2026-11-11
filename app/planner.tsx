@@ -375,7 +375,7 @@ function PaymentLedger({items,selectedQuarter,bySettlement,clearQuarter,openProj
 
   return <article id="settlement-ledger" tabIndex={-1} className="panel payment-ledger">
     <div className="ledger-heading">
-      <div><h3 className="budget-title">项目结算明细</h3><p>实际搭建费与实际体验费在项目规划填写。</p></div>
+      <div><h3 className="budget-title">项目结算明细</h3></div>
       <div className="segmented" aria-label="支出查看方式"><button aria-pressed={view==='project'} onClick={()=>setView('project')}>按项目</button><button aria-pressed={view==='time'} onClick={()=>setView('time')}>按结算时间</button></div>
     </div>
     <div className="ledger-tools">
