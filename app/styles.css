@@ -1892,3 +1892,50 @@ button.calendar-bar{min-height:0;padding:0 2px}
   .spend-card-actual{padding:7px 6px}
   .spend-card-budget{font-size:12px}
 }
+
+/* Light screening surfaces keep the campaign tint without carrying over the night backdrop. */
+:root:not([data-theme=dark]) .edition-shell .edition-screening{
+  color:#302329;border-color:#dfc8cd;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--screen-wash) 30%,#f9efed),#f7eeeb 72%);
+  --screen-light-ink:color-mix(in srgb,var(--screen-mid) 46%,#472d3b);
+  --screen-light-rule:#b2889c5c;
+}
+:root:not([data-theme=dark]) .edition-screening .edition-screen-guide{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--screen-wash) 27%,#fff5f2),#fff8f4 85%);border-color:var(--screen-light-rule);
+}
+:root:not([data-theme=dark]) .screening-stage .edition-screen{border-color:#fff9f7;box-shadow:0 12px 25px #5b36423d}
+:root:not([data-theme=dark]) .edition-screening :is(.edition-screen-index,.screening-brief,.screening-milestones,.screening-schedule){border-color:var(--screen-light-rule)}
+:root:not([data-theme=dark]) .edition-screening .screening-brief{background:#fffaf7b3}
+:root:not([data-theme=dark]) .edition-screening :is(small,.screening-milestones dt,.screening-quarter-load>div,.screening-schedule header span,.screening-months){color:#68535f}
+:root:not([data-theme=dark]) .edition-screening .screening-milestones dd{color:#34252d}
+:root:not([data-theme=dark]) .edition-screening :is(.screening-brief-heading strong,.screening-quarter-load [data-active=true] b){color:var(--screen-light-ink)}
+:root:not([data-theme=dark]) .edition-screening .screening-quarter-load i{background:#ccb6be70}
+:root:not([data-theme=dark]) .edition-screening .screening-quarter-load i span{background:var(--screen-light-ink)}
+:root:not([data-theme=dark]) .edition-screening .edition-screen-actions button{background:#fff8f5;color:#472e3a;border-color:var(--screen-light-rule)}
+:root:not([data-theme=dark]) .edition-screening .edition-screen-actions .edition-screen-open{background:color-mix(in srgb,var(--screen-glow) 55%,#fff4f0);color:#3a2631}
+:root:not([data-theme=dark]) .edition-screening :is(.screening-schedule,.edition-screen-rail){background:#f4e7e6}
+:root:not([data-theme=dark]) .screening-months>span{border-color:#cbb0be}
+:root:not([data-theme=dark]) .screening-track{background:repeating-linear-gradient(90deg,#d6c1cb80 0 calc(25% - 1px),#aa879a calc(25% - 1px) 25%)}
+:root:not([data-theme=dark]) .edition-screening .edition-screen-rail button{background:color-mix(in srgb,var(--edition-swatch) 22%,#fff7f3);color:#4d3441}
+:root:not([data-theme=dark]) .edition-screening .edition-screen-rail button[aria-pressed=true]{background:color-mix(in srgb,var(--edition-swatch) 63%,#fff7f3);border-color:#a17c8a}
+
+.prior-budget{
+  min-width:0;padding:10px;margin-block:9px;border:1px solid var(--line);border-radius:7px;
+  background:color-mix(in srgb,var(--accent) 7%,var(--panel));font-variant-numeric:tabular-nums;
+}
+.prior-budget header{display:flex;justify-content:space-between;align-items:flex-start;gap:7px;margin-bottom:7px}
+.prior-budget header :is(p,span),.prior-budget>p{font-size:11px;color:var(--muted)}
+.prior-budget header>span{white-space:nowrap}
+.prior-budget h4{font-size:13px}
+.prior-budget table{width:100%;border-collapse:collapse;table-layout:fixed;text-align:right;font-size:11px}
+.prior-budget th:first-child{width:19%;text-align:left}
+.prior-budget :is(th,td){padding:5px 2px;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.prior-budget thead th{font-size:10px;font-weight:550;color:var(--muted)}
+.prior-budget tbody td:last-child{font-weight:700;color:var(--accent)}
+.prior-budget .prior-budget-over{color:var(--danger);margin-top:4px}
+.prior-budget-summary{padding:13px 16px;margin-block:13px}
+.prior-budget-summary header a{font-size:12px;display:flex;gap:4px;align-items:center;white-space:nowrap}
+.prior-budget-summary dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0}
+.prior-budget-summary dl>div{border-top:1px solid var(--line);padding:6px 0 0;min-width:0}
+.prior-budget-summary dt,.prior-budget-summary small{font-size:11px;color:var(--muted)}
+.prior-budget-summary dd{margin:2px 0 0;font-weight:680;font-size:clamp(15px,2.1vw,26px);overflow-wrap:anywhere}
+@media(max-width:650px){.prior-budget-summary dl{grid-template-columns:repeat(2,minmax(0,1fr))}}

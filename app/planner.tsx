@@ -2,7 +2,7 @@
 import {useEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
 import {ArrowDownToLine,ArrowUpRight,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet} from 'lucide-react';
 import {allocation,backup,COLORS,csv,durationDays,EXPERIENCE_MODES,experienceModeLabel,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,recordedSpend,rows,settlementMonths,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
-import {useCampaignArtwork,usePlanner,type ViewerData} from '../lib/storage';
+import {useCampaignArtwork,usePlanner,type BudgetReference,type ViewerData} from '../lib/storage';
 
 import {PlanOverview} from './overview';
 import {campaignTitles,type CampaignArtwork} from './campaign-gallery';
@@ -162,7 +162,26 @@ function ProjectSummary({project}:{project:Pick<ViewerData['projects'][number],'
     <CampaignDates start={project.start} end={project.end}/><p className="project-list-form">{primaryFormLabel(project)} · {experienceModeLabel(project)}</p>
   </div>;
 }
-function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
+function PriorBudget({project,reference}:{project:Project;reference:BudgetReference}) {
+  const amounts=[
+    ['规划总额',project.budget,reference.plan.total,reference.actual.total],
+    ['搭建',project.build,reference.plan.build,reference.actual.build],
+    ['体验',project.experience,reference.plan.experience,reference.actual.experience],
+  ] as const;
+  return <section className="prior-budget" aria-label="2026 年同档预算对照">
+    <header><div><h4>2026 同档参考</h4><p>{project.id} · {reference.name}</p></div>
+      <span>{reference.status==='partial'?'部分录入':reference.status==='unrecorded'?'未录入':'有实际记录'}</span></header>
+    <table><thead><tr><th scope="col">费用</th><th scope="col">2027 规划</th><th scope="col">2026 规划</th><th scope="col">2026 实际</th></tr></thead>
+      <tbody>{amounts.map(([label,current,plan,actual])=><tr key={label}><th scope="row">{label}</th>
+        <td>{current===null?'—':yuan(current)}</td><td>{yuan(plan)}</td><td>{actual===null?'—':yuan(actual)}</td>
+      </tr>)}</tbody>
+    </table>
+    {reference.adjusted!==reference.plan.total&&<p>2026 调度预算 {yuan(reference.adjusted)}</p>}
+    {reference.status==='recorded'&&reference.actual.total!==null&&reference.actual.total>reference.adjusted&&
+      <p className="prior-budget-over">2026 超调度预算 {yuan(reference.actual.total-reference.adjusted)}</p>}
+  </section>;
+}
+function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReference;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
   const gap=allocation(p), split=(p.build??0)+(p.experience??0);
   const [dateError,setDateError]=useState('');
   const changeDate=(which:'start'|'end', value:string)=>{
@@ -213,6 +232,7 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
           <div className="split"><Money label="搭建" value={p.build} onChange={build=>edit({build})}/><Money label="体验" value={p.experience} onChange={experience=>edit({experience})}/></div>
           <Ratio segments={[...splitSegments(p.build??0,p.experience??0),{value:Math.max(0,gap),color:'var(--unassigned)'}]} label={'项目预算分配：搭建 '+yuan(p.build??0)+'，体验 '+yuan(p.experience??0)+'，'+(gap<0?'超额 ':'待分配 ')+yuan(Math.abs(gap))}/>
           <div className="split-legend"><span><i/>搭建 {split&&p.build!==null?pct(p.build,split):'—'}</span><span><i/>体验 {split&&p.experience!==null?pct(p.experience,split):'—'}</span>{gap>0&&<span className="unassigned"><i/>待分配</span>}</div>
+          {reference&&<PriorBudget project={p} reference={reference}/>}
           <ProjectSettlement project={p} onSave={settlement=>edit({settlement})}/>
           </div>
         </details>
@@ -221,7 +241,7 @@ function Card({p,edit,copy,remove}:{p:Project;edit:(patch:Partial<Project>)=>voi
     </details>
   </article>;
 }
-function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];baseline:number;weekday?:WeekdayPlan|null;openProject:(id:string)=>void}) {
+function SpendingBoard({items,baseline,weekday,history,openProject}:{items:Project[];baseline:number;weekday?:WeekdayPlan|null;history:BudgetReference[];openProject:(id:string)=>void}) {
   const [series,setSeries]=useState<'plan'|'paid'>('plan');
   const [selectedQuarter,setSelectedQuarter]=useState<string|null>(null);
   const totals=spending(items), plan=summary(items,baseline);
@@ -242,6 +262,12 @@ function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];bas
     }
     return split;
   },{build:0,experience:0,count:0});
+  const historyTotals=history.reduce((totals,entry)=>({
+    planned:totals.planned+entry.plan.total,
+    adjusted:totals.adjusted+entry.adjusted,
+    actual:totals.actual+(entry.actual.total??0),
+    recorded:totals.recorded+Number(entry.status==='recorded'),
+  }),{planned:0,adjusted:0,actual:0,recorded:0});
   const paidLabel=totals.recorded?yuan(totals.paid):'—';
 
   return <>
@@ -279,6 +305,13 @@ function SpendingBoard({items,baseline,weekday,openProject}:{items:Project[];bas
       </section>
     </div>
 
+    {history.length>0&&<section className="panel prior-budget prior-budget-summary" aria-label="S / A 年度预算对照">
+      <header><div><h3>S / A 年度对照</h3><p>两年同口径 · 仅 S / A</p></div><a href="#projects">项目规划 <ArrowUpRight size={14}/></a></header>
+      <dl><div><dt>2027 规划</dt><dd>{yuan(plan.total)}</dd></div>
+        <div><dt>2026 原规划</dt><dd>{yuan(historyTotals.planned)}</dd></div>
+        <div><dt>2026 调度预算</dt><dd>{yuan(historyTotals.adjusted)}</dd></div>
+        <div><dt>2026 已录入支出</dt><dd>{yuan(historyTotals.actual)}</dd><small>{historyTotals.recorded} 项完整记录 / {history.length} 项，含部分录入支出</small></div></dl>
+    </section>}
     <div className="budget-modules">
       <article className="panel budget-quarter">
         <h3 className="budget-title">季度计划与实际</h3>
@@ -491,6 +524,7 @@ export default function Planner() {
   const toggle=()=>setDark(current=>!current);
   const items=store.items??[], shown=filterProjects(items,tier,q,form), baseline=store.snapshot?.role==='owner'?store.snapshot.baseline:0, t=summary(items,baseline);
   const weekday=store.snapshot?.role==='owner'?store.snapshot.weekdayPlan:undefined;
+  const budgetReference=store.snapshot?.role==='owner'?store.snapshot.budgetReference:null;
   const edit=(id:string,patch:Partial<Project>)=>{
     const active=items.find(x=>x.id===id);
     if(active&&patch.tier&&active.tier!==patch.tier){patch.code=nextCode(items,patch.tier);setTier(patch.tier);}
@@ -540,7 +574,7 @@ export default function Planner() {
           {weekday&&<ChapterJump target="weekday-budget">周中预算</ChapterJump>}
           <ChapterJump target="settlement-ledger">项目结算</ChapterJump>
         </WorkspaceChapter>
-        <SpendingBoard items={items} baseline={baseline} weekday={weekday} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id,true);}}/>
+        <SpendingBoard items={items} baseline={baseline} weekday={weekday} history={Object.values(budgetReference??{})} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id,true);}}/>
       </section>
       {store.error&&<div className="banner" role="alert">{store.error}<div className="actions">
         {store.dirty&&<button onClick={()=>void store.flush()}>重试同步</button>}
@@ -565,7 +599,7 @@ export default function Planner() {
           <label><CalendarDays size={15}/><select aria-label="季度筛选" value={q} onChange={e=>setQ(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label>
           <label><select aria-label="搭建形式与体验模式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">搭建 / 体验</option>{options(FORM_FILTERS.filter(value=>PRIMARY_FORMS.some(primary=>primary===value)||EXPERIENCE_MODES.some(mode=>mode===value)||items.some(p=>p.primary===value||p.secondary===value)))}</select></label></>}>
 
-        {shown.map(p=><Card key={p.id} p={p} edit={patch=>edit(p.id,patch)} copy={()=>add(p)} remove={()=>ask({title:'删除 '+p.code+'？',description:'将从年度计划移除「'+p.name+'」，预算会随之更新。',action:()=>store.change(items.filter(x=>x.id!==p.id))})}/>)}</ProjectCollection>
+        {shown.map(p=><Card key={p.id} p={p} reference={p.id.startsWith(p.tier)?budgetReference?.[p.id]:undefined} edit={patch=>edit(p.id,patch)} copy={()=>add(p)} remove={()=>ask({title:'删除 '+p.code+'？',description:'将从年度计划移除「'+p.name+'」，预算会随之更新。',action:()=>store.change(items.filter(x=>x.id!==p.id))})}/>)}</ProjectCollection>
         {!shown.length&&<div className="empty panel">当前筛选下没有项目。<button onClick={()=>{setTier('all');setQ('all');setForm('all');}}>清除筛选</button></div>}
       </section>
       <ResourceAnalysis items={items} financial={{items,weekday}} hidden={pane!=='resources'}/>
