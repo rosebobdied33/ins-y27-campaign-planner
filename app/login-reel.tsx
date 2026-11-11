@@ -19,7 +19,7 @@ const publicEditions:Record<typeof scenes[number],{name:string;start:string;end:
 };
 const cardDate=(date:string)=>date.startsWith('2027-')?date.slice(5).replace('-','.'):date.replaceAll('-','.');
 const sceneIndex=(index:number)=>(index+scenes.length)%scenes.length;
-const sparks=[[9,22],[19,44],[28,16],[39,32],[59,19],[72,38],[84,25],[93,43]];
+const sparks=[[8,24,26],[16,43,15],[24,15,21],[34,31,13],[63,14,22],[76,35,15],[86,24,31],[93,43,21],[11,72,18],[89,80,24]];
 
 export function LoginReel({busy,error,onLogin}:{
   busy:boolean;error:string;onLogin:(name:string,password:string,register:boolean)=>void;
@@ -88,11 +88,13 @@ export function LoginReel({busy,error,onLogin}:{
   } as CSSProperties} lang="en">
     <div className="reel-atmosphere" aria-hidden="true"/>
     <div className="reel-volume" aria-hidden="true"/>
-    <div className="reel-sparks" aria-hidden="true">{sparks.map(([x,y],i)=><i key={i} style={{left:x+'%',top:y+'%',animationDelay:i*-.83+'s'}}/>)}</div>
+    <div className="reel-sparks" aria-hidden="true">{sparks.map(([x,y,size],i)=><i key={i} style={{left:x+'%',top:y+'%',width:size,height:size,animationDelay:i*-.83+'s'}}/>)}</div>
     <header className="reel-header">
       <span className="reel-wordmark">INS LAND<small>2027</small></span><span className="reel-edition">THE CAMPAIGN EDITION</span>
 
     </header>
+
+    <h1 className="reel-greeting"><span>Hi 2027</span></h1>
 
     <div className="reel-intro">
       <button type="button" className="reel-enter reel-entry-window" onClick={enter}>

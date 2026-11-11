@@ -2062,3 +2062,56 @@ button.calendar-bar{min-height:0;padding:0 2px}
   width:100%;grid-template-columns:minmax(0,1fr);justify-content:stretch;
 }
 #budget .budget-pair-track{width:100%}
+
+/* Opening composition scales with both the viewport width and available height. */
+.login-reel{
+  --reel-width:min(44vw,73vh,760px);
+  grid-template-rows:auto auto auto auto auto;align-content:start;
+}
+.reel-greeting{
+  position:relative;justify-self:center;isolation:isolate;text-align:center;
+  margin:clamp(6px,1.5vh,24px) 0 clamp(3px,1.2vh,18px);padding:0 .13em .1em;
+  font:italic 400 clamp(92px,min(18.3vw,26vh),365px)/.98 "Bodoni Moda",Didot,Georgia,serif;
+  letter-spacing:-.082em;white-space:nowrap;pointer-events:none;
+}
+.reel-greeting span{
+  display:block;padding-right:.05em;color:#f6d6e7;
+  background:linear-gradient(108deg,#fff1eeed 12%,color-mix(in srgb,var(--scene-glow) 73%,#ffe6ed) 50%,#f6a9d885 91%);
+  background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 8px 28px #c86a9d35);animation:reel-greeting-ink 1.25s cubic-bezier(.22,.75,.25,1) both;
+}
+.reel-greeting::after{
+  content:"";position:absolute;left:12%;bottom:9%;width:81%;height:21%;
+  border-bottom:2px solid color-mix(in srgb,var(--scene-glow) 68%,transparent);
+  border-radius:45% 36% 55% 48%;transform:rotate(-6deg);opacity:.75;
+  animation:reel-greeting-ink 1.1s .27s cubic-bezier(.22,.75,.25,1) both;
+}
+@keyframes reel-greeting-ink{from{clip-path:inset(-25% 100% -35% -5%);opacity:0}to{clip-path:inset(-25% -5% -35% -5%);opacity:1}}
+.login-reel .reel-intro{align-self:start;padding:0 15px clamp(6px,1vh,14px)}
+.login-reel .reel-entry-window{min-height:clamp(69px,10.5vh,116px);width:min(100%,585px);padding-block:10px}
+.login-reel .reel-entry-window strong{font-size:clamp(28px,4vw,58px)}
+.login-reel .reel-stage{height:calc(var(--reel-width) * .5625 + clamp(24px,4vh,62px))}
+.login-reel .reel-stage .reel-card{aspect-ratio:16/9}
+.login-reel .reel-card-art{width:100%;height:100%;aspect-ratio:auto;left:0;transform:none}
+.login-reel .reel-footer{padding-top:0}
+.login-reel .reel-volume::after{
+  inset:auto auto clamp(-370px,-18vw,-100px) clamp(-330px,-15vw,-90px);
+  width:clamp(330px,61vw,1120px);aspect-ratio:1;
+  border-radius:50%;opacity:.68;transform:none;filter:blur(8px);
+  background:radial-gradient(circle at 66% 27%,color-mix(in srgb,var(--scene-glow) 55%,#ac4a76),color-mix(in srgb,var(--scene-wash) 61%,#75324e) 33%,#3d2339 64%,#231523 79%);
+  box-shadow:inset -9px 15px 56px #e9a0c143;
+  mask-image:linear-gradient(148deg,#000 30%,#000b 63%,transparent 95%);
+}
+.login-reel .reel-sparks i{background:color-mix(in srgb,var(--scene-glow) 62%,#fff3e9);animation:reel-large-glimmer 5.5s ease-in-out infinite both}
+@keyframes reel-large-glimmer{0%,100%{opacity:.26;transform:scale(.77)}50%{opacity:.87;transform:scale(1.17)}}
+@media(max-width:1050px){.login-reel{--reel-width:min(60vw,72vh,600px)}}
+@media(max-width:650px){
+  .login-reel{--reel-width:min(86vw,465px)}
+  .reel-greeting{font-size:clamp(75px,24vw,155px);margin:clamp(16px,5vh,48px) 0 9px}
+  .login-reel .reel-entry-window strong{font-size:clamp(28px,8vw,46px)}
+  .login-reel .reel-volume::after{bottom:-85px}
+  .login-reel .reel-sparks i{max-width:24px;max-height:24px}
+}
+@media(prefers-reduced-motion:reduce){
+  .reel-greeting span,.reel-greeting::after,.login-reel .reel-sparks i{animation:none}
+}
