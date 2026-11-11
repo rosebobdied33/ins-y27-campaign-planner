@@ -1543,3 +1543,68 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .quarter-load small{color:var(--muted)}
 .resource-peak-filter{margin:4px 0 8px}
 .edition-quarter-band .edition-section-label h2{font-size:18px;margin:0}
+
+/* Annual theme atlas and quarterly calendar sheets */
+.theme-atlas{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;
+  padding:1px;border-radius:12px;background:var(--line);overflow:hidden;
+}
+.theme-quarter{display:grid;grid-template-rows:auto 1fr auto auto;min-width:0;background:var(--panel);padding:clamp(10px,1.2vw,18px);gap:11px}
+.theme-quarter-heading{display:flex;justify-content:flex-start;gap:8px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;padding:0 0 8px}
+.theme-quarter-heading strong,.calendar-quarter-heading strong{font:italic 400 32px/.95 "Bodoni Moda",Didot,Georgia,serif;color:var(--accent)}
+.theme-quarter-heading span,.calendar-quarter-heading span{color:var(--muted);font-size:11px}
+.theme-quarter-heading svg{margin-left:auto}
+.theme-leads{display:grid;align-content:start;gap:7px}
+.theme-cover{
+  position:relative;isolation:isolate;display:flex;align-items:flex-end;justify-content:flex-start;text-align:left;
+  min-height:clamp(64px,7vw,120px);padding:8px 10px;overflow:hidden;
+  color:#fff4f4;border:1px solid color-mix(in srgb,var(--theme-ink) 38%,transparent);border-radius:7px;
+  background:linear-gradient(125deg,#261c29,color-mix(in srgb,var(--theme-ink) 30%,#2b2030));
+}
+.theme-cover:hover,.theme-cover[data-current=true]{border-color:var(--theme-ink);color:#fff4f4}
+.theme-cover::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#150e1aee 5%,transparent 85%);}
+.theme-cover img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:center 63%}
+.theme-cover span{display:grid;gap:3px}
+.theme-cover strong{font-size:15px;line-height:1.1}
+.theme-cover small,.theme-nodes time,.theme-windows small{font-size:10px;font-variant-numeric:tabular-nums}
+.theme-cover small{color:#f6dfe9}
+.theme-nodes,.theme-windows{border-top:1px solid var(--line);padding-top:8px}
+.theme-quarter h3{font-size:12px;margin:0 0 3px;color:var(--accent)}
+.theme-quarter p{color:var(--muted);font-size:12px}
+.theme-nodes button,.theme-windows button{display:flex;justify-content:space-between;gap:5px;width:100%;padding:3px 0;min-height:26px;border:0;background:none;text-align:left;font-size:12px}
+.theme-nodes time,.theme-windows small{color:var(--muted);text-align:right}
+.theme-detail-image{display:block;width:100%;height:auto;border-radius:6px;margin:6px 0 13px}
+.theme-detail-nodes{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.theme-detail-nodes h4{flex-basis:100%;font-size:12px}
+.theme-detail-nodes button{min-height:30px;font-size:12px}
+.annual-quarter-calendar{display:grid;gap:14px}
+.calendar-quarter-sheet{min-width:0;padding:clamp(9px,1.25vw,18px);border:1px solid var(--line);border-radius:11px;background:var(--panel)}
+.calendar-quarter-heading{display:flex;align-items:baseline;gap:10px;padding:2px 2px 10px}
+.calendar-quarter-heading h3{font-size:15px}
+.calendar-quarter-heading span{margin-left:auto}
+.calendar-quarter-sheet .annual-month-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.calendar-quarter-sheet .annual-month{padding:8px;border:1px solid var(--line);border-radius:8px;background:linear-gradient(160deg,color-mix(in srgb,var(--month-color) 12%,var(--panel)),var(--panel) 48%)}
+.annual-month h4{display:flex;align-items:baseline;gap:4px;font-size:12px}
+.annual-month h4 b{font:italic 400 clamp(25px,2.7vw,39px)/1 "Bodoni Moda",Didot,Georgia,serif;color:var(--text);font-variant-numeric:tabular-nums}
+.annual-month .month-weekdays{background:transparent;border-bottom:1px solid var(--line)}
+.annual-month .month-week{min-height:37px;border:0;border-bottom:1px solid var(--line);row-gap:2px;padding-block:3px}
+.annual-month .month-day{min-height:16px}
+.annual-month .month-day[data-weekend=true]{background:color-mix(in srgb,var(--month-color) 8%,transparent)}
+.annual-month .month-event{border:0;border-left:2px solid var(--event-color);background:color-mix(in srgb,var(--event-color) 28%,var(--panel));color:var(--text)}
+.annual-month .month-event[data-kind=A]{background:color-mix(in srgb,var(--event-color) 18%,var(--panel))}
+.annual-month .month-event[data-kind=weekday]{background:color-mix(in srgb,var(--event-color) 10%,var(--panel));border:1px dashed color-mix(in srgb,var(--event-color) 80%,var(--line))}
+.annual-month .month-event:is(:hover,:focus-visible){background:color-mix(in srgb,var(--event-color) 43%,var(--panel))}
+.calendar-weekday-toggle{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;color:var(--text);font-size:12px}
+.calendar-weekday-toggle input{width:15px;height:15px;min-height:0;accent-color:var(--accent)}
+@media(max-width:930px){.theme-atlas{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.calendar-quarter-sheet .annual-month-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:430px){
+  .theme-quarter{padding:8px;gap:8px}
+  .theme-cover{padding:7px;min-height:73px}
+  .theme-cover strong{font-size:13px}
+  .theme-windows button{align-items:flex-start;flex-direction:column;gap:2px}
+}
+.theme-detail-formats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.theme-detail-formats>div{border-top:1px solid var(--line);padding:6px 0;min-width:0}
+.theme-detail-formats dt{font-size:11px;color:var(--muted)}
+.theme-detail-formats dd{margin:2px 0 0;overflow-wrap:anywhere;font-size:13px}

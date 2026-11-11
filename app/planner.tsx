@@ -5,7 +5,7 @@ import {allocation,backup,COLORS,csv,durationDays,EXPERIENCE_MODES,experienceMod
 import {useCampaignArtwork,usePlanner,type ViewerData} from '../lib/storage';
 
 import {PlanOverview} from './overview';
-import {CampaignGallery,campaignTitles,type CampaignArtwork} from './campaign-gallery';
+import {campaignTitles,type CampaignArtwork} from './campaign-gallery';
 import {ProjectSettlement} from './project-settlement';
 import {ResourceAnalysis,WeekdayBudget} from './year-insights';
 import {monthlyTotal,type WeekdayPlan} from '../lib/weekday';
@@ -446,10 +446,7 @@ function Viewer({data,artwork,dark,toggle,logout,error}:{data:ViewerData;artwork
     <main><div className="content edition-content">
         <section id="overview" className="pane" hidden={pane!=='overview'}>
           <WorkspaceChapter pane="overview"><ChapterJump target="annual-schedule">查看全年排期</ChapterJump></WorkspaceChapter>
-          <div className="edition-gallery">
-            <CampaignGallery projects={data.projects} artwork={artwork} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
-          </div>
-          <PlanOverview items={data.projects} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
+          <PlanOverview items={data.projects} artwork={artwork} openQuarter={q=>{setFilter('all');setQuarterFilter(q);window.location.hash='projects';}} openProject={id=>{setFilter('all');setQuarterFilter('all');jumpToProject(id);}}/>
         </section>
         {error&&<p className="banner" role="alert">{error}</p>}
         <section id="projects" className="section pane" hidden={pane!=='projects'}><WorkspaceChapter pane="projects" detail={projects.length+' / '+data.projects.length+' 项'}/>
@@ -528,10 +525,7 @@ export default function Planner() {
     <main><div className="content edition-content">
       <section id="overview" className="pane" hidden={pane!=='overview'}>
         <WorkspaceChapter pane="overview"><ChapterJump target="annual-schedule">查看全年排期</ChapterJump></WorkspaceChapter>
-        <div className="edition-gallery">
-          <CampaignGallery projects={items} artwork={artwork} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
-        </div>
-        <PlanOverview items={items} budget={t} weekday={weekday} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
+        <PlanOverview items={items} artwork={artwork} budget={t} weekday={weekday} openQuarter={q=>{setTier('all');setQ(q);setForm('all');window.location.hash='projects';}} openProject={id=>{setTier('all');setQ('all');setForm('all');jumpToProject(id);}}/>
       </section>
       <section id="budget" className="section pane" hidden={pane!=='budget'}>
         <WorkspaceChapter pane="budget">

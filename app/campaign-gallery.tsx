@@ -1,5 +1,5 @@
 'use client';
-import {useRef,useState,type CSSProperties} from 'react';
+import {useRef,type CSSProperties} from 'react';
 import {ArrowLeft,ArrowRight,ArrowUpRight} from 'lucide-react';
 import {durationDays,QUARTERS} from '../lib/planner';
 
@@ -8,18 +8,19 @@ import {coverageDays,monthBounds,weekdayWindows,type ScheduleProject} from '../l
 type GalleryProject=ScheduleProject;
 export type CampaignArtwork=Record<string,string>;
 
-export function CampaignGallery({projects,artwork,openProject}:{
+export function CampaignGallery({projects,artwork,activeId,onSelect,openProject}:{
   projects:GalleryProject[];
   artwork:CampaignArtwork;
+  activeId:string|null;
+  onSelect:(id:string)=>void;
   openProject:(id:string)=>void;
 }) {
   const swipe=useRef<number|null>(null);
-  const [active,setActive]=useState(0);
   const items=projects.filter(project=>/^S0[1-7]$/.test(project.id)).sort((a,b)=>a.id.localeCompare(b.id));
-  const index=Math.min(active,items.length-1);
+  const index=Math.max(0,items.findIndex(item=>item.id===activeId));
   const project=items[index];
   if(!project)return null;
-  const go=(next:number)=>setActive(Math.max(0,Math.min(items.length-1,next)));
+  const go=(next:number)=>onSelect(items[Math.max(0,Math.min(items.length-1,next))].id);
   const palette=campaignTitles[project.id];
   const image=artwork[project.id];
   const window=weekdayWindows([project])[0];
