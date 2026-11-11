@@ -2010,3 +2010,55 @@ button.calendar-bar{min-height:0;padding:0 2px}
     position:absolute;right:13px;top:7px;width:calc(35% - 14px);min-height:48px;
   }
 }
+
+/* Budget charts share broad plots, a continuous zero line, and tonal fills. */
+#budget{
+  --plot-grid:color-mix(in srgb,var(--project-line) 82%,transparent);
+  --plot-zero:color-mix(in srgb,var(--project-note) 72%,var(--project-line));
+  --plot-lilac:linear-gradient(180deg,var(--budget-lilac),#a36a98);
+  --plot-teal:linear-gradient(180deg,var(--budget-teal),#47786e);
+  --plot-weekday:linear-gradient(180deg,color-mix(in srgb,var(--weekday-color) 75%,#f3ccda),#8c5c7f);
+}
+@media(min-width:1051px){
+  #budget .budget-modules{grid-template-columns:minmax(0,2.45fr) minmax(255px,1fr)}
+}
+#budget :is(.budget-pairs,.weekday-months,.spend-months){gap:0}
+#budget .budget-pair-bars{gap:0}
+#budget .budget-pairs .budget-column{
+  grid-template-rows:auto clamp(115px,15vw,188px);padding-inline:0;gap:5px;
+}
+#budget .budget-pair-amount{font-weight:650;font-variant-numeric:tabular-nums}
+#budget .budget-pair-track{
+  position:relative;border-bottom:0;
+  background:repeating-linear-gradient(0deg,transparent 0 calc(25% - 1px),var(--plot-grid) calc(25% - 1px) 25%);
+}
+#budget .budget-pair:not(:first-child) .budget-column:first-child .budget-pair-track{border-left:1px solid var(--plot-grid)}
+#budget .budget-pair-track i{width:88%;background:var(--plot-lilac);border-radius:5px 5px 0 0}
+#budget .budget-pairs [data-series=paid] i{background:var(--plot-teal)}
+#budget .budget-pair-legend i{background:var(--plot-lilac)}
+#budget .budget-pair-legend span+span i{background:var(--plot-teal)}
+#budget .weekday-months button{
+  grid-template-rows:auto clamp(94px,11vw,151px) auto;justify-items:stretch;gap:5px;padding-inline:0;
+}
+#budget .weekday-month-track,
+#budget .spend-month>span{
+  position:relative;width:100%;justify-content:center;border-radius:0;overflow:visible;
+  background:repeating-linear-gradient(0deg,transparent 0 calc(25% - 1px),var(--plot-grid) calc(25% - 1px) 25%);
+}
+#budget :is(.budget-pair-track,.weekday-month-track,.spend-month>span)::after{
+  content:"";position:absolute;inset:auto -1px 0;height:1px;background:var(--plot-zero);pointer-events:none;
+}
+#budget .weekday-month-track i{width:89%;background:var(--plot-weekday)}
+#budget .spend-month{
+  grid-template-rows:clamp(86px,10vw,135px) auto;justify-items:stretch;padding-inline:0;
+}
+#budget .spend-month i{width:88%;background:var(--plot-teal);border-radius:4px 4px 0 0}
+#budget :is(.weekday-months button,.spend-month) small{color:var(--project-text)}
+@media(max-width:600px){
+  #budget :is(.weekday-months,.spend-months){row-gap:10px}
+  #budget .budget-pair-amount{font-size:10px}
+}
+#budget :is(.budget-pairs .budget-column,.weekday-months button,.spend-month){
+  width:100%;grid-template-columns:minmax(0,1fr);justify-content:stretch;
+}
+#budget .budget-pair-track{width:100%}
