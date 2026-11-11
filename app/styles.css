@@ -1840,3 +1840,55 @@ button.calendar-bar{min-height:0;padding:0 2px}
 }
 :root[data-theme=dark] .paper-planning .theme-detail-image{background:#483645;border-color:#7f5f73;box-shadow:2px 4px 0 #1a131e}
 :root[data-theme=dark] .calendar-detail.paper-planning .primary{background:#e9aac1;border-color:#e9aac1;color:#351f2d}
+
+/* Settlement cards share a full-year budget scale. */
+.spend-card-groups{display:grid;gap:20px}
+.spend-water-key{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+.spend-water-key i{width:13px;height:9px;border:1px solid #ac748e;background:linear-gradient(#c78da960,#a3668b);border-radius:2px}
+.spend-card-group{--spend-water:#a7759d}
+.spend-card-group[data-tier=A]{--spend-water:#bd9479}
+.spend-card-group>header{display:flex;align-items:baseline;gap:8px;border-bottom:1px solid var(--line);margin-bottom:10px;padding-bottom:6px}
+.spend-card-group>header h4{font-size:16px}
+.spend-card-group>header span{font-size:12px;color:var(--muted)}
+.spend-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,max(205px,calc((100% - 30px) / 4))),1fr));gap:10px;align-items:start}
+.spend-card-grid .spend-card{
+  min-width:0;border:1px solid var(--line);border-radius:10px;
+  background:var(--panel);box-shadow:0 3px 0 color-mix(in srgb,var(--line) 82%,transparent);overflow:hidden;
+}
+.spend-card-summary{
+  position:relative;isolation:isolate;display:grid;gap:8px;align-content:start;min-width:0;
+  padding:12px;cursor:pointer;list-style:none;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--project-tone) 14%,var(--panel)),var(--panel) 65%);
+}
+.spend-card-summary::-webkit-details-marker{display:none}
+.spend-card-summary:is(:hover,:focus-visible){box-shadow:inset 0 0 0 1px var(--accent)}
+.spend-card-water{
+  position:absolute;z-index:-1;inset:auto 0 0;height:var(--budget-water);pointer-events:none;
+  border-top:1px solid color-mix(in srgb,var(--spend-water) 72%,transparent);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--spend-water) 26%,transparent),color-mix(in srgb,var(--spend-water) 49%,var(--panel)));
+}
+.spend-card-meta{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.spend-card-meta small{font-size:10px;color:var(--text);font-variant-numeric:tabular-nums}
+.spend-card-meta small+small{padding:2px 5px;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+.spend-card-name{font-size:15px;overflow-wrap:anywhere}
+.spend-card-actual{display:grid;gap:4px;padding:9px 8px;border:1px solid var(--line);border-radius:6px;background:color-mix(in srgb,var(--panel) 91%,transparent)}
+.spend-card-actual>span,.spend-card-actual small,.spend-card-budget>span{color:var(--muted);font-size:11px}
+.spend-card-actual b{
+  color:var(--text);font-size:clamp(22px,2.2vw,34px);line-height:1.05;letter-spacing:-.04em;
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+.spend-card[data-state=settled] .spend-card-actual b{color:var(--budget-teal)}
+.spend-card[data-state=over] .spend-card-actual :is(b,small){color:var(--danger)}
+.spend-card[data-state=unrecorded] .spend-card-actual b{color:var(--muted)}
+.spend-card-budget{display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 6px}
+.spend-card-budget>span{color:var(--text)}
+.spend-card-budget b{font-size:13px;font-variant-numeric:tabular-nums}
+.spend-card-budget svg{align-self:center;margin-left:auto;flex:none}
+.spend-card[open] .spend-card-budget svg{transform:rotate(180deg)}
+.spend-card .spend-inline-detail{border-top:1px solid var(--line);padding:10px 12px}
+@media(max-width:550px){
+  .spend-card-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,145px),1fr));gap:8px}
+  .spend-card-summary{padding:8px;gap:6px}
+  .spend-card-actual{padding:7px 6px}
+  .spend-card-budget{font-size:12px}
+}

@@ -362,7 +362,7 @@ function PaymentLedger({items,selectedQuarter,bySettlement,clearQuarter,openProj
   });
   const subtotal=spending(visible);
   const planned=visible.reduce((total,project)=>total+project.budget,0);
-  const projectScale=Math.max(0,...visible.map(project=>Math.max(project.budget,recordedSpend(project)??0)));
+  const projectScale=Math.max(0,...items.map(project=>Math.max(project.budget,recordedSpend(project)??0)));
   const dated=visible.flatMap(project=>project.settlement?[{project,settlement:project.settlement}]:[])
     .sort((a,b)=>b.settlement.date.localeCompare(a.settlement.date));
   const years=[...new Set(['2027',...dated.map(entry=>entry.settlement.date.slice(0,4))])].sort();
@@ -388,32 +388,40 @@ function PaymentLedger({items,selectedQuarter,bySettlement,clearQuarter,openProj
       <span className="ledger-count" aria-live="polite">{visible.length} / {items.length} 项</span>
     </div>
     {visible.length>0?<div className="spend-explorer">
-      {view==='project'?<div className="spend-compare">
-        <div className="spend-legend"><span><i/>预算</span><span><i/>实际支出</span><span><i/>超预算</span></div>
-        <div className="spend-column-head" aria-hidden="true"><span>项目</span><span>预算水位</span><span>实际 / 预算</span></div>
-        {visible.map(project=>{
-          const actual=recordedSpend(project);
-          const paid=actual??0;
-          const {settlement}=project;
-          return <details className="spend-project-row" key={project.id}>
-            <summary className="spend-compare-row">
-              <ChevronDown className="spend-expand" size={15} aria-hidden="true"/>
-              <span><strong>{project.name||'未命名项目'}</strong><small>{project.code} · {SETTLEMENT_STATUS[settlementStatus(project)]}</small></span>
-              <span className="spend-compare-track" aria-hidden="true">
-                <i style={{width:pct(project.budget,projectScale)}}/>
-                <i style={{width:pct(Math.min(paid,project.budget),projectScale)}}/>
-                {paid>project.budget&&<i style={{left:pct(project.budget,projectScale),width:pct(paid-project.budget,projectScale)}}/>}
-              </span>
-              <span><b>{actual===null?'—':yuan(actual)}</b><small>{yuan(project.budget)}</small></span>
-            </summary>
-            <div className="spend-inline-detail">
-              {settlement?<dl><div><dt>实际搭建费</dt><dd>{yuan(settlement.build)}</dd></div><div><dt>实际体验费</dt><dd>{yuan(settlement.experience)}</dd></div><div><dt>结算日期</dt><dd>{settlement.date}</dd></div></dl>:
-                <p>{actual===null?'暂无实际支出。':'旧支出记录 '+yuan(actual)+'，待补结算日期与费用分类。'}</p>}
-              <button onClick={()=>openProject(project.id)}>打开项目规划 <ArrowUpRight size={14}/></button>
+      {view==='project'?<div className="spend-card-groups">
+        <p className="spend-water-key"><i aria-hidden="true"/>背景水位按全年项目统一刻度 · 满格 {yuan(projectScale)}</p>
+        {(['S','A'] as const).map(tier=>{
+          const group=visible.filter(project=>project.tier===tier);
+          if(!group.length)return null;
+          return <section key={tier} className="spend-card-group" data-tier={tier} aria-labelledby={'spend-tier-'+tier}>
+            <header><h4 id={'spend-tier-'+tier}>{tier} 级项目</h4><span>{group.length} 项</span></header>
+            <div className="spend-card-grid">
+              {group.map(project=>{
+                const actual=recordedSpend(project);
+                const state=settlementStatus(project);
+                const {settlement}=project;
+                return <details className="spend-project-row spend-card" key={project.id} data-state={state}
+                  style={{'--budget-water':pct(project.budget,projectScale),'--project-tone':project.color} as CSSProperties}>
+                  <summary className="spend-card-summary">
+                    {project.budget>0&&<span className="spend-card-water" aria-hidden="true"/>}
+                    <span className="spend-card-meta"><small>{project.code}</small><small>{SETTLEMENT_STATUS[state]}</small></span>
+                    <strong className="spend-card-name">{project.name||'未命名项目'}</strong>
+                    <span className="spend-card-actual">
+                      <span>实际支出</span><b>{actual===null?'—':yuan(actual)}</b>
+                      {state==='over'&&actual!==null&&<small>超预算 {yuan(actual-project.budget)}</small>}
+                    </span>
+                    <span className="spend-card-budget"><span>规划预算</span><b>{yuan(project.budget)}</b><ChevronDown size={16} aria-hidden="true"/></span>
+                  </summary>
+                  <div className="spend-inline-detail">
+                    {settlement?<dl><div><dt>实际搭建费</dt><dd>{yuan(settlement.build)}</dd></div><div><dt>实际体验费</dt><dd>{yuan(settlement.experience)}</dd></div><div><dt>结算日期</dt><dd>{settlement.date}</dd></div></dl>:
+                      <p>{actual===null?'暂无实际支出。':'旧支出记录 '+yuan(actual)+'，待补结算日期与费用分类。'}</p>}
+                    <button onClick={()=>openProject(project.id)}>打开项目规划 <ArrowUpRight size={14}/></button>
+                  </div>
+                </details>;
+              })}
             </div>
-          </details>;
+          </section>;
         })}
-        <p className="budget-hint">各项目共用金额刻度。点左侧箭头展开结算详情。</p>
       </div>:<div className="spend-time">
         <div className="calendar-heading"><h4>月度结算</h4><select aria-label="结算年份" value={activeYear} onChange={e=>{setYear(e.target.value);setMonth(null);}}>{years.map(y=><option key={y}>{y}</option>)}</select></div>
         <div className="spend-months">{monthly.map((amount,i)=>{
