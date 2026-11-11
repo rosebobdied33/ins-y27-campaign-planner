@@ -30,6 +30,7 @@ export function LoginReel({busy,error,onLogin}:{
   const [open,setOpen]=useState(false);
   const [flipped,setFlipped]=useState(false);
   const [register,setRegister]=useState(false);
+  const stage=useRef<HTMLElement>(null);
   const details=useRef<HTMLDialogElement>(null);
   const dialog=useRef<HTMLDialogElement>(null);
   const swipeStart=useRef<number|null>(null);
@@ -58,7 +59,7 @@ export function LoginReel({busy,error,onLogin}:{
     setPlaying(false);setFlipped(false);
     setActive(index=>sceneIndex(index+offset));
   },[]);
-  useHorizontalWheel(step,!open&&!flipped);
+  useHorizontalWheel(step,!open&&!flipped,stage);
   useEffect(()=>{
     if(open||flipped)return;
     const navigate=(event:KeyboardEvent)=>{
@@ -103,7 +104,7 @@ export function LoginReel({busy,error,onLogin}:{
       </button>
     </div>
 
-    <section className="reel-stage" aria-label="Seven campaign editions"
+    <section ref={stage} className="reel-stage" aria-label="Seven campaign editions"
       onPointerDown={event=>{
         swiped.current=false;
         if(event.button===0)swipeStart.current=event.clientX;
