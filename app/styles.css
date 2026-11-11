@@ -2115,3 +2115,55 @@ button.calendar-bar{min-height:0;padding:0 2px}
 @media(prefers-reduced-motion:reduce){
   .reel-greeting span,.reel-greeting::after,.login-reel .reel-sparks i{animation:none}
 }
+
+/* Two editions, one opening carousel. */
+.reel-year-mark{display:flex;position:relative;align-items:center;gap:8px}
+.reel-year-mark>span:nth-child(2){font-size:10px;color:var(--reel-muted)}
+.reel-year-mark select{position:absolute;right:0;width:63px;height:34px;opacity:0;cursor:pointer}
+.reel-year-caption{padding:3px 5px;color:var(--reel-ink);font-size:11px;letter-spacing:.08em;pointer-events:none}
+.reel-year-caption::after{content:"";display:inline-block;width:5px;height:5px;margin:0 2px 3px 6px;border:solid currentColor;border-width:0 1px 1px 0;transform:rotate(45deg)}
+.reel-year-mark:focus-within .reel-year-caption{outline:1px solid var(--scene-glow);border-radius:3px}
+.login-reel[data-year="2026"]{
+  --poster-height:min(48dvh,106vw,480px);
+  --reel-width:calc(var(--poster-height) * .75);
+  --reel-step:calc(var(--reel-width) * .91);
+}
+.login-reel[data-year="2026"] .reel-greeting{font-size:clamp(70px,min(15.5vw,19vh),285px)}
+.login-reel[data-year="2026"] .reel-stage{height:calc(var(--poster-height) + clamp(16px,2.7vh,36px))}
+.login-reel[data-year="2026"] .reel-stage .reel-card{aspect-ratio:3/4}
+.login-reel[data-year="2026"] .reel-card:is([data-position="-2"],[data-position="2"]){opacity:0;pointer-events:none}
+.login-reel[data-year="2026"] .reel-paper-front{padding:0;background:var(--card-deep)}
+.login-reel[data-year="2026"] .reel-paper-front::after{content:none}
+.login-reel[data-year="2026"] .reel-card[data-position="0"] .reel-paper-front{
+  border-color:var(--card-glow);box-shadow:2px 3px color-mix(in srgb,var(--card-glow) 48%,var(--card-deep)),4px 5px var(--card-deep),0 15px 35px #0d0715a8;
+}
+.reel-poster{display:block;width:100%;height:100%;object-fit:contain;user-select:none}
+.login-reel[data-year="2026"] .reel-atmosphere{background:var(--scene-poster) center 40%/cover;opacity:.19}
+.login-reel[data-year="2026"] .reel-slider input::-webkit-slider-thumb{background:linear-gradient(#ffe9f3,var(--scene-glow))}
+.login-reel[data-year="2026"] .reel-slider input::-moz-range-thumb{background:var(--scene-glow)}
+.login-reel[data-year="2026"] .reel-controls button{border-color:color-mix(in srgb,var(--scene-glow) 48%,transparent);color:var(--scene-glow)}
+.reel-edition-dialog[data-archive=true]{width:min(420px,calc(100% - 28px));overflow:visible}
+.reel-edition-dialog[data-archive=true][open]{animation:reel-archive-lift .65s ease both}
+.reel-archive-flip{position:relative;transform-style:preserve-3d}
+.reel-edition-dialog[open] .reel-archive-flip{animation:reel-archive-turn .65s cubic-bezier(.24,.74,.3,1) both}
+.reel-archive-front{
+  position:absolute;inset:0;display:grid;place-items:center;border:1px solid var(--card-glow);border-radius:9px;
+  background:var(--card-deep);backface-visibility:hidden;overflow:hidden;
+}
+.reel-archive-front img{width:100%;height:100%;object-fit:contain;position:absolute}
+.reel-archive-flip .reel-edition-detail{
+  min-height:min(500px,calc(100dvh - 42px));max-height:calc(100dvh - 34px);overflow:auto;
+  backface-visibility:hidden;transform:rotateY(180deg);gap:13px;padding:clamp(16px,3vw,29px);
+}
+.reel-archive-flip .reel-card-title{font-size:clamp(30px,5.4vw,51px)}
+.reel-archive-imprint{font-size:10px;color:var(--card-glow);letter-spacing:.13em}
+@keyframes reel-archive-lift{from{transform:perspective(1000px) scale(.79) translateY(14px)}to{transform:perspective(1000px) scale(1)}}
+@keyframes reel-archive-turn{from{transform:rotateY(0)}to{transform:rotateY(180deg)}}
+body:has(.reel-edition-dialog[data-archive=true][open]){overflow:hidden}
+@media(max-width:650px){
+  .login-reel[data-year="2026"] .reel-greeting{font-size:clamp(68px,22vw,110px);margin-top:clamp(6px,2vh,24px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .reel-edition-dialog[data-archive=true][open]{animation:none}
+  .reel-edition-dialog[open] .reel-archive-flip{animation:none;transform:rotateY(180deg)}
+}
