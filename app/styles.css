@@ -1965,3 +1965,48 @@ button.calendar-bar{min-height:0;padding:0 2px}
 }
 :root[data-theme=dark] .theme-atlas .theme-cover::before{opacity:.63}
 :root[data-theme=dark] .theme-atlas .theme-cover::after{border-color:#f9dcf129;background:linear-gradient(115deg,#18111d69,transparent 77%)}
+
+/* Compact project editors with separate controls for budget and notes. */
+#projects .edition-projects[data-layout=folio]{
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,max(260px,calc((100% - 48px) / 4))),1fr));
+  gap:16px;align-items:start;
+}
+#projects .edition-projects[data-layout=folio][data-columns="3"]{
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,max(260px,calc((100% - 32px) / 3))),1fr));
+}
+.project-edit-body{display:grid;gap:9px}
+.project-edit-fields,.project-edit-sections{min-width:0}
+.project-edit-fields .project-edit-head{justify-content:space-between}
+.project-edit-fields :is(.date-pair,.fields){gap:6px;margin-block:6px}
+.project-edit-fields :is(label,input,select){min-width:0;max-width:100%}
+.project-edit-fields :is(input,select){width:100%}
+.project-edit-body .project-categories{padding-top:6px}
+.project-edit-sections{
+  border:1px solid var(--project-line);border-radius:8px;padding:0 7px;background:color-mix(in srgb,var(--panel) 91%,var(--accent));
+}
+.project-edit-sections :is(.budget-disclosure,.notes){margin:0;border:0}
+.project-edit-sections .notes{border-top:1px solid var(--project-line)}
+.project-edit-sections :is(.budget-disclosure,.notes)>summary{min-height:36px;padding-inline:2px}
+.project-allocation-summary{font-size:10px;color:var(--project-note);margin-left:auto;white-space:nowrap}
+.project-allocation-summary[data-over=true]{color:var(--danger)}
+.project-edit-sections .budget-disclosure-chevron{margin-left:1px}
+.project-edit-sections .card-budget{min-width:0;padding-inline:5px}
+.project-edit-sections .notes textarea{width:100%;margin-bottom:6px}
+@media(min-width:780px){
+  .edition-projects[data-layout=list] .project-edit-body{
+    grid-template-columns:minmax(0,1fr) minmax(230px,.9fr);gap:15px;align-items:start;
+  }
+}
+@media(min-width:1050px){
+  .edition-projects[data-layout=list] .project-edit-fields{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:7px 12px;
+  }
+  .edition-projects[data-layout=list] .project-edit-fields :is(.project-edit-head,.project-edit-name,.project-categories,[role=alert]){grid-column:1/-1}
+  .edition-projects[data-layout=list] .project-edit-fields :is(.project-edit-head,.project-edit-name,.date-pair,.fields){margin-block:0}
+}
+@media(min-width:780px){
+  .edition-projects[data-layout=list] .project:has(>.project-editor[open]){position:relative}
+  .edition-projects[data-layout=list] .project-editor[open]>summary{
+    position:absolute;right:13px;top:7px;width:calc(35% - 14px);min-height:48px;
+  }
+}

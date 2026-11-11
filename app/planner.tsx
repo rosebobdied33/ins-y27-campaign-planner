@@ -122,7 +122,7 @@ function CampaignDates({start,end}:{start:string;end:string}) {
   const days=durationDays(start,end);
   return <div className="date-caption"><CalendarDays size={13} aria-hidden="true"/><span>{dateLabel(start)} — {dateLabel(end)}</span>{days!==null&&<strong className="duration" title="含开始日和结束日">共 {days} 天</strong>}</div>;
 }
-function ProjectCollection({filters,children}:{filters:ReactNode;children:ReactNode}) {
+function ProjectCollection({filters,children,count}:{filters:ReactNode;children:ReactNode;count:number}) {
   const [layout,setLayout]=useState<'folio'|'list'>('folio');
   return <div className="edition-collection">
     <div className="edition-collection-toolbar">
@@ -132,7 +132,7 @@ function ProjectCollection({filters,children}:{filters:ReactNode;children:ReactN
         <button aria-pressed={layout==='list'} onClick={()=>setLayout('list')}>清单</button>
       </div>
     </div>
-    <div className="cards edition-projects" data-layout={layout}>{children}</div>
+    <div className="cards edition-projects" data-layout={layout} data-columns={count===5||count===6?3:4}>{children}</div>
   </div>;
 }
 function CoverOrbit({className}:{className:string}) {
@@ -195,6 +195,7 @@ function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReferen
         <span className="project-edit-trigger"><span className="edit-show">编辑项目</span><span className="edit-hide">收起编辑</span><ChevronDown size={15} aria-hidden="true"/></span>
       </summary>
       <div className="project-edit-body">
+        <div className="project-edit-fields">
         <div className="project-edit-head">
           <span>项目信息</span>
           <div className="card-actions"><button className="icon" title="复制项目" aria-label="复制项目" onClick={copy}><Copy/></button><button className="icon" title="删除项目" aria-label="删除项目" onClick={remove}><Trash2/></button></div>
@@ -217,9 +218,12 @@ function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReferen
           </select></label>
           {p.secondary==='其他'&&<label className="primary-detail">自定义体验模式<input aria-label="自定义体验模式" maxLength={80} placeholder="输入体验模式" value={p.secondaryDetail??''} onChange={e=>edit({secondaryDetail:e.target.value})}/></label>}</div>
         </div>
+        </div>
+        <div className="project-edit-sections">
         <details className="budget-disclosure">
           <summary>
             <span className="budget-disclosure-label">预算与结算</span>
+            <small className="project-allocation-summary" data-over={gap<0}>{gap<0?'超额':gap===0?'已分配':'待分配'}</small>
             <ChevronDown className="budget-disclosure-chevron" size={15} aria-hidden="true"/>
           </summary>
           <div className="card-budget">
@@ -233,6 +237,7 @@ function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReferen
           </div>
         </details>
         <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
+        </div>
       </div>
     </details>
   </article>;
@@ -480,7 +485,7 @@ function Viewer({data,artwork,dark,toggle,logout,error}:{data:ViewerData;artwork
         </section>
         {error&&<p className="banner" role="alert">{error}</p>}
         <section id="projects" className="section pane" hidden={pane!=='projects'}><WorkspaceChapter pane="projects" detail={projects.length+' / '+data.projects.length+' 项'}/>
-          <ProjectCollection filters={<><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div><label><CalendarDays size={15}/><select aria-label="季度筛选" value={quarterFilter} onChange={e=>setQuarterFilter(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label></>}>
+          <ProjectCollection count={projects.length} filters={<><div className="segmented">{(['all','S','A'] as const).map(f=><button key={f} aria-pressed={filter===f} onClick={()=>setFilter(f)}>{f==='all'?'全部':f+' 级'}</button>)}</div><label><CalendarDays size={15}/><select aria-label="季度筛选" value={quarterFilter} onChange={e=>setQuarterFilter(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label></>}>
           {projects.map(p=><article key={p.id} className="project viewer-project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
             <ProjectCover project={p}/>
             <ProjectSummary project={p}/>
@@ -584,7 +589,7 @@ export default function Planner() {
           }catch{setNotice('导入失败：请选择有效的 2027 年度 JSON 备份。');}
         }}/>
         {notice&&<p className="notice" role="status">{notice}<button className="icon" onClick={()=>setNotice('')} aria-label="关闭提示">×</button></p>}
-        <ProjectCollection filters={<><div className="segmented" aria-label="级别筛选">{[['S','S 级'],['A','A 级'],['all','全部']].map(([value,label])=><button key={value} aria-pressed={tier===value} onClick={()=>setTier(value)}>{label}</button>)}</div>
+        <ProjectCollection count={shown.length} filters={<><div className="segmented" aria-label="级别筛选">{[['S','S 级'],['A','A 级'],['all','全部']].map(([value,label])=><button key={value} aria-pressed={tier===value} onClick={()=>setTier(value)}>{label}</button>)}</div>
           <label><CalendarDays size={15}/><select aria-label="季度筛选" value={q} onChange={e=>setQ(e.target.value)}><option value="all">全年</option>{options(QUARTERS)}</select></label>
           <label><select aria-label="搭建形式与体验模式筛选" value={form} onChange={e=>setForm(e.target.value)}><option value="all">搭建 / 体验</option>{options(FORM_FILTERS.filter(value=>PRIMARY_FORMS.some(primary=>primary===value)||EXPERIENCE_MODES.some(mode=>mode===value)||items.some(p=>p.primary===value||p.secondary===value)))}</select></label></>}>
 
