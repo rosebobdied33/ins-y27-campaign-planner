@@ -1,13 +1,14 @@
 'use client';
 import {useRef,type CSSProperties} from 'react';
 import {ArrowLeft,ArrowRight,ArrowUpRight} from 'lucide-react';
-import {durationDays,QUARTERS} from '../lib/planner';
+import {durationDays} from '../lib/planner';
+import {campaignBrief,type PlanningBrief} from '../lib/planning-brief';
 
-import {coverageDays,monthBounds,weekdayWindows,type ScheduleProject} from '../lib/weekday';
+import {monthBounds,weekdayWindows,type ScheduleProject} from '../lib/weekday';
 
 import {useHorizontalWheel} from './use-horizontal-wheel';
 
-type GalleryProject=ScheduleProject;
+type GalleryProject=ScheduleProject & {planningBrief?:PlanningBrief|null};
 export type CampaignArtwork=Record<string,string>;
 
 export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,visible,fullArtwork}:{
@@ -31,11 +32,8 @@ export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,
   const window=weekdayWindows([project])[0];
   const neighbors=[{item:items[index-1],offset:-1},{item:items[index+1],offset:1}];
   const days=durationDays(project.start,project.end);
-  const milestones=[
-    {label:'上线',date:project.start},
-    ...(window?[{label:'周中启动',date:window.start}]:[]),
-    {label:'下线',date:project.end},
-  ];
+  const brief=campaignBrief(project);
+  const keywords=brief?.keywords.map(value=>value.trim()).filter(Boolean)??[];
   return <section className="campaign-gallery edition-screening" aria-labelledby="campaign-gallery-title"
     onKeyDown={event=>{
       if(event.altKey||event.ctrlKey||event.metaKey)return;
@@ -63,18 +61,17 @@ export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,
     <div className="edition-screen-guide">
       <div className="edition-screen-index"><span id="campaign-gallery-title">S 级场景档案</span><small>{String(index+1).padStart(2,'0')} / {String(items.length).padStart(2,'0')}</small></div>
       <div className="edition-screen-text" aria-live="polite"><small>{project.code} / {project.status}</small><p lang="en">{palette.title}</p><h2>{project.name||'未命名项目'}</h2></div>
-      <div className="screening-brief">
-        <div className="screening-brief-heading"><span>活动周期</span>{days!==null&&<strong>{days}<small> 天</small></strong>}</div>
-        <dl className="screening-milestones" style={{gridTemplateColumns:'repeat('+milestones.length+', minmax(0,1fr))'}}>
-          {milestones.map(({label,date})=><div key={label}><dt>{label}</dt><dd><time dateTime={date}>{date.slice(5).replace('-','.')}</time>{!date.startsWith('2027-')&&<small>{date.slice(0,4)}</small>}</dd></div>)}
+      <div className="screening-editorial" aria-live="polite">
+        <h3>{brief?.positioning.trim()||'主题定位待补充'}</h3>
+        <dl>
+          <div className="screening-direction"><dt lang="en">PRIMARY DIRECTION</dt><dd>{brief?.direction.trim()||'待补充'}</dd></div>
+          <div><dt lang="en">KEY DIFFERENCE</dt><dd>{brief?.difference.trim()||'待补充'}</dd></div>
         </dl>
-        <div className="screening-quarter-load" aria-label="2027 年各季度占用天数">
-          {QUARTERS.map((label,i)=>{
-            const [start]=monthBounds(i*3), [,end]=monthBounds(i*3+2);
-            const occupied=coverageDays([project],start,end);
-            return <div key={label} data-active={occupied>0}><span>{label}</span><b>{occupied}<small> 天</small></b><i aria-hidden="true"><span style={{width:occupied/(end-start)*100+'%'}}/></i></div>;
-          })}
-        </div>
+        {keywords.length>0&&<ul aria-label="内容关键词">{keywords.map((word,i)=><li key={i}>{word}</li>)}</ul>}
+      </div>
+      <div className="screening-date-line">
+        <span><time dateTime={project.start}>{project.start.replaceAll('-','.')}</time> – <time dateTime={project.end}>{project.end.startsWith(project.start.slice(0,4))?project.end.slice(5).replace('-','.'):project.end.replaceAll('-','.')}</time></span>
+        {days!==null&&<strong>{days} 天</strong>}
       </div>
       <div className="edition-screen-actions">
         <button className="edition-screen-open" onClick={()=>openProject(project.id)}>打开项目 <ArrowUpRight size={15}/></button>

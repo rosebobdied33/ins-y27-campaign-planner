@@ -1,6 +1,7 @@
 'use client';
 import {createClient} from '@supabase/supabase-js';
 import {useEffect,useRef,useState} from 'react';
+import type {PlanningBrief} from './planning-brief';
 import {validateProjects,type Project} from './planner';
 import {weekdayPlanSchema,type WeekdayPlan} from './weekday';
 
@@ -8,7 +9,13 @@ const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const client=url&&key ? createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}) : null;
 const SESSION='ins-y27-session';
-export type ViewerProject=Omit<Project,'budget'|'spent'|'payments'|'settlement'|'build'|'experience'|'notes'|'accent'|'primaryDetail'|'secondaryDetail'> & {accent?:string|null;primaryDetail?:string|null;secondaryDetail?:string|null};
+const OPENING_RETURN='ins-y27-opening-return';
+
+export function setOpeningReturn(active:boolean) {
+  if(active)sessionStorage.setItem(OPENING_RETURN,'1');
+  else sessionStorage.removeItem(OPENING_RETURN);
+}
+export type ViewerProject=Omit<Project,'budget'|'spent'|'payments'|'settlement'|'build'|'experience'|'notes'|'accent'|'planningBrief'|'primaryDetail'|'secondaryDetail'> & {planningBrief?:PlanningBrief|null;accent?:string|null;primaryDetail?:string|null;secondaryDetail?:string|null};
 export type ViewerData={role:'viewer';name:string;projects:ViewerProject[];charts:{tier:number|null;build:number|null;quarters:number[]}};
 export type BudgetReference={
   name:string;
@@ -116,6 +123,10 @@ export function usePlanner() {
     finally {if(run===generation.current)setLoading(false);}
   }
   useEffect(()=>{
+    if(sessionStorage.getItem(OPENING_RETURN)){
+      setOpeningReturn(false);
+      sessionStorage.removeItem(SESSION);
+    }
     token.current=sessionStorage.getItem(SESSION)??'';
     void load();
     const refresh=()=>{if(token.current&&!pending.current&&!saving.current&&!document.hidden)void load(true);};

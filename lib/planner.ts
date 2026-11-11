@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import {planningBriefSchema} from './planning-brief';
 
 export const FORMS = ['待定','空间搭建','场景营造','艺术装置','互动体验','沉浸演艺','市集快闪','事件营销','IP联动','全楼运营'] as const;
 export const EXPERIENCE_MODES = ['常规体验','创新体验','其他'] as const;
@@ -29,7 +30,7 @@ const project = z.object({
   tier:z.enum(['S','A']), name:z.string().max(100), start:date, end:date,
   budget:money, settlement:settlement.optional(), spent:money.nullable().optional(), payments:z.array(payment).max(100).refine(rows=>new Set(rows.map(row=>row.id)).size===rows.length).optional(), build:money.nullable(), experience:money.nullable(),
   primary:z.enum(BUILD_FORMS), primaryDetail:z.string().max(80).optional(), secondary:z.enum(SECONDARY), secondaryDetail:z.string().max(80).optional(), status:z.enum(STATUSES),
-  notes:z.string().max(1000), color:z.string().regex(/^#[a-fA-F0-9]{6}$/), accent:z.string().regex(/^#[a-fA-F0-9]{6}$/).optional()
+  planningBrief:planningBriefSchema.optional(), notes:z.string().max(1000), color:z.string().regex(/^#[a-fA-F0-9]{6}$/), accent:z.string().regex(/^#[a-fA-F0-9]{6}$/).optional()
 }).refine(p => p.start <= p.end && (p.primary !== p.secondary || p.secondary === '其他') && p.code.startsWith(p.tier));
 export type Project = z.infer<typeof project>;
 const projects = z.array(project).max(300).refine(p => new Set(p.map(x=>x.code)).size === p.length && new Set(p.map(x=>x.id)).size === p.length);

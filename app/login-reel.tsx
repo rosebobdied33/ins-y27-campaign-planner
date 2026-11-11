@@ -21,8 +21,8 @@ const cardDate=(date:string)=>date.startsWith('2027-')?date.slice(5).replace('-'
 const sceneIndex=(index:number)=>(index+scenes.length)%scenes.length;
 const sparks=[[8,24,26],[16,43,15],[24,15,21],[34,31,13],[63,14,22],[76,35,15],[86,24,31],[93,43,21],[11,72,18],[89,80,24]];
 
-export function LoginReel({busy,error,onLogin}:{
-  busy:boolean;error:string;onLogin:(name:string,password:string,register:boolean)=>void;
+export function LoginReel({busy,error,onLogin,onResume}:{
+  busy:boolean;error:string;onResume?:()=>void;onLogin:(name:string,password:string,register:boolean)=>void;
 }) {
   const image=useLoginReel();
   const [active,setActive]=useState(0);
@@ -73,6 +73,7 @@ export function LoginReel({busy,error,onLogin}:{
     return ()=>window.removeEventListener('keydown',navigate);
   },[open,flipped,step]);
   const enter=()=>{
+    if(onResume){onResume();return;}
     dialog.current?.showModal();
     setOpen(true);
   };

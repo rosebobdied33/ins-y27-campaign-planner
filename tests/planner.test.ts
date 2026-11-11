@@ -1,4 +1,5 @@
 import {seed} from './fixtures/example';
+import {campaignBrief} from '../lib/planning-brief';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { allocation, summary, PRIMARY_FORMS, primaryFormLabel, experienceModeLabel, filterProjects, spending, settlementMonths, validateProjects, durationDays, quarter, parseMoney, backup, readBackup, csv, nextCode } from '../lib/planner';
@@ -111,4 +112,13 @@ test('a final settlement replaces legacy actuals and belongs to the month it was
   assert.equal(settlementMonths([old,restored],'2027').reduce((a,b)=>a+b,0),0);
   assert.equal(settlementMonths([old,restored],'2028')[0],3000);
   assert.match(csv([restored]), /"30","0","2028-01-03"/);
+});
+
+test('optional planning briefs survive backup and keep saved copy ahead of suggestions', () => {
+  const item=seed()[0];
+  assert.ok(campaignBrief({...item,id:'S01'})?.positioning.includes('牧场'));
+  const planningBrief={positioning:'自定义定位',direction:'',difference:'差异',keywords:['关键词']};
+  const [saved]=readBackup(backup([{...item,id:'S01',planningBrief}]));
+  assert.deepEqual(campaignBrief(saved),planningBrief);
+  assert.throws(()=>validateProjects([{...item,planningBrief:{...planningBrief,keywords:['一','二','三','四']}}]));
 });

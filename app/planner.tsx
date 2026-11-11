@@ -2,8 +2,8 @@
 import {useEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
 import {ArrowDownToLine,ArrowUpRight,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet} from 'lucide-react';
 import {allocation,backup,COLORS,csv,durationDays,EXPERIENCE_MODES,experienceModeLabel,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,recordedSpend,rows,settlementMonths,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
-import {useCampaignArtwork,usePlanner,type BudgetReference,type ViewerData} from '../lib/storage';
-
+import {setOpeningReturn,useCampaignArtwork,usePlanner,type BudgetReference,type ViewerData} from '../lib/storage';
+import {briefLimits,campaignBrief} from '../lib/planning-brief';
 import {PlanOverview} from './overview';
 import {campaignTitles,type CampaignArtwork} from './campaign-gallery';
 import {ProjectSettlement} from './project-settlement';
@@ -105,10 +105,10 @@ function useProjectJump(pane:Pane) {
   };
 }
 function Brand() {return <span className="brand">INS<sup>®</sup></span>;}
-function WorkspaceNavigation({pane,owner,children}:{pane:Pane;owner:boolean;children:ReactNode}) {
+function WorkspaceNavigation({pane,owner,children,onOpening}:{pane:Pane;owner:boolean;children:ReactNode;onOpening:()=>void}) {
   const links:Pane[]=owner?['overview','budget','projects','resources']:['overview','projects','resources'];
   return <header className="edition-nav">
-    <a className="edition-brand" href="#overview" aria-label="INS LAND 年度总览"><Brand/><small>LAND / Y27</small></a>
+    <button type="button" className="edition-brand" onClick={onOpening} aria-label="INS LAND · 返回开屏"><Brand/><small>LAND / Y27</small></button>
     <nav aria-label="工作台导航">{links.map(key=>{
       const {icon:Icon,label}=PANE_INFO[key];
       return <a href={'#'+key} key={key} aria-current={pane===key?'page':undefined}>
@@ -178,6 +178,7 @@ function PriorBudget({project,reference}:{project:Project;reference:BudgetRefere
   </section>;
 }
 function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReference;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
+  const brief=p.tier==='S'?campaignBrief(p):undefined;
   const gap=allocation(p), split=(p.build??0)+(p.experience??0);
   const [dateError,setDateError]=useState('');
   const changeDate=(which:'start'|'end', value:string)=>{
@@ -236,6 +237,24 @@ function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReferen
           <ProjectSettlement project={p} onSave={settlement=>edit({settlement})}/>
           </div>
         </details>
+        {brief&&<details className="project-planning-brief">
+          <summary>主题概述 <ChevronDown size={14} aria-hidden="true"/></summary>
+          <div className="planning-brief-fields">
+            <label>定位<input aria-label="主题定位" maxLength={briefLimits.positioning} value={brief.positioning}
+              onChange={event=>edit({planningBrief:{...brief,positioning:event.target.value}})}/></label>
+            <label>主导方向<input aria-label="主题主导方向" maxLength={briefLimits.direction} value={brief.direction}
+              onChange={event=>edit({planningBrief:{...brief,direction:event.target.value}})}/></label>
+            <label>核心差异<textarea aria-label="主题核心差异" rows={2} maxLength={briefLimits.difference} value={brief.difference}
+              onChange={event=>edit({planningBrief:{...brief,difference:event.target.value}})}/></label>
+            <fieldset><legend>关键词</legend><div>
+              {Array.from({length:briefLimits.keywordCount},(_,i)=><input key={i} aria-label={'主题关键词 '+(i+1)}
+                maxLength={briefLimits.keyword} value={brief.keywords[i]??''} onChange={event=>{
+                  const keywords=Array.from({length:briefLimits.keywordCount},(_,index)=>index===i?event.target.value:brief.keywords[index]??'');
+                  edit({planningBrief:{...brief,keywords}});
+                }}/>)}
+            </div></fieldset>
+          </div>
+        </details>}
         <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
         </div>
       </div>
@@ -469,14 +488,14 @@ function PaymentLedger({items,selectedQuarter,bySettlement,clearQuarter,openProj
   </article>;
 }
 
-function Viewer({data,artwork,dark,toggle,logout,error}:{data:ViewerData;artwork:CampaignArtwork;dark:boolean;toggle:()=>void;logout:()=>void;error:string}) {
+function Viewer({data,artwork,dark,toggle,logout,error,onOpening}:{onOpening:()=>void;data:ViewerData;artwork:CampaignArtwork;dark:boolean;toggle:()=>void;logout:()=>void;error:string}) {
   const [filter,setFilter]=useState<'all'|Tier>('all');
   const [quarterFilter,setQuarterFilter]=useState('all');
   const pane=usePane(false);
   const jumpToProject=useProjectJump(pane);
   const projects=data.projects.filter(p=>(filter==='all'||p.tier===filter)&&(quarterFilter==='all'||quarter(p.start)===quarterFilter));
   return <div className="shell edition-shell viewer">
-    <WorkspaceNavigation pane={pane} owner={false}><span className="role-chip">浏览者</span><button className="icon" aria-label={dark?'切换浅色主题':'切换深色主题'} onClick={toggle}>{dark?<Sun/>:<Moon/>}</button><button className="icon" aria-label="退出登录" onClick={logout}><LogOut/></button>
+    <WorkspaceNavigation pane={pane} owner={false} onOpening={onOpening}><span className="role-chip">浏览者</span><button className="icon" aria-label={dark?'切换浅色主题':'切换深色主题'} onClick={toggle}>{dark?<Sun/>:<Moon/>}</button><button className="icon" aria-label="退出登录" onClick={logout}><LogOut/></button>
     </WorkspaceNavigation>
     <main><div className="content edition-content">
         <section id="overview" className="pane" hidden={pane!=='overview'}>
@@ -507,6 +526,7 @@ export default function Planner() {
   const pane=usePane(true);
   const jumpToProject=useProjectJump(pane);
   const [tier,setTier]=useState('S'),[q,setQ]=useState('all'),[form,setForm]=useState('all');
+  const [atOpening,setAtOpening]=useState(false);
   const [dark,setDark]=useState(true),[notice,setNotice]=useState('');
   const [confirm,setConfirm]=useState<Confirmation|null>(null);
   const [resetStep,setResetStep]=useState(false);
@@ -552,11 +572,22 @@ export default function Planner() {
       download(new Uint8Array(bytes),'INS-Y27-Campaign.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }catch{setNotice('Excel 导出失败，请重试或导出 CSV。');}finally{setExcelBusy(false);}
   };
-  if(store.snapshot?.role==='viewer')return <Viewer data={store.snapshot} artwork={artwork} dark={dark} toggle={toggle} logout={()=>void store.logout()} error={store.error}/>;
-  if(!store.items)return <LoginReel busy={store.loading} error={store.error} onLogin={(name,password,register)=>void store.login(name,password,register)}/>;
+  const goToOpening=(active:boolean)=>{
+    setOpeningReturn(active);
+    setAtOpening(active);
+    window.scrollTo(0,0);
+  };
+  const showOpening=()=>goToOpening(true);
+  if(atOpening||!store.snapshot)return <LoginReel busy={store.loading} error={store.error}
+    onResume={atOpening&&store.snapshot?()=>goToOpening(false):undefined}
+    onLogin={(name,password,register)=>{
+      if(atOpening)goToOpening(false);
+      void store.login(name,password,register);
+    }}/>;
+  if(store.snapshot.role==='viewer')return <Viewer data={store.snapshot} artwork={artwork} dark={dark} toggle={toggle} logout={()=>void store.logout()} error={store.error} onOpening={showOpening}/>;
 
   return <div className="shell edition-shell">
-    <WorkspaceNavigation pane={pane} owner><span className="save" aria-live="polite"><span className="dot"/>{store.status}</span><button className="icon" aria-label={dark?'切换浅色主题':'切换深色主题'} onClick={toggle}>{dark?<Sun/>:<Moon/>}</button><span className="role-chip">管理者</span><button className="icon" aria-label="退出登录" disabled={store.dirty} onClick={()=>void store.logout()}><LogOut/></button>
+    <WorkspaceNavigation pane={pane} owner onOpening={showOpening}><span className="save" aria-live="polite"><span className="dot"/>{store.status}</span><button className="icon" aria-label={dark?'切换浅色主题':'切换深色主题'} onClick={toggle}>{dark?<Sun/>:<Moon/>}</button><span className="role-chip">管理者</span><button className="icon" aria-label="退出登录" disabled={store.dirty} onClick={()=>void store.logout()}><LogOut/></button>
     </WorkspaceNavigation>
     <main><div className="content edition-content">
       <section id="overview" className="pane" hidden={pane!=='overview'}>
