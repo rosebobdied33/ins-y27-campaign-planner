@@ -1071,8 +1071,8 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .weekday-periods article b{color:var(--project-note);font-size:10px}
 .weekday-periods article strong{white-space:nowrap;font-weight:600}
 .resource-page{color:var(--project-text)}
-.resource-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(270px,1fr);align-items:start;gap:14px}
-.resource-sidebar{display:grid;gap:14px;min-width:0}
+.resource-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(270px,1fr);align-items:stretch;gap:14px}
+.resource-sidebar{display:grid;grid-template-rows:repeat(2,minmax(min-content,1fr));align-self:stretch;gap:14px;min-width:0}
 .resource-panel{
   min-width:0;padding:clamp(14px,1.7vw,24px);background:var(--project-paper);
   border:1px solid var(--project-line);border-radius:12px;display:grid;align-content:start;gap:11px;
@@ -1117,7 +1117,7 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .resource-budget-breakdown dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:650}
 .resource-budget-breakdown dd small{margin-left:4px;font-size:11px;color:var(--project-note);font-weight:500}
 .resource-types .segmented{justify-self:start}
-.resource-type-list{display:grid;gap:11px}
+.resource-type-list{display:grid;align-content:space-between;gap:11px;min-height:0}
 .insight-track{display:grid;gap:4px}
 .insight-track>div:first-child{display:flex;justify-content:space-between;gap:6px;font-size:12px}
 .insight-track span{overflow-wrap:anywhere}
@@ -1126,6 +1126,7 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .insight-track .ratio{height:6px;background:var(--project-control)}
 @media(max-width:900px){
   .resource-grid{grid-template-columns:minmax(0,1fr)}
+  .resource-sidebar{grid-template-rows:none;grid-auto-rows:auto;align-self:auto}
 }
 @media(max-width:720px){
   .weekday-months{grid-template-columns:repeat(6,minmax(0,1fr))}
