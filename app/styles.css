@@ -459,14 +459,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
   margin:10px 0 11px;color:#fff1f7;
 }
 .section-heading h2{font-weight:660;line-height:1.22;letter-spacing:.018em}
-.project-settlement{margin-top:10px}
-.project-settlement>summary{display:flex;justify-content:flex-start;width:100%;background:var(--panel);font-size:12px}
-.project-settlement>summary svg{color:var(--muted);transform:rotate(-90deg)}
-.project-settlement[open]>summary svg{transform:none}
-.project-settlement>summary span{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
-.project-settlement form{padding:7px 2px 0}
-.project-settlement form>p{font-size:11px;color:var(--muted);margin:3px 0 6px}
-.project-settlement form .primary{margin-top:8px;width:100%}
 .settlement-date{display:grid;gap:3px;font-size:11px;color:var(--muted);margin-top:7px}
 
 .campaign-gallery{
@@ -568,11 +560,10 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .project .project-summary .date-caption{padding:0;margin:0;gap:6px;color:var(--project-note)}
 .project-summary .duration{background:transparent;border:0;color:inherit;padding:0}
 .project-editor{margin:0 16px;border-top:1px solid var(--project-line)}
-.project-editor>summary{
+.project-editor>button{
   min-height:60px;width:100%;padding:6px 0;display:flex;justify-content:space-between;gap:8px;
   border:0;border-radius:0;background:none;list-style:none;
 }
-.project-editor>summary::-webkit-details-marker{display:none}
 .project-budget-preview{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;text-align:left}
 .project-budget-preview small{font-size:11px;font-weight:550;color:var(--project-note)}
 .project-budget-preview strong{font-size:15px;color:var(--project-text);font-variant-numeric:tabular-nums}
@@ -581,16 +572,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
   padding:6px 8px;border-radius:7px;border:1px solid var(--project-line);
   color:var(--project-accent);font-size:12px;line-height:1.45;
 }
-.project-edit-trigger svg{transform:rotate(-90deg)}
-.project-editor[open]>summary .project-edit-trigger svg{transform:rotate(180deg)}
-.project-editor>summary .edit-hide,.project-editor[open]>summary .edit-show{display:none}
-.project-editor[open]>summary .edit-hide{display:inline}
-.project-editor>summary:hover .project-edit-trigger,.project-editor[open]>summary .project-edit-trigger{
-  background:var(--project-control);border-color:var(--project-accent);
-}
-.project-edit-body{padding:10px 0 12px;border-top:1px solid var(--project-line)}
-.project-edit-head{display:flex;align-items:center;color:var(--project-note);font-size:12px;margin-bottom:8px}
-.project-edit-head .icon{border-color:var(--project-line);color:var(--project-note)}
 .project-edit-name{display:grid;gap:4px;margin-bottom:8px;color:var(--project-note);font-size:12px}
 .project-edit-name input{min-height:36px;color:var(--project-text)}
 .project-edit-body .project-categories{padding:8px 0 3px;border-top:1px solid var(--project-line)}
@@ -623,18 +604,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
   .campaign-slide-info small,.campaign-slide-date{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.campaign-rail{scroll-behavior:auto}}
-
-.budget-disclosure{margin:9px 0 8px}
-.budget-disclosure>summary{
-  width:100%;min-height:42px;justify-content:flex-start;gap:8px;
-  padding:5px 8px 5px 10px;background:var(--glass);
-  border-color:color-mix(in srgb,var(--theme) 32%,var(--line));
-}
-.budget-disclosure>summary:hover{border-color:var(--accent)}
-.budget-disclosure-label{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
-.budget-disclosure-chevron{flex:none;margin-left:auto;color:var(--muted);transform:rotate(-90deg)}
-.budget-disclosure[open]>summary .budget-disclosure-chevron{transform:none}
-.budget-disclosure>.card-budget{margin:6px 0 0}
 
 .campaign-masthead{
   --masthead-gutter:clamp(12px,2.6vw,32px);
@@ -1332,7 +1301,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .edition-projects[data-layout=list] .project-cover{min-height:92px;border-radius:11px 0 0 11px;padding:8px 12px 10px;gap:9px}
 .edition-projects[data-layout=list] .project-cover-title{font-size:clamp(21px,10.5cqi,38px)}
 .edition-projects[data-layout=list] .project-editor{margin:10px 13px 0 0;border:0}
-.edition-projects[data-layout=list] .project-editor[open]{grid-column:1/-1;margin:0 15px}
 .edition-projects[data-layout=list] .viewer-categories{margin-top:10px}
 .edition-projects[data-layout=list] .viewer-budget{grid-column:2/-1}
 .edition-shell .project-cover{
@@ -1352,7 +1320,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
   padding:2px 7px;border:1px solid var(--edition-rule);border-radius:999px;background:var(--project-control)
 }
 .edition-shell .project-edit-trigger{background:var(--project-control);border-color:var(--edition-rule)}
-.edition-shell .project-editor[open] .project-edit-trigger{border-color:var(--accent)}
 
 .edition-shell .budget-tiles{grid-template-rows:auto}
 .edition-shell #budget .budget-feature{grid-row:auto;min-height:280px}
@@ -1955,43 +1922,6 @@ button.calendar-bar{min-height:0;padding:0 2px}
 #projects .edition-projects[data-layout=folio][data-columns="3"]{
   grid-template-columns:repeat(auto-fill,minmax(min(100%,max(260px,calc((100% - 32px) / 3))),1fr));
 }
-.project-edit-body{display:grid;gap:9px}
-.project-edit-fields,.project-edit-sections{min-width:0}
-.project-edit-fields .project-edit-head{justify-content:space-between}
-.project-edit-fields :is(.date-pair,.fields){gap:6px;margin-block:6px}
-.project-edit-fields :is(label,input,select){min-width:0;max-width:100%}
-.project-edit-fields :is(input,select){width:100%}
-.project-edit-body .project-categories{padding-top:6px}
-.project-edit-sections{
-  border:1px solid var(--project-line);border-radius:8px;padding:0 7px;background:color-mix(in srgb,var(--panel) 91%,var(--accent));
-}
-.project-edit-sections :is(.budget-disclosure,.notes){margin:0;border:0}
-.project-edit-sections .notes{border-top:1px solid var(--project-line)}
-.project-edit-sections :is(.budget-disclosure,.notes)>summary{min-height:36px;padding-inline:2px}
-.project-allocation-summary{font-size:10px;color:var(--project-note);margin-left:auto;white-space:nowrap}
-.project-allocation-summary[data-over=true]{color:var(--danger)}
-.project-edit-sections .budget-disclosure-chevron{margin-left:1px}
-.project-edit-sections .card-budget{min-width:0;padding-inline:5px}
-.project-edit-sections .notes textarea{width:100%;margin-bottom:6px}
-@media(min-width:780px){
-  .edition-projects[data-layout=list] .project-edit-body{
-    grid-template-columns:minmax(0,1fr) minmax(230px,.9fr);gap:15px;align-items:start;
-  }
-}
-@media(min-width:1050px){
-  .edition-projects[data-layout=list] .project-edit-fields{
-    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:7px 12px;
-  }
-  .edition-projects[data-layout=list] .project-edit-fields :is(.project-edit-head,.project-edit-name,.project-categories,[role=alert]){grid-column:1/-1}
-  .edition-projects[data-layout=list] .project-edit-fields :is(.project-edit-head,.project-edit-name,.date-pair,.fields){margin-block:0}
-}
-@media(min-width:780px){
-  .edition-projects[data-layout=list] .project:has(>.project-editor[open]){position:relative}
-  .edition-projects[data-layout=list] .project-editor[open]>summary{
-    position:absolute;right:13px;top:7px;width:calc(35% - 14px);min-height:48px;
-  }
-}
-
 /* Budget charts share broad plots, a continuous zero line, and tonal fills. */
 #budget{
   --plot-grid:color-mix(in srgb,var(--project-line) 82%,transparent);
@@ -2187,13 +2117,6 @@ body:has(.reel-edition-dialog[data-archive=true][open]){overflow:hidden}
   .screening-editorial dd{font-size:14px}
 }
 
-.project-edit-sections .project-planning-brief{border-top:1px solid var(--project-line)}
-.project-planning-brief>summary{
-  display:flex;align-items:center;justify-content:space-between;min-height:36px;padding:4px 2px;
-  font-size:12px;color:var(--project-text);border:0;background:none;border-radius:0;list-style:none;
-}
-.project-planning-brief>summary::-webkit-details-marker{display:none}
-.project-planning-brief[open]>summary svg{transform:rotate(180deg)}
 .planning-brief-fields{display:grid;gap:7px;padding:3px 3px 9px;min-width:0}
 .planning-brief-fields label{display:grid;gap:3px;color:var(--project-note);font-size:12px}
 .planning-brief-fields :is(input,textarea){min-width:0;width:100%;font-size:13px}
@@ -2238,3 +2161,61 @@ button.edition-brand{border:0;padding:0;background:none;justify-content:flex-sta
 .screening-editorial h3{color:var(--brief-accent);line-height:1.58}
 .screening-editorial dl{gap:8px;margin-top:10px}
 .screening-editorial dl>div{padding:6px 10px 7px}
+
+
+.project-editor>button:hover .project-edit-trigger,.project-editor>button:focus-visible .project-edit-trigger{
+  background:var(--project-control);border-color:var(--project-accent);
+}
+.project-edit-dialog{
+  position:fixed;inset:0;margin:auto;width:min(1120px,calc(100% - 32px));max-width:none;
+  max-height:calc(100dvh - 32px);padding:0;overflow:hidden;color:var(--project-text);
+  border-color:color-mix(in srgb,var(--theme) 35%,var(--project-line));border-radius:16px;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--theme) 13%,var(--panel)),var(--panel) 48%);
+  box-shadow:0 28px 90px #160d225c;
+}
+.project-edit-dialog::backdrop{background:#1b10246b;backdrop-filter:blur(5px)}
+body:has(.project-edit-dialog[open]){overflow:hidden}
+.project-edit-form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px);min-height:0}
+.project-dialog-head,.project-dialog-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px clamp(12px,2vw,24px)}
+.project-dialog-head{border-bottom:1px solid var(--project-line)}
+.project-dialog-head small{color:var(--project-note);font-size:12px;letter-spacing:.06em}
+.project-dialog-head h2{font-size:clamp(21px,2.5vw,30px);line-height:1.22;margin-top:3px;overflow-wrap:anywhere}
+.project-dialog-head .icon{flex:none}
+.project-edit-body{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr) minmax(0,1fr);gap:12px;align-items:start;
+  padding:14px clamp(12px,2vw,24px);overflow:auto;overscroll-behavior:contain;min-height:0;
+}
+.project-dialog-section{
+  min-width:0;padding:12px;border:1px solid var(--project-line);border-radius:10px;
+  background:color-mix(in srgb,var(--project-control) 42%,transparent);
+}
+.project-dialog-section h3{font-size:15px;font-weight:650;margin:0 0 10px;color:var(--project-accent)}
+.project-dialog-section :is(input,select,textarea){min-width:0;max-width:100%}
+.project-dialog-section label{min-width:0}
+.project-edit-fields :is(.date-pair,.fields){margin-block:8px;gap:7px}
+.project-edit-fields :is(input,select),.project-dialog-notes textarea,.project-dialog-settlement input{width:100%}
+.project-dialog-notes{display:grid;gap:4px;font-size:12px;color:var(--project-note);margin-top:10px}
+.project-dialog-budget .card-budget{margin:0;padding:0;border:0;background:none}
+.project-dialog-budget .budget-top{flex-wrap:wrap}
+.project-dialog-settlement{margin-top:12px;padding-top:10px;border-top:1px solid var(--project-line)}
+.project-dialog-settlement-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.project-dialog-settlement-head h4{margin:0;font-size:13px}
+.project-dialog-settlement-head span{font-size:11px;color:var(--project-note);font-variant-numeric:tabular-nums}
+.project-dialog-settlement p{margin:4px 0;font-size:11px}
+.project-dialog-settlement .danger{color:var(--danger)}
+.project-dialog-footer{margin:0;border-top:1px solid var(--project-line)}
+.project-dialog-footer .actions{gap:7px}
+.project-dialog-footer .card-actions{margin:0}
+@media(min-width:651px){
+  .project-edit-form[data-has-brief=false] .project-edit-body{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:960px){
+  .project-edit-body{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .project-dialog-brief{grid-column:1}
+}
+@media(max-width:650px){
+  .project-edit-dialog{width:calc(100% - 16px);max-height:calc(100dvh - 16px)}
+  .project-edit-form{max-height:calc(100dvh - 18px)}
+  .project-edit-body{grid-template-columns:minmax(0,1fr);gap:9px}
+  .project-dialog-section :is(input,select,textarea){font-size:16px}
+}

@@ -1,12 +1,12 @@
 'use client';
-import {useEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
-import {ArrowDownToLine,ArrowUpRight,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet} from 'lucide-react';
+import {useEffect,useRef,useState,type CSSProperties,type FormEvent,type ReactNode} from 'react';
+import {ArrowDownToLine,ArrowUpRight,BarChart3,CalendarDays,Check,ChevronDown,Copy,Database,LayoutGrid,LockKeyhole,LogOut,Moon,Plus,Search,Sun,Trash2,Wallet,X} from 'lucide-react';
 import {allocation,backup,COLORS,csv,durationDays,EXPERIENCE_MODES,experienceModeLabel,filterProjects,FORM_FILTERS,HEADERS,PRIMARY_FORMS,primaryFormLabel,nextCode,number,parseMoney,percent,QUARTERS,quarter,readBackup,recordedSpend,rows,settlementMonths,STATUSES,spending,summary,yuan,type Project,type Tier} from '../lib/planner';
 import {setOpeningReturn,useCampaignArtwork,usePlanner,type BudgetReference,type ViewerData} from '../lib/storage';
 import {briefLimits,campaignBrief} from '../lib/planning-brief';
 import {PlanOverview} from './overview';
 import {campaignTitles,type CampaignArtwork} from './campaign-gallery';
-import {ProjectSettlement} from './project-settlement';
+import {ProjectSettlement,readSettlement} from './project-settlement';
 import {ResourceAnalysis,WeekdayBudget} from './year-insights';
 import {monthlyTotal,type WeekdayPlan} from '../lib/weekday';
 import {LoginReel} from './login-reel';
@@ -27,8 +27,8 @@ function Ratio({segments,label,scale}:{segments:Segment[];label:string;scale?:nu
 }
 const tierSegments=(S:number,A:number):Segment[]=>[{value:S,color:'var(--tier-s)'},{value:A,color:'var(--tier-a)'}];
 const splitSegments=(build:number,experience:number):Segment[]=>[{value:build,color:'var(--build)'},{value:experience,color:'var(--experience)'}];
-function Money({label,value,onChange,required=false,commitOnBlur=false}:{
-  label:string;value:number|null;onChange:(v:number|null)=>void;required?:boolean;commitOnBlur?:boolean;
+function Money({label,value,onChange,required=false,commitOnBlur=false,validate=false}:{
+  label:string;value:number|null;onChange:(v:number|null)=>void;required?:boolean;commitOnBlur?:boolean;validate?:boolean;
 }) {
   const [draft,setDraft]=useState('');
   const [editing,setEditing]=useState(false);
@@ -44,7 +44,7 @@ function Money({label,value,onChange,required=false,commitOnBlur=false}:{
     <span>{label}</span>
     <span className="money-field"><b>¥</b><input aria-label={label} aria-invalid={error} inputMode="decimal"
       value={editing?draft:value===null?'':number(value)} placeholder="—"
-      onFocus={e=>{setDraft(e.currentTarget.value);setEditing(true);setError(false);}}
+      onFocus={e=>{setDraft(e.currentTarget.value);setEditing(true);if(!validate)setError(false);}}
       onChange={e=>{
         const raw=e.target.value;
         setDraft(raw);
@@ -52,9 +52,14 @@ function Money({label,value,onChange,required=false,commitOnBlur=false}:{
           const amount=read(raw);
           if(!commitOnBlur)onChange(amount);
           setError(false);
-        }catch{setError(true);}
+          if(validate)e.currentTarget.setCustomValidity('');
+        }catch{
+          setError(true);
+          if(validate)e.currentTarget.setCustomValidity('请输入有效金额，最多两位小数。');
+        }
       }}
       onBlur={e=>{
+        if(validate&&error)return;
         setEditing(false);
         if(!commitOnBlur){setError(false);return;}
         try{
@@ -89,14 +94,9 @@ function useProjectJump(pane:Pane) {
   useEffect(()=>{
     if(pane!=='projects'||target===null)return;
     const project=document.getElementById(target.id);
-    if(target.budget){
-      const editor=project?.querySelector<HTMLDetailsElement>('.project-editor');
-      const budget=editor?.querySelector<HTMLDetailsElement>('.budget-disclosure');
-      if(editor)editor.open=true;
-      if(budget)budget.open=true;
-    }
     project?.scrollIntoView({block:'start'});
-    project?.focus({preventScroll:true});
+    if(target.budget)project?.querySelector<HTMLButtonElement>('.project-editor>button')?.click();
+    else project?.focus({preventScroll:true});
     setTarget(null);
   },[pane,target]);
   return (id:string,budget=false)=>{
@@ -177,10 +177,40 @@ function PriorBudget({project,reference}:{project:Project;reference:BudgetRefere
     </table>
   </section>;
 }
-function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReference;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
+function Card({p:project,reference,edit:save,copy,remove}:{p:Project;reference?:BudgetReference;edit:(patch:Partial<Project>)=>void;copy:()=>void;remove:()=>void}) {
+  const dialog=useRef<HTMLDialogElement>(null);
+  const [draft,setDraft]=useState<Partial<Project>|null>(null);
+  const [settlementError,setSettlementError]=useState('');
+  const [dateError,setDateError]=useState('');
+  const p={...project,...draft};
+  const edit=(patch:Partial<Project>)=>setDraft(current=>({...current,...patch}));
+  const isEditing=draft!==null;
+  useEffect(()=>{
+    if(isEditing&&!dialog.current?.open)dialog.current?.showModal();
+  },[isEditing]);
+  const closeEditor=()=>{
+    dialog.current?.close();
+    setDraft(null);setDateError('');setSettlementError('');
+  };
+  const submit=(event:FormEvent<HTMLFormElement>)=>{
+    event.preventDefault();
+    if(!draft||dateError)return;
+    let settlement:Project['settlement'];
+    try{
+      settlement=readSettlement(new FormData(event.currentTarget));
+    }catch{
+      setSettlementError('请填写有效金额与结算日期，无支出的费用项填 0。');
+      return;
+    }
+    const patch={...draft};
+    if(settlement&&(settlement.build!==project.settlement?.build||settlement.experience!==project.settlement.experience||settlement.date!==project.settlement.date)){
+      patch.settlement=settlement;
+    }
+    closeEditor();
+    if(Object.keys(patch).length)save(patch);
+  };
   const brief=p.tier==='S'?campaignBrief(p):undefined;
   const gap=allocation(p), split=(p.build??0)+(p.experience??0);
-  const [dateError,setDateError]=useState('');
   const changeDate=(which:'start'|'end', value:string)=>{
     if(!/^20\d\d-\d\d-\d\d$/.test(value)||(which==='start'?value>p.end:value<p.start)){
       setDateError('请填写有效日期，结束日期不得早于开始日期。');return;
@@ -188,19 +218,24 @@ function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReferen
     setDateError('');edit({[which]:value});
   };
   return <article className="project" id={p.id} tabIndex={-1} style={{'--theme':p.color} as CSSProperties}>
-    <ProjectCover project={p}/>
-    <ProjectSummary project={p}/>
-    <details className="project-editor">
-      <summary>
-        <span className="project-budget-preview"><small>总预算</small><strong>{yuan(p.budget)}</strong></span>
-        <span className="project-edit-trigger"><span className="edit-show">编辑项目</span><span className="edit-hide">收起编辑</span><ChevronDown size={15} aria-hidden="true"/></span>
-      </summary>
-      <div className="project-edit-body">
-        <div className="project-edit-fields">
-        <div className="project-edit-head">
-          <span>项目信息</span>
-          <div className="card-actions"><button className="icon" title="复制项目" aria-label="复制项目" onClick={copy}><Copy/></button><button className="icon" title="删除项目" aria-label="删除项目" onClick={remove}><Trash2/></button></div>
-        </div>
+    <ProjectCover project={project}/>
+    <ProjectSummary project={project}/>
+    <div className="project-editor">
+      <button type="button" aria-haspopup="dialog" onClick={()=>setDraft({})}>
+        <span className="project-budget-preview"><small>总预算</small><strong>{yuan(project.budget)}</strong></span>
+        <span className="project-edit-trigger">编辑项目 <ArrowUpRight size={14} aria-hidden="true"/></span>
+      </button>
+    </div>
+    <dialog className="project-edit-dialog" ref={dialog} aria-labelledby={project.id+'-edit-title'}
+      onCancel={event=>{event.preventDefault();closeEditor();}}>
+      {isEditing&&<form className="project-edit-form" data-has-brief={!!brief} onSubmit={submit}>
+        <header className="project-dialog-head">
+          <div><small>{project.code} / 编辑项目</small><h2 id={project.id+'-edit-title'}>{project.name||'未命名项目'}</h2></div>
+          <button type="button" className="icon" aria-label="关闭编辑" onClick={closeEditor}><X size={18}/></button>
+        </header>
+        <div className="project-edit-body">
+        <section className="project-edit-fields project-dialog-section">
+        <h3>项目信息</h3>
         <label className="project-edit-name">主题名称<input aria-label="主题名称" maxLength={100} placeholder="输入项目主题" value={p.name} onChange={e=>edit({name:e.target.value})}/></label>
         <div className="date-pair"><label>开始<input aria-label="开始日期" type="date" min="2000-01-01" max={p.end} value={p.start} onChange={e=>changeDate('start',e.target.value)}/></label><label>结束<input aria-label="结束日期" type="date" min={p.start} max="2099-12-31" value={p.end} onChange={e=>changeDate('end',e.target.value)}/></label></div>
         {dateError&&<small className="danger" role="alert">{dateError}</small>}
@@ -219,26 +254,22 @@ function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReferen
           </select></label>
           {p.secondary==='其他'&&<label className="primary-detail">自定义体验模式<input aria-label="自定义体验模式" maxLength={80} placeholder="输入体验模式" value={p.secondaryDetail??''} onChange={e=>edit({secondaryDetail:e.target.value})}/></label>}</div>
         </div>
-        </div>
-        <div className="project-edit-sections">
-        <details className="budget-disclosure">
-          <summary>
-            <span className="budget-disclosure-label">预算与结算</span>
-            <small className="project-allocation-summary" data-over={gap<0}>{gap<0?'超额':gap===0?'已分配':'待分配'}</small>
-            <ChevronDown className="budget-disclosure-chevron" size={15} aria-hidden="true"/>
-          </summary>
+        <label className="project-dialog-notes">备注<textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></label>
+        </section>
+        <section className="project-dialog-section project-dialog-budget">
+          <h3>预算与结算</h3>
           <div className="card-budget">
-          <div className="budget-top"><Money label="预算总额" value={p.budget} required onChange={budget=>budget!==null&&edit({budget})}/>
+          <div className="budget-top"><Money validate label="预算总额" value={p.budget} required onChange={budget=>budget!==null&&edit({budget})}/>
           <span className={'budget-state '+(gap<0?'danger':gap===0?'success':'')}>{gap<0?'超额 '+yuan(-gap):gap===0?'已分配完成':'待分配 '+yuan(gap)}</span></div>
-          <div className="split"><Money label="搭建" value={p.build} onChange={build=>edit({build})}/><Money label="体验" value={p.experience} onChange={experience=>edit({experience})}/></div>
+          <div className="split"><Money validate label="搭建" value={p.build} onChange={build=>edit({build})}/><Money validate label="体验" value={p.experience} onChange={experience=>edit({experience})}/></div>
           <Ratio segments={[...splitSegments(p.build??0,p.experience??0),{value:Math.max(0,gap),color:'var(--unassigned)'}]} label={'项目预算分配：搭建 '+yuan(p.build??0)+'，体验 '+yuan(p.experience??0)+'，'+(gap<0?'超额 ':'待分配 ')+yuan(Math.abs(gap))}/>
           <div className="split-legend"><span><i/>搭建 {split&&p.build!==null?pct(p.build,split):'—'}</span><span><i/>体验 {split&&p.experience!==null?pct(p.experience,split):'—'}</span>{gap>0&&<span className="unassigned"><i/>待分配</span>}</div>
+          <ProjectSettlement project={p} error={settlementError} onChange={()=>setSettlementError('')}/>
           {reference&&<PriorBudget project={p} reference={reference}/>}
-          <ProjectSettlement project={p} onSave={settlement=>edit({settlement})}/>
           </div>
-        </details>
-        {brief&&<details className="project-planning-brief">
-          <summary>主题概述 <ChevronDown size={14} aria-hidden="true"/></summary>
+        </section>
+        {brief&&<section className="project-dialog-section project-dialog-brief">
+          <h3>主题概述</h3>
           <div className="planning-brief-fields">
             <label>定位<input aria-label="主题定位" maxLength={briefLimits.positioning} value={brief.positioning}
               onChange={event=>edit({planningBrief:{...brief,positioning:event.target.value}})}/></label>
@@ -254,11 +285,20 @@ function Card({p,reference,edit,copy,remove}:{p:Project;reference?:BudgetReferen
                 }}/>)}
             </div></fieldset>
           </div>
-        </details>}
-        <details className="notes"><summary>备注 {p.notes&&<span className="dot"/>}<ChevronDown size={14}/></summary><textarea aria-label="备注" placeholder="记录创意方向、场景想法或特殊要求" maxLength={1000} rows={3} value={p.notes} onChange={e=>edit({notes:e.target.value})}/></details>
+        </section>}
         </div>
-      </div>
-    </details>
+        <footer className="project-dialog-footer">
+          <div className="card-actions">
+            <button type="button" className="icon" title="复制项目" aria-label="复制项目" onClick={()=>{closeEditor();copy();}}><Copy/></button>
+            <button type="button" className="icon" title="删除项目" aria-label="删除项目" onClick={remove}><Trash2/></button>
+          </div>
+          <div className="actions">
+            <button type="button" onClick={closeEditor}>取消</button>
+            <button type="submit" className="primary"><Check size={16}/>确认保存</button>
+          </div>
+        </footer>
+      </form>}
+    </dialog>
   </article>;
 }
 function SpendingBoard({items,baseline,weekday,history,openProject}:{items:Project[];baseline:number;weekday?:WeekdayPlan|null;history:BudgetReference[];openProject:(id:string)=>void}) {
@@ -555,9 +595,8 @@ export default function Planner() {
     store.change([p,...items]);setTier(chosen);setQ('all');setForm('all');setNotice(source?'已复制 '+p.code:'已新增 '+p.code);
     requestAnimationFrame(()=>{
       const project=document.getElementById(p.id);
-      const editor=project?.querySelector<HTMLDetailsElement>('.project-editor');
-      if(editor)editor.open=true;
       project?.scrollIntoView({block:'nearest'});
+      project?.querySelector<HTMLButtonElement>('.project-editor>button')?.click();
     });
   };
   const exportExcel=async()=>{
