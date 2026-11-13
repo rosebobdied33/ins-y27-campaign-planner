@@ -14,7 +14,9 @@ declare
         from jsonb_array_elements(case when jsonb_typeof(p->'planningBrief'->'keywords')='array'
           then p->'planningBrief'->'keywords' else '[]'::jsonb end) with ordinality as k(keyword,ord)
         where k.ord<=3 and jsonb_typeof(keyword)='string'
-      ),'[]'::jsonb)
+      ),'[]'::jsonb),
+      'storeTitle',case when jsonb_typeof(p->'planningBrief'->'storeTitle')='string' then left(p->'planningBrief'->>'storeTitle',24) else '' end,
+      'storeDirection',case when jsonb_typeof(p->'planningBrief'->'storeDirection')='string' then left(p->'planningBrief'->>'storeDirection',80) else '' end
     ) end$fields$;
 begin
   if strpos(definition,anchor||addition)>0 then return; end if;

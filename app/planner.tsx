@@ -277,6 +277,10 @@ function Card({p:project,reference,edit:save,copy,remove}:{p:Project;reference?:
               onChange={event=>edit({planningBrief:{...brief,direction:event.target.value}})}/></label>
             <label>核心差异<textarea aria-label="主题核心差异" rows={2} maxLength={briefLimits.difference} value={brief.difference}
               onChange={event=>edit({planningBrief:{...brief,difference:event.target.value}})}/></label>
+            <label>门店创意方向标题<input aria-label="门店创意方向标题" maxLength={briefLimits.storeTitle} value={brief.storeTitle??''}
+              onChange={event=>edit({planningBrief:{...brief,storeTitle:event.target.value}})}/></label>
+            <label>门店创意方向<textarea aria-label="门店创意方向" rows={2} maxLength={briefLimits.storeDirection} value={brief.storeDirection??''}
+              onChange={event=>edit({planningBrief:{...brief,storeDirection:event.target.value}})}/></label>
             <fieldset><legend>关键词</legend><div>
               {Array.from({length:briefLimits.keywordCount},(_,i)=><input key={i} aria-label={'主题关键词 '+(i+1)}
                 maxLength={briefLimits.keyword} value={brief.keywords[i]??''} onChange={event=>{

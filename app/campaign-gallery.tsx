@@ -52,6 +52,7 @@ export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,
       }}>
       {image?<img key={project.id} src={image} alt={project.name+' 项目封面'} width={1920} height={1080} decoding="async"/>:
         <div className="edition-screen-fallback" aria-hidden="true">{project.code}</div>}
+      <p className="screening-positioning">{brief?.positioning.trim()||'主题定位待补充'}</p>
     </div>
     {neighbors.map(({item,offset})=>item&&artwork[item.id]&&<button key={item.id} className="screening-neighbor" data-side={offset<0?'previous':'next'}
       aria-label={'预览 '+item.name} onClick={()=>go(index+offset)}>
@@ -61,8 +62,12 @@ export function CampaignGallery({projects,artwork,activeId,onSelect,openProject,
     <div className="edition-screen-guide">
       <div className="edition-screen-index"><span id="campaign-gallery-title">S 级场景档案</span><small>{String(index+1).padStart(2,'0')} / {String(items.length).padStart(2,'0')}</small></div>
       <div className="edition-screen-text" aria-live="polite"><small>{project.code} / {project.status}</small><p lang="en">{palette.title}</p><h2 className="screening-chinese-title">{project.name||'未命名项目'}</h2></div>
+      <div className="screening-store-direction" aria-live="polite">
+        <span>STORE CREATIVE DIRECTION</span>
+        <h3>{brief?.storeTitle?.trim()||'门店创意方向'}</h3>
+        <p>{brief?.storeDirection?.trim()||'创意方向待补充'}</p>
+      </div>
       <div className="screening-editorial" aria-live="polite">
-        <h3>{brief?.positioning.trim()||'主题定位待补充'}</h3>
         <dl>
           <div className="screening-direction"><dt lang="en">PRIMARY DIRECTION</dt><dd>{brief?.direction.trim()||'待补充'}</dd></div>
           <div className="screening-difference"><dt lang="en">KEY DIFFERENCE</dt><dd>{brief?.difference.trim()||'待补充'}</dd></div>
