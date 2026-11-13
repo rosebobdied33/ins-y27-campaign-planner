@@ -497,7 +497,7 @@ function PaymentLedger({items,selectedQuarter,bySettlement,clearQuarter,openProj
                     <span className="spend-card-meta"><small>{project.code}</small><small>{SETTLEMENT_STATUS[state]}</small></span>
                     <strong className="spend-card-name">{project.name||'未命名项目'}</strong>
                     <span className="spend-card-actual">
-                      <span>实际支出</span><b>{actual===null?'—':yuan(actual)}</b>
+                      <span>{actual===null?'实际支出 · 结案填写':'实际支出'}</span><b>{actual===null?'待录入':yuan(actual)}</b>
                       {state==='over'&&actual!==null&&<small>超预算 {yuan(actual-project.budget)}</small>}
                     </span>
                     <span className="spend-card-budget"><span>规划预算</span><b>{yuan(project.budget)}</b><ChevronDown size={16} aria-hidden="true"/></span>

@@ -1831,6 +1831,20 @@ button.calendar-bar{min-height:0;padding:0 2px}
 .spend-card[data-state=settled] .spend-card-actual b{color:var(--budget-teal)}
 .spend-card[data-state=over] .spend-card-actual :is(b,small){color:var(--danger)}
 .spend-card[data-state=unrecorded] .spend-card-actual b{color:var(--muted)}
+.spend-card[data-state=unrecorded] .spend-card-budget{
+  order:3;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 8px;align-items:center;
+  margin-top:2px;padding:12px 13px;border:1px solid color-mix(in srgb,var(--spend-water) 46%,var(--line));
+  border-radius:8px;background:linear-gradient(115deg,color-mix(in srgb,var(--spend-water) 22%,var(--panel)),color-mix(in srgb,var(--project-tone) 16%,var(--panel)) 72%);
+}
+.spend-card[data-state=unrecorded] .spend-card-budget>span{grid-column:1;color:var(--muted);font-size:11px;letter-spacing:.035em}
+.spend-card[data-state=unrecorded] .spend-card-budget>b{grid-column:1;font-size:clamp(25px,2.4vw,36px);line-height:1.08;letter-spacing:-.035em;color:var(--text)}
+.spend-card[data-state=unrecorded] .spend-card-budget svg{grid-column:2;grid-row:1/3}
+.spend-card[data-state=unrecorded] .spend-card-actual{
+  order:4;display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:5px 2px 0;
+  border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;
+}
+.spend-card[data-state=unrecorded] .spend-card-actual>span{font-size:10px;color:var(--muted)}
+.spend-card[data-state=unrecorded] .spend-card-actual>b{font-size:11px;line-height:1.3;font-weight:550;letter-spacing:0;color:var(--muted)}
 .spend-card-budget{display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 6px}
 .spend-card-budget>span{color:var(--text)}
 .spend-card-budget b{font-size:13px;font-variant-numeric:tabular-nums}
