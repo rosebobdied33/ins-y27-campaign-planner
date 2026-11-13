@@ -1249,7 +1249,7 @@ button.calendar-bar{min-height:0;padding:0 2px}
 }
 .edition-screen{min-width:0;aspect-ratio:16/9;touch-action:pan-y;position:relative;overflow:hidden;background:#201720}
 .edition-screen img{display:block;width:100%;height:100%;object-fit:contain}
-.screening-positioning{position:absolute;left:clamp(14px,2.4vw,36px);bottom:clamp(13px,2vw,30px);max-width:min(72%,680px);margin:0;padding:9px 14px;border-left:1px solid color-mix(in srgb,var(--screen-glow) 75%,transparent);color:var(--screen-glow);font:italic 400 clamp(16px,2vw,30px)/1.42 "Bodoni Moda","Songti SC",Georgia,serif;text-shadow:0 2px 18px #160e18;background:linear-gradient(90deg,rgb(25 17 25 / .68),transparent)}
+.screening-positioning{position:relative;align-self:stretch;margin:0;padding:10px 13px 11px;border:1px solid color-mix(in srgb,var(--screen-glow) 34%,transparent);border-left:2px solid var(--screen-glow);border-radius:0 7px 7px 0;color:var(--screen-glow);font-family:ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:clamp(14px,1.15vw,18px);font-style:italic;font-weight:560;line-height:1.62;letter-spacing:.035em;background:linear-gradient(105deg,color-mix(in srgb,var(--screen-glow) 15%,transparent),color-mix(in srgb,var(--screen-wash) 9%,transparent) 58%,transparent);text-wrap:pretty}
 .edition-screen-fallback{
   display:grid;place-items:center;width:100%;height:100%;
   font:italic 400 clamp(40px,7vw,105px)/1 "Bodoni Moda","Didot",serif;
@@ -2134,13 +2134,14 @@ body:has(.reel-edition-dialog[data-archive=true][open]){overflow:hidden}
 button.edition-brand{border:0;padding:0;background:none;justify-content:flex-start}
 
 /* Treat the right-hand guide as a campaign print, with quiet separation between captions. */
-.edition-screening .edition-screen-guide{gap:clamp(9px,1.1vw,16px)}
+.edition-screening .edition-screen-guide{gap:clamp(8px,.9vw,13px)}
 .edition-screening .edition-screen-text p{color:var(--brief-accent);margin:1px 0 7px}
 .edition-screening .screening-chinese-title{
   display:inline-block;margin:0;padding:3px 9px 4px;border:1px solid var(--brief-rule);border-radius:3px;
   font-size:clamp(16px,1.4vw,23px);font-weight:650;line-height:1.35;letter-spacing:.055em;
   background:color-mix(in srgb,var(--screen-deep) 28%,transparent);
 }
+.edition-screening .screening-positioning{margin-top:-2px}
 .screening-editorial{padding-top:10px}
 .screening-editorial h3{line-height:1.52}
 .screening-editorial dl{gap:6px;margin-top:8px}
@@ -2155,7 +2156,8 @@ button.edition-brand{border:0;padding:0;background:none;justify-content:flex-sta
 .screening-editorial li{padding:3px 7px}
 :root:not([data-theme=dark]) .edition-screening .screening-chinese-title{background:#fffaf8a8}
 @media(max-width:700px){
-  .edition-screening .edition-screen-guide{gap:11px}
+  .edition-screening .edition-screen-guide{gap:10px}
+  .screening-positioning{font-size:15px;line-height:1.58}
 }
 
 .edition-screening .screening-chinese-title{
