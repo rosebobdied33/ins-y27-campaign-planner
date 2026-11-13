@@ -65,5 +65,10 @@ const suggestions:Readonly<Partial<Record<string,PlanningBrief>>>={
 };
 
 export function campaignBrief(project:{id:string;planningBrief?:PlanningBrief|null}) {
-  return project.planningBrief??suggestions[project.id];
+  const suggested=suggestions[project.id];
+  const saved=project.planningBrief;
+  if(!suggested)return saved??undefined;
+  // Older saved briefs predate the store-direction fields. Merge defaults so
+  // those records keep their custom overview copy while receiving new fields.
+  return {...suggested,...saved,keywords:saved?.keywords??suggested.keywords};
 }
