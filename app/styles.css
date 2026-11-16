@@ -2245,7 +2245,7 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
 /* 2027 opening campaign editions */
 .campaign-opening{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;overflow:hidden;background:transparent;color:#fff;overscroll-behavior:contain}
 .campaign-opening::backdrop{background:rgb(11 7 17 / .91);animation:opening-dim 940ms both}
-.campaign-opening[data-phase=closing]::backdrop{animation:opening-undim 940ms both}
+.campaign-opening[data-phase=closing]::backdrop{animation:opening-undim 180ms both}
 @keyframes opening-dim{from{opacity:0}}
 @keyframes opening-undim{to{opacity:0}}
 .opening-frame{position:absolute;left:50%;top:50%;width:min(calc(100vw - 48px),calc((100dvh - 48px) * 16 / 9));aspect-ratio:16/9;transform:translate(-50%,-50%);perspective:1800px;container-type:inline-size}
@@ -2284,10 +2284,10 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
 .opening-play{position:absolute;right:2%;bottom:9%;color:#fff}
 .campaign-opening button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:36px;min-height:36px;padding:5px 8px;color:inherit;background:rgb(15 10 20 / .55);border:1px solid rgb(255 255 255 / .3);border-radius:4px;cursor:pointer}
 .campaign-opening button:disabled{opacity:.4;cursor:default}
-.opening-in{animation:opening-in .62s cubic-bezier(.22,.65,.3,1) both}
-.opening-out{animation:opening-out .62s cubic-bezier(.22,.65,.3,1) both}
-@keyframes opening-in{from{transform:translateY(var(--opening-slip));opacity:0}}
-@keyframes opening-out{to{transform:translateY(calc(-1 * var(--opening-slip)));opacity:0}}
+.opening-in{animation:opening-in 240ms cubic-bezier(.25,.8,.25,1) both}
+.opening-out{animation:opening-out 240ms cubic-bezier(.25,.8,.25,1) both}
+@keyframes opening-in{from{transform:translateX(var(--opening-slip))}}
+@keyframes opening-out{to{transform:translateX(calc(-1 * var(--opening-slip)))}}
 @media(max-width:700px){
   .opening-frame{width:calc(100vw - 20px);height:calc(100dvh - 26px);aspect-ratio:auto}
   .opening-art{height:36%;min-height:120px}
@@ -2312,3 +2312,5 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
 }
 .opening-art::after{mask-image:linear-gradient(0deg,#000 74%,transparent 94%)}
 @media(max-width:700px){.opening-art::after{mask-image:none}}
+
+.login-reel[data-opening=true] .reel-stage .reel-card{transition:none}

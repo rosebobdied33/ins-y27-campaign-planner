@@ -87,7 +87,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
     onLogin(String(fields.get('handle')).trim(),String(fields.get('password')),register);
   };
 
-  return <main className="login-reel" data-year={year} style={{
+  return <main className="login-reel" data-year={year} data-opening={!!opening} style={{
     '--scene-glow':edition.glow,'--scene-wash':edition.wash,'--scene-deep':edition.deep,
     '--scene-x':(active%3)*50+'%','--scene-y':Math.floor(active/3)*50+'%',
     ...(!archive&&image?{'--reel-image':'url('+image+')'}:{}),

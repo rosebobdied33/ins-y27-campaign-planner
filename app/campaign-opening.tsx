@@ -8,6 +8,8 @@ import {loginEditions} from './login-editions';
 import {openingMedia} from './campaign-opening-media';
 
 const editions=loginEditions[2027];
+const pageTurnMs=240;
+const returnMs=180;
 const reduced=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function OpeningPoster({index,play}:{index:number;play:boolean}) {
@@ -99,7 +101,7 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
   const switchTimer=useRef<number|undefined>(undefined);
   const changePhase=(next:Phase)=>{phase.current=next;setStatus(next);};
 
-  function animate(origin:DOMRect,closing:boolean) {
+  function animateOpening(origin:DOMRect) {
     const panel=frame.current!;
     const end=panel.getBoundingClientRect();
     const geometry=[
@@ -107,7 +109,7 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
       {left:end.left+'px',top:end.top+'px',width:end.width+'px',height:end.height+'px',transform:'none'},
     ];
     const angles=[{transform:'rotateY(0deg)'},{transform:'rotateY(180deg)'}];
-    const options:KeyframeAnimationOptions={duration:reduced()?0:940,easing:'cubic-bezier(.32,.72,.18,1)',fill:'both',direction:closing?'reverse':'normal'};
+    const options:KeyframeAnimationOptions={duration:reduced()?0:940,easing:'cubic-bezier(.32,.72,.18,1)',fill:'both'};
     animations.current=[panel.animate(geometry,options),flip.current!.animate(angles,options)];
     return Promise.all(animations.current.map(animation=>animation.finished));
   }
@@ -120,7 +122,7 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
     document.body.style.overflow='hidden';
     changePhase('opening');
     setFocusIndex(index);
-    void animate(request.origin.getBoundingClientRect(),false).then(()=>{
+    void animateOpening(request.origin.getBoundingClientRect()).then(()=>{
       animations.current.forEach(animation=>animation.cancel());
       changePhase('expanded');
     }).catch(()=>{});
@@ -146,7 +148,7 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
     switchTimer.current=window.setTimeout(()=>{
       setPrevious(null);
       changePhase('expanded');
-    },reduced()?0:620);
+    },reduced()?0:pageTurnMs);
   }
 
   function close(enterWorkshop=false) {
@@ -156,16 +158,21 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
     setPrevious(null);
     changePhase('closing');
     const target=stage.current?.querySelector<HTMLButtonElement>('.reel-card[data-position="0"]')??request?.origin;
-    // Let the carousel finish centering the current card before measuring a return.
-    void Promise.allSettled(target?.getAnimations().map(animation=>animation.finished)??[]).then(()=>{
-      if(!target||phase.current!=='closing')return;
-      return animate(target.getBoundingClientRect(),true).then(()=>{
-        dialog.current?.close();
-        changePhase('home');
-        onClose();
-        target.focus({preventScroll:true});
-        if(workshop.current)onWorkshop();
-      });
+    const panel=frame.current;
+    if(!panel||!target)return;
+    const from=panel.getBoundingClientRect();
+    const to=target.getBoundingClientRect();
+    const shrink=panel.animate([
+      {transform:'translate(-50%,-50%)',opacity:1},
+      {transform:`translate(-50%,-50%) translate(${to.x+to.width/2-from.x-from.width/2}px,${to.y+to.height/2-from.y-from.height/2}px) scale(${to.width/from.width},${to.height/from.height})`,opacity:.35},
+    ],{duration:reduced()?0:returnMs,easing:'cubic-bezier(.25,.8,.25,1)',fill:'both'});
+    animations.current=[shrink];
+    void shrink.finished.then(()=>{
+      dialog.current?.close();
+      changePhase('home');
+      onClose();
+      target.focus({preventScroll:true});
+      if(workshop.current)onWorkshop();
     }).catch(()=>{});
   }
 
@@ -184,8 +191,9 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
       if(window.innerWidth<=700&&event.target instanceof Element&&event.target.closest('.opening-copy'))return;
       event.preventDefault();
       const now=event.timeStamp;
-      const delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?innerHeight:1);
-      if(!delta||Math.abs(event.deltaX)>Math.abs(event.deltaY))return;
+      const horizontal=Math.abs(event.deltaX)>Math.abs(event.deltaY);
+      const delta=(horizontal?event.deltaX:event.deltaY)*(event.deltaMode===1?16:event.deltaMode===2?innerHeight:1);
+      if(!delta)return;
       const idle=now-last;
       last=now;
       // Ignore a weaker same-direction tail even when wheel events arrive in bursts.
@@ -206,7 +214,7 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
   const suppressClick=useRef(0);
   const front=editions[focusIndex];
   const poster=(posterIndex:number,classes:string,play:boolean):ReactNode=>
-    <div key={posterIndex} className={classes} style={{'--opening-slip':direction*3+'%'} as CSSProperties}>
+    <div key={posterIndex} className={classes} style={{'--opening-slip':direction*100+'%'} as CSSProperties}>
       <OpeningPoster index={posterIndex} play={play}/>
     </div>;
 
@@ -221,7 +229,9 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
       }
     }}
     onClick={event=>{
-      if(event.button===0&&performance.now()>suppressClick.current&&!(event.target instanceof Element&&event.target.closest('button')))close();
+      if(event.button!==0||performance.now()<=suppressClick.current||!(event.target instanceof Element)||event.target.closest('button'))return;
+      if(event.target.closest('.opening-back'))step(1);
+      else close();
     }}
     onTouchStart={event=>{
       if(event.target instanceof Element&&event.target.closest('button,.opening-copy'))return;
@@ -234,10 +244,10 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
       touch.current=null;
       if(!start)return;
       const point=event.changedTouches[0];
-      const dy=start.y-point.clientY;
-      if(Math.abs(dy)>45&&Math.abs(dy)>Math.abs(start.x-point.clientX)){
+      const dx=start.x-point.clientX;
+      if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(start.y-point.clientY)){
         suppressClick.current=performance.now()+450;
-        step(Math.sign(dy));
+        step(Math.sign(dx));
       }
     }}>
     {request&&<div ref={frame} className="opening-frame">
