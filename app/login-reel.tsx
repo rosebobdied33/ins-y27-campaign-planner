@@ -4,6 +4,7 @@ import {ArrowLeft,ArrowRight,ArrowUpRight,Pause,Play,X} from 'lucide-react';
 import {durationDays} from '../lib/planner';
 import {useLoginReel} from '../lib/storage';
 import {loginEditions,type EditionYear} from './login-editions';
+import {CampaignOpening} from './campaign-opening';
 import {useHorizontalWheel} from './use-horizontal-wheel';
 
 const yearPreference='ins-land-opening-year';
@@ -20,6 +21,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
   const [playing,setPlaying]=useState(false);
   const [open,setOpen]=useState(false);
   const [flipped,setFlipped]=useState(false);
+  const [opening,setOpening]=useState<{origin:HTMLButtonElement}|null>(null);
   const [register,setRegister]=useState(false);
   const stage=useRef<HTMLElement>(null);
   const details=useRef<HTMLDialogElement>(null);
@@ -139,12 +141,13 @@ export function LoginReel({busy,error,onLogin,onResume}:{
               '--tile-x':(index%3)*50+'%','--tile-y':Math.floor(index/3)*50+'%',
               '--card-glow':item.glow,'--card-wash':item.wash,'--card-deep':item.deep,
             } as CSSProperties}
-            onClick={()=>{
+            onClick={event=>{
               if(swiped.current){swiped.current=false;return;}
               if(relative===0){
                 setPlaying(false);
                 setFlipped(true);
-                details.current?.showModal();
+                if(archive)details.current?.showModal();
+                else setOpening({origin:event.currentTarget});
               }else step(relative);
             }}>
             <span className="reel-paper" aria-hidden="true">
@@ -163,6 +166,8 @@ export function LoginReel({busy,error,onLogin,onResume}:{
       </div>
     </section>
 
+    <CampaignOpening index={active} image={image} request={opening} stage={stage}
+      onIndex={setActive} onClose={()=>{setOpening(null);setFlipped(false);}} onWorkshop={enter}/>
     <dialog ref={details} className="reel-edition-dialog" data-archive={archive} lang="zh-CN" aria-labelledby="reel-detail-title"
       onClose={()=>setFlipped(false)}
       onClick={event=>{if(event.target===event.currentTarget)details.current?.close();}}

@@ -2241,3 +2241,74 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
   .project-edit-body{grid-template-columns:minmax(0,1fr);gap:9px}
   .project-dialog-section :is(input,select,textarea){font-size:16px}
 }
+
+/* 2027 opening campaign editions */
+.campaign-opening{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;overflow:hidden;background:transparent;color:#fff;overscroll-behavior:contain}
+.campaign-opening::backdrop{background:rgb(11 7 17 / .91);animation:opening-dim 940ms both}
+.campaign-opening[data-phase=closing]::backdrop{animation:opening-undim 940ms both}
+@keyframes opening-dim{from{opacity:0}}
+@keyframes opening-undim{to{opacity:0}}
+.opening-frame{position:absolute;left:50%;top:50%;width:min(calc(100vw - 48px),calc((100dvh - 48px) * 16 / 9));aspect-ratio:16/9;transform:translate(-50%,-50%);perspective:1800px;container-type:inline-size}
+.opening-flip{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(180deg)}
+.opening-front,.opening-back{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;background:#21142b}
+.opening-front{border-color:rgb(248 203 237 / .73);box-shadow:1px 2px #ad7fa2,3px 4px #4a324c,4px 5px #986a91}
+.opening-back{transform:rotateY(180deg);box-shadow:0 20px 90px #08050a}
+.opening-layer,.opening-poster,.opening-art{position:absolute;inset:0}
+.opening-poster{color:var(--opening-ink);font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--opening-deep)}
+.opening-art{background:radial-gradient(ellipse at 82% 48%,color-mix(in srgb,var(--opening-wash) 48%,var(--opening-deep)),var(--opening-deep) 76%)}
+.opening-art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--opening-deep) 0%,color-mix(in srgb,var(--opening-deep) 88%,transparent) 24%,transparent 58%);pointer-events:none}
+.opening-art :is(img,video){position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.opening-art video{clip-path:inset(var(--opening-video-inset));opacity:0;transition:opacity .3s}
+.opening-art video.is-playing{opacity:1}
+.opening-copy{position:absolute;top:22%;left:4.3%;width:34%;font-size:1.18cqw;line-height:1.42}
+.opening-code{display:flex;align-items:center;gap:1.2cqw;font-size:1.6cqw;letter-spacing:.1em}
+.opening-code::after{content:"";height:1px;width:13cqw;background:linear-gradient(90deg,currentColor,transparent)}
+.opening-title{position:relative;box-sizing:border-box;display:grid;place-items:center;margin:1.2cqw 0 .85cqw;padding:.12em .35em;width:91%;min-height:7.4cqw;border:4px double currentColor;border-radius:1.1cqw .25cqw;font-size:4.6cqw;letter-spacing:.075em;line-height:1.05;font-weight:700}
+.opening-title::before,.opening-title::after{content:"";position:absolute;width:.66cqw;height:.66cqw;background:var(--opening-deep);border:1px solid currentColor;transform:rotate(45deg)}
+.opening-title::before{left:-.46cqw;top:-.46cqw}
+.opening-title::after{right:-.46cqw;bottom:-.46cqw}
+.opening-dates{font-size:1.48cqw;letter-spacing:.015em}
+.opening-dates span{margin-left:.55em;white-space:nowrap}
+.opening-direction{margin:.48cqw 0 0;padding-bottom:.8cqw;border-bottom:1px solid color-mix(in srgb,currentColor 50%,transparent)}
+.opening-slogan{margin:.85cqw 0 .28cqw;font-size:1.72cqw;font-weight:700}
+.opening-difference{margin:0;color:color-mix(in srgb,currentColor 60%,white)}
+.opening-store{margin-top:1.3cqw;padding:.9cqw 1.55cqw;border:1px solid color-mix(in srgb,currentColor 52%,transparent);border-radius:.7cqw;background:rgb(10 6 14 / .12)}
+.opening-store p,.opening-store h3{margin:0}
+.opening-store p[lang]{font-size:.9cqw;letter-spacing:.16em}
+.opening-store h3{margin:.1em 0;font-size:2.2cqw;color:inherit}
+.opening-keywords{display:flex;flex-wrap:wrap;gap:.75cqw;margin:1cqw 0 0;padding:0;list-style:none}
+.opening-keywords li{flex:1 0 auto;text-align:center;border:1px solid currentColor;border-radius:.6cqw;padding:.32em .8em}
+.opening-controls,.opening-navigation{position:absolute;right:2%;display:flex;align-items:center;gap:6px;color:#fff}
+.opening-controls{bottom:2%;right:12%}
+.opening-navigation{bottom:2%;font-size:11px;letter-spacing:.08em}
+.opening-play{position:absolute;right:2%;bottom:9%;color:#fff}
+.campaign-opening button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:36px;min-height:36px;padding:5px 8px;color:inherit;background:rgb(15 10 20 / .55);border:1px solid rgb(255 255 255 / .3);border-radius:4px;cursor:pointer}
+.campaign-opening button:disabled{opacity:.4;cursor:default}
+.opening-in{animation:opening-in .62s cubic-bezier(.22,.65,.3,1) both}
+.opening-out{animation:opening-out .62s cubic-bezier(.22,.65,.3,1) both}
+@keyframes opening-in{from{transform:translateY(var(--opening-slip));opacity:0}}
+@keyframes opening-out{to{transform:translateY(calc(-1 * var(--opening-slip)));opacity:0}}
+@media(max-width:700px){
+  .opening-frame{width:calc(100vw - 20px);height:calc(100dvh - 26px);aspect-ratio:auto}
+  .opening-art{height:36%;min-height:120px}
+  .opening-art::after{background:linear-gradient(0deg,var(--opening-deep),transparent 35%)}
+  .opening-copy{top:36%;left:0;right:0;bottom:53px;width:auto;overflow:auto;overscroll-behavior:contain;padding:0 6% 18px;font-size:14px}
+  .opening-code{font-size:12px;gap:9px}
+  .opening-title{width:fit-content;min-height:0;margin:8px 0;padding:7px 22px;font-size:clamp(30px,8vw,48px)}
+  .opening-dates{font-size:13px}
+  .opening-direction{margin:5px 0;padding-bottom:7px}
+  .opening-slogan{margin:7px 0 4px;font-size:17px}
+  .opening-store{margin-top:11px;padding:9px 12px}
+  .opening-store h3{font-size:21px}
+  .opening-store p[lang]{font-size:10px}
+  .opening-keywords{gap:5px;margin-top:9px}
+  .opening-keywords li{padding:.26em .45em}
+  .opening-controls{top:2%;bottom:auto;right:2%}
+  .opening-play{top:24%;bottom:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  .campaign-opening::backdrop,.opening-layer{animation:none!important}
+  .opening-art video{transition:none}
+}
+.opening-art::after{mask-image:linear-gradient(0deg,#000 74%,transparent 94%)}
+@media(max-width:700px){.opening-art::after{mask-image:none}}
