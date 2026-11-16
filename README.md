@@ -40,6 +40,6 @@ GitHub Pages 项目站点用 `PLANNER_BASE_PATH=/ins-y27-campaign-planner pnpm b
 
 ## 2027 开屏媒体
 
-七期公开 KV 在 `public/campaign-opening/2027/S01–S07/cover.webp`，来自本次提供的 8192 × 4608 原图，网页 WebP 保留全分辨率。日期和文案分别复用 `app/login-editions.ts` 与 `lib/planning-brief.ts`。开屏不会读取需要登录的封面接口。
+七期公开 KV 在 `public/campaign-opening/2027/S01–S07/cover.webp`，来自本次提供的 8192 × 4608 原图，8K WebP 保留全分辨率。画册按屏幕选择同源的 1024、1600 或 2560 像素宽 WebP，并在翻转前完成解码。日期和文案分别复用 `app/login-editions.ts` 与 `lib/planning-brief.ts`。开屏不会读取需要登录的封面接口。
 
 未来将循环视频放入对应主题目录，例如 `public/campaign-opening/2027/S01/loop.mp4`，并在 `app/campaign-opening-media.ts` 为该期填写 `videoMp4: './campaign-opening/2027/S01/loop.mp4'` 和 `videoEnabled: true`。可选的 `videoWebm` 提供备用源。视频与静态 KV 使用同一画幅。只需要显示局部时，可通过 `videoInset` 设置上下左右裁切值，例如 `'20% 0 0 40%'`。暂停和切换时会恢复该期静态原图。

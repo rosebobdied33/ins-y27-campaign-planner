@@ -2244,15 +2244,14 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
 
 /* 2027 opening campaign editions */
 .campaign-opening{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;overflow:hidden;background:transparent;color:#fff;overscroll-behavior:contain}
-.campaign-opening::backdrop{background:rgb(11 7 17 / .91);animation:opening-dim 940ms both}
-.campaign-opening[data-phase=closing]::backdrop{animation:opening-undim 180ms both}
-@keyframes opening-dim{from{opacity:0}}
-@keyframes opening-undim{to{opacity:0}}
-.opening-frame{position:absolute;left:50%;top:50%;width:min(calc(100vw - 48px),calc((100dvh - 48px) * 16 / 9));aspect-ratio:16/9;transform:translate(-50%,-50%);perspective:1800px;container-type:inline-size}
+.campaign-opening::backdrop{background:rgb(11 7 17 / .53);backdrop-filter:blur(12px)}
+.opening-frame{position:absolute;left:50%;top:50%;width:min(calc((100vw - 48px) * .8),calc((100dvh - 48px) * 16 / 9 * .8));aspect-ratio:16/9;transform:translate(-50%,-50%);perspective:1800px;container-type:inline-size}
 .opening-flip{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(180deg)}
 .opening-front,.opening-back{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;background:#21142b}
 .opening-front{border-color:rgb(248 203 237 / .73);box-shadow:1px 2px #ad7fa2,3px 4px #4a324c,4px 5px #986a91}
-.opening-back{transform:rotateY(180deg);box-shadow:0 20px 90px #08050a}
+.opening-back{transform:rotateY(180deg);border-radius:5px;box-shadow:0 26px 90px rgb(8 5 10 / .7),0 0 0 1px rgb(255 255 255 / .12)}
+.login-reel[data-opening=true] .reel-sparks i{animation-play-state:paused}
+.opening-atlas{position:absolute;inset:0;background-size:300% 300%}
 .opening-layer,.opening-poster,.opening-art{position:absolute;inset:0}
 .opening-poster{color:var(--opening-ink);font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--opening-deep)}
 .opening-art{background:radial-gradient(ellipse at 82% 48%,color-mix(in srgb,var(--opening-wash) 48%,var(--opening-deep)),var(--opening-deep) 76%)}
@@ -2289,7 +2288,7 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
 @keyframes opening-in{from{transform:translateX(var(--opening-slip))}}
 @keyframes opening-out{to{transform:translateX(calc(-1 * var(--opening-slip)))}}
 @media(max-width:700px){
-  .opening-frame{width:calc(100vw - 20px);height:calc(100dvh - 26px);aspect-ratio:auto}
+  .opening-frame{width:80vw;height:90dvh;aspect-ratio:auto}
   .opening-art{height:36%;min-height:120px}
   .opening-art::after{background:linear-gradient(0deg,var(--opening-deep),transparent 35%)}
   .opening-copy{top:36%;left:0;right:0;bottom:53px;width:auto;overflow:auto;overscroll-behavior:contain;padding:0 6% 18px;font-size:14px}
@@ -2307,7 +2306,7 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
   .opening-play{top:24%;bottom:auto}
 }
 @media(prefers-reduced-motion:reduce){
-  .campaign-opening::backdrop,.opening-layer{animation:none!important}
+  .opening-layer{animation:none!important}
   .opening-art video{transition:none}
 }
 .opening-art::after{mask-image:linear-gradient(0deg,#000 74%,transparent 94%)}

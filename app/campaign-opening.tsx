@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect,useRef,useState,type CSSProperties,type ReactNode,type RefObject} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState,type CSSProperties,type ReactNode,type RefObject} from 'react';
 import {ArrowLeft,ArrowRight,ArrowUpRight,Pause,Play,X} from 'lucide-react';
 import {durationDays} from '../lib/planner';
 import {campaignBrief} from '../lib/planning-brief';
@@ -10,9 +10,32 @@ import {openingMedia} from './campaign-opening-media';
 const editions=loginEditions[2027];
 const pageTurnMs=240;
 const returnMs=180;
+const openingMs=540;
 const reduced=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function OpeningPoster({index,play}:{index:number;play:boolean}) {
+const decodedPosters=new Map<string,Promise<string|null>>();
+
+function preparePoster(index:number) {
+  const original=openingMedia[editions[index]?.code]?.stillImage;
+  if(!original)return Promise.resolve(null);
+  const mobile=window.innerWidth<=700;
+  const width=mobile?window.innerWidth*.8:Math.min(window.innerWidth-48,(window.innerHeight-48)*16/9)*.8;
+  const pixels=width*Math.min(window.devicePixelRatio||1,2);
+  const size=pixels<=1024?1024:pixels<=1600?1600:2560;
+  const src=original.replace(/cover\.webp$/, `cover-${size}.webp`);
+  const cached=decodedPosters.get(src);
+  if(cached)return cached;
+  const img=new Image();
+  img.src=src;
+  const decoded=img.decode().then(()=>src,()=>{
+    decodedPosters.delete(src);
+    return null;
+  });
+  decodedPosters.set(src,decoded);
+  return decoded;
+}
+
+function OpeningPoster({index,play,src,atlas}:{index:number;play:boolean;src:string|null;atlas:string}) {
   const edition=editions[index];
   const brief=campaignBrief({id:edition.code});
   const media=openingMedia[edition.code];
@@ -49,7 +72,9 @@ function OpeningPoster({index,play}:{index:number;play:boolean}) {
     '--opening-ink':edition.glow,'--opening-video-inset':media?.videoInset??'0',
   } as CSSProperties}>
     <div className="opening-art">
-      {media?.stillImage&&stillVisible&&<img src={media.stillImage} alt="" draggable={false} onError={()=>setStillVisible(false)}/>}
+      {src&&stillVisible?<img src={src} alt="" draggable={false} onError={()=>setStillVisible(false)}/>:
+        atlas&&<div className="opening-atlas" style={{backgroundImage:`url(${atlas})`,
+          backgroundPosition:`${index%3*50}% ${Math.floor(index/3)*50}%`}}/>}
       {enabled&&play&&motion&&<video ref={video} muted loop playsInline preload="none"
         className={ready&&!paused?'is-playing':undefined}
         onPlaying={()=>setReady(true)} onError={()=>{setReady(false);setFailed(true);}}>
@@ -101,32 +126,50 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
   const switchTimer=useRef<number|undefined>(undefined);
   const changePhase=(next:Phase)=>{phase.current=next;setStatus(next);};
 
-  function animateOpening(origin:DOMRect) {
-    const panel=frame.current!;
-    const end=panel.getBoundingClientRect();
-    const geometry=[
-      {left:origin.left+'px',top:origin.top+'px',width:origin.width+'px',height:origin.height+'px',transform:'none'},
-      {left:end.left+'px',top:end.top+'px',width:end.width+'px',height:end.height+'px',transform:'none'},
-    ];
-    const angles=[{transform:'rotateY(0deg)'},{transform:'rotateY(180deg)'}];
-    const options:KeyframeAnimationOptions={duration:reduced()?0:940,easing:'cubic-bezier(.32,.72,.18,1)',fill:'both'};
-    animations.current=[panel.animate(geometry,options),flip.current!.animate(angles,options)];
-    return Promise.all(animations.current.map(animation=>animation.finished));
-  }
+  const [start,setStart]=useState<OpeningProps['request']>(null);
+  const [stills,setStills]=useState<Partial<Record<number,string|null>>>({});
+  const pendingPage=useRef<symbol|null>(null);
 
   useEffect(()=>{
-    if(!request||!dialog.current)return;
+    void preparePoster(index);
+  },[index]);
+
+  useEffect(()=>{
+    if(!request)return;
+    let current=true;
+    void preparePoster(index).then(src=>{
+      if(!current)return;
+      setStills(stills=>({...stills,[index]:src}));
+      setStart(request);
+    });
+    return ()=>{current=false;};
+    // The request captures the initially selected card.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[request]);
+
+  useLayoutEffect(()=>{
+    if(!request||start!==request||!dialog.current)return;
     const element=dialog.current;
     element.showModal();
     const overflow=document.body.style.overflow;
     document.body.style.overflow='hidden';
     changePhase('opening');
     setFocusIndex(index);
-    void animateOpening(request.origin.getBoundingClientRect()).then(()=>{
+    const origin=request.origin.getBoundingClientRect();
+    const panel=frame.current!;
+    const end=panel.getBoundingClientRect();
+    const startTransform=`translate(-50%,-50%) translate(${origin.x+origin.width/2-end.x-end.width/2}px,${origin.y+origin.height/2-end.y-end.height/2}px) scale(${origin.width/end.width},${origin.height/end.height})`;
+    const options:KeyframeAnimationOptions={duration:reduced()?0:openingMs,easing:'cubic-bezier(.3,.7,.25,1)',fill:'both'};
+    animations.current=[
+      panel.animate([{transform:startTransform},{transform:'translate(-50%,-50%)'}],options),
+      flip.current!.animate([{transform:'rotateY(0deg)'},{transform:'rotateY(180deg)'}],options),
+    ];
+    void Promise.all(animations.current.map(animation=>animation.finished)).then(()=>{
       animations.current.forEach(animation=>animation.cancel());
       changePhase('expanded');
     }).catch(()=>{});
     return ()=>{
+      pendingPage.current=null;
       window.clearTimeout(switchTimer.current);
       animations.current.forEach(animation=>animation.cancel());
       document.body.style.overflow=overflow;
@@ -135,24 +178,38 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
     };
     // The request identifies a single opening session, even as its active edition changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[request]);
+  },[request,start]);
+
+  useEffect(()=>{
+    if(status!=='expanded')return;
+    if(index+1<editions.length)void preparePoster(index+1);
+    if(index>0)void preparePoster(index-1);
+  },[index,status]);
 
   function step(offset:number) {
     const next=index+offset;
-    if(phase.current!=='expanded'||next<0||next>=editions.length)return;
-    setDirection(offset);
-    setPrevious(reduced()?null:index);
-    setFocusIndex(next);
-    changePhase('switching');
-    onIndex(next);
-    switchTimer.current=window.setTimeout(()=>{
-      setPrevious(null);
-      changePhase('expanded');
-    },reduced()?0:pageTurnMs);
+    if(phase.current!=='expanded'||pendingPage.current||next<0||next>=editions.length)return;
+    const load=Symbol();
+    pendingPage.current=load;
+    void preparePoster(next).then(src=>{
+      if(pendingPage.current!==load)return;
+      pendingPage.current=null;
+      setStills(stills=>({...stills,[next]:src}));
+      setDirection(offset);
+      setPrevious(reduced()?null:index);
+      setFocusIndex(next);
+      changePhase('switching');
+      onIndex(next);
+      switchTimer.current=window.setTimeout(()=>{
+        setPrevious(null);
+        changePhase('expanded');
+      },reduced()?0:pageTurnMs);
+    });
   }
 
   function close(enterWorkshop=false) {
     if(phase.current!=='expanded'&&phase.current!=='switching')return;
+    pendingPage.current=null;
     workshop.current=enterWorkshop;
     window.clearTimeout(switchTimer.current);
     setPrevious(null);
@@ -215,7 +272,7 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
   const front=editions[focusIndex];
   const poster=(posterIndex:number,classes:string,play:boolean):ReactNode=>
     <div key={posterIndex} className={classes} style={{'--opening-slip':direction*100+'%'} as CSSProperties}>
-      <OpeningPoster index={posterIndex} play={play}/>
+      <OpeningPoster index={posterIndex} play={play} src={stills[posterIndex]??null} atlas={image}/>
     </div>;
 
   return <dialog ref={dialog} className="campaign-opening" aria-label={editions[index].name} lang="zh-CN"
