@@ -1,4 +1,4 @@
-:HL["/ins-y27-campaign-planner/_next/static/css/96a61b1fe7092c5c.css","style"]
+:HL["/ins-y27-campaign-planner/_next/static/css/84ba6ed6f0d98cb1.css","style"]
 2:[["children",{"s":"__PAGE__","h":160}]]
 1:[["children",{"s":"_not-found","h":96,"c":"$Q2"}]]
-0:{"b":"Uqc9MRyBdeNYNqQoHQWld","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"vBRkug5ujuuAMsUE9WYcD","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
