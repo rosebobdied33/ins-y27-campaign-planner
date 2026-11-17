@@ -8,7 +8,6 @@ import {CampaignOpening} from './campaign-opening';
 import {useHorizontalWheel} from './use-horizontal-wheel';
 import {DreamscapeWorld,useDreamscapeNavigation} from './dreamscape-world';
 
-const yearPreference='ins-land-opening-year';
 const cardDate=(date:string,year:EditionYear)=>date.startsWith(year+'-')?date.slice(5).replace('-','.'):date.replaceAll('-','.');
 const sceneIndex=(index:number,count:number)=>(index+count)%count;
 const sparks=[[8,24,26],[16,43,15],[24,15,21],[34,31,13],[63,14,22],[76,35,15],[86,24,31],[93,43,21],[11,72,18],[89,80,24]];
@@ -35,10 +34,6 @@ export function LoginReel({busy,error,onLogin,onResume}:{
   const edition=scenes[active];
   const archive=year===2026;
   const world=useDreamscapeNavigation(home,stage,open||flipped||!!opening,!archive);
-  useEffect(()=>{
-    try{if(localStorage.getItem(yearPreference)==='2026')setYear(2026);}catch{}
-  },[]);
-
   useEffect(()=>{
     const preference=window.matchMedia('(prefers-reduced-motion: reduce)');
     setPlaying(!preference.matches);
@@ -77,7 +72,6 @@ export function LoginReel({busy,error,onLogin,onResume}:{
     setFlipped(false);
     setActive(0);
     setYear(next);
-    try{localStorage.setItem(yearPreference,String(next));}catch{}
   };
   const enter=()=>{
     if(onResume){onResume();return;}

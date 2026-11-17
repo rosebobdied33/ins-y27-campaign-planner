@@ -209,18 +209,18 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
       <button type="button" onClick={closeStore}>返回水晶阵列</button>
     </dialog>}
     <div className="dreamscape-bar">
-      <button type="button" onClick={()=>move(false)}><ArrowUp size={15}/> Campaigns</button>
+      <button type="button" className="dreamscape-return" onClick={()=>move(false)}><ArrowUp size={17}/> Campaigns</button>
       {status==='ready'&&mode==='transitioning'&&<p role="status">重组中…</p>}
       {status==='ready'&&mode==='store-crystals'&&<p>拖拽旋转 · 点击选择水晶</p>}
       {status==='ready'&&mode==='building'&&<p><span className="dreamscape-desktop">左键拖转 · 滚轮推进／拉远 · 双击楼体晶化</span>
         <span className="dreamscape-touch">拖动旋转 · 双指缩放 · 双击楼体晶化</span></p>}
       {status==='fallback'&&<p role="status">3D unavailable. Showing the scene preview.</p>}
       {status==='loading'&&requested&&<p role="status">Loading the 3D scene…</p>}
-      {status==='ready'&&mode==='store-crystals'&&<button type="button" onClick={()=>controls.current?.restoreBuilding()}><RotateCcw size={15}/> 还原大楼</button>}
+      {status==='ready'&&mode==='store-crystals'&&<button type="button" className="dreamscape-return" onClick={()=>controls.current?.restoreBuilding()}><RotateCcw size={17}/> 还原大楼</button>}
       {status==='ready'&&mode==='building'&&<div className="dreamscape-zoom">
         <button type="button" aria-label="拉远" onClick={()=>controls.current?.zoomBy(-.19)}><Minus size={15}/></button>
         <button type="button" aria-label="推进" onClick={()=>controls.current?.zoomBy(.19)}><Plus size={15}/></button>
-        <button type="button" aria-label="Reset view" title="返回默认视角" onClick={()=>controls.current?.reset()}><RotateCcw size={15}/></button>
+        <button type="button" className="dreamscape-return dreamscape-return-icon" aria-label="Reset view" title="返回默认视角" onClick={()=>controls.current?.reset()}><RotateCcw size={18}/></button>
       </div>}
     </div>
   </section>;
