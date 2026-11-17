@@ -55,24 +55,36 @@ function duskDome(){
       varying vec3 worldRay;
       uniform float time;
       float hash(vec2 p){return fract(sin(dot(p,vec2(27.17,181.73)))*43758.545);}
-      float noise(vec2 p){
+      const float TAU=6.28318530718;
+      float wrappedNoise(vec2 p,float cells){
         vec2 a=floor(p);vec2 f=smoothstep(0.0,1.0,fract(p));
-        return mix(mix(hash(a),hash(a+vec2(1,0)),f.x),mix(hash(a+vec2(0,1)),hash(a+1.0),f.x),f.y);
+        float left=mod(a.x,cells),right=mod(a.x+1.0,cells);
+        return mix(
+          mix(hash(vec2(left,a.y)),hash(vec2(right,a.y)),f.x),
+          mix(hash(vec2(left,a.y+1.0)),hash(vec2(right,a.y+1.0)),f.x),f.y);
       }
       void main(){
         vec3 d=normalize(worldRay);
         float h=d.y;
         float az=atan(d.z,d.x);
-        float haze=exp(-pow((h-.10)*4.7,2.0));
+        // The longitude field wraps across the same lattice cells at either edge.
+        float longitude=az/TAU+.5;
+        float hazeOffset=(h-.10)*4.7;
+        float haze=exp(-hazeOffset*hazeOffset);
         vec3 col=mix(vec3(.008,.012,.036),vec3(.024,.02,.099),smoothstep(-.6,.2,h));
-        col+=mix(vec3(.016,.019,.077),vec3(.139,.039,.071),.5+.5*sin(az*1.6+1.2))*haze;
-        float ribbon=exp(-pow((h-.04-.019*sin(az*5.0+time*.08)-.014*sin(az*9.0))*74.0,2.0));
-        col+=vec3(.085,.045,.19)*ribbon*smoothstep(.16,.88,sin(az*2.3));
-        vec2 p=vec2(az*3.0+time*.005,h*24.0);
-        float cloud=noise(p)*.55+noise(p*2.2)*.29+noise(p*5.5)*.16;
+        col+=mix(vec3(.016,.019,.077),vec3(.139,.039,.071),.5+.5*sin(az*2.0+.65))*haze;
+        float ribbonOffset=(h-.04-.019*sin(az*5.0+time*.08)-.014*sin(az*9.0))*74.0;
+        float ribbon=exp(-ribbonOffset*ribbonOffset);
+        col+=vec3(.085,.045,.19)*ribbon*smoothstep(.16,.88,sin(az*2.0+.4));
+        float drift=longitude+time*.000266;
+        float cloud=wrappedNoise(vec2(drift*19.0,h*24.0),19.0)*.55
+          +wrappedNoise(vec2(drift*42.0,h*52.8),42.0)*.29
+          +wrappedNoise(vec2(drift*104.0,h*132.0),104.0)*.16;
         col+=vec3(.102,.046,.127)*smoothstep(.49,.78,cloud)*haze;
-        vec2 star=vec2(az,h)*195.0;
-        float starCore=(1.0-smoothstep(.032,.11,length(fract(star)-.5)))*step(.91,hash(floor(star)));
+        vec2 star=vec2(longitude*1225.0,h*195.0);
+        vec2 starCell=floor(star);
+        starCell.x=mod(starCell.x,1225.0);
+        float starCore=(1.0-smoothstep(.032,.11,length(fract(star)-.5)))*step(.91,hash(starCell));
         col+=vec3(.31,.26,.43)*starCore*smoothstep(-.06,.31,h);
         gl_FragColor=vec4(col,1.0);
         #include <tonemapping_fragment>
