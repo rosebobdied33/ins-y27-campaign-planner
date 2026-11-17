@@ -1,11 +1,12 @@
 'use client';
 import {useCallback,useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react';
-import {ArrowLeft,ArrowRight,ArrowUpRight,Pause,Play,X} from 'lucide-react';
+import {ArrowDown,ArrowLeft,ArrowRight,ArrowUpRight,Pause,Play,X} from 'lucide-react';
 import {durationDays} from '../lib/planner';
 import {useLoginReel} from '../lib/storage';
 import {loginEditions,type EditionYear} from './login-editions';
 import {CampaignOpening} from './campaign-opening';
 import {useHorizontalWheel} from './use-horizontal-wheel';
+import {DreamscapeWorld,useDreamscapeNavigation} from './dreamscape-world';
 
 const yearPreference='ins-land-opening-year';
 const cardDate=(date:string,year:EditionYear)=>date.startsWith(year+'-')?date.slice(5).replace('-','.'):date.replaceAll('-','.');
@@ -23,6 +24,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
   const [flipped,setFlipped]=useState(false);
   const [opening,setOpening]=useState<{origin:HTMLButtonElement}|null>(null);
   const [register,setRegister]=useState(false);
+  const home=useRef<HTMLElement>(null);
   const stage=useRef<HTMLElement>(null);
   const details=useRef<HTMLDialogElement>(null);
   const dialog=useRef<HTMLDialogElement>(null);
@@ -32,6 +34,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
   const count=scenes.length;
   const edition=scenes[active];
   const archive=year===2026;
+  const world=useDreamscapeNavigation(home,open||flipped||!!opening,!archive);
   useEffect(()=>{
     try{if(localStorage.getItem(yearPreference)==='2026')setYear(2026);}catch{}
   },[]);
@@ -45,20 +48,20 @@ export function LoginReel({busy,error,onLogin,onResume}:{
   },[]);
 
   useEffect(()=>{
-    if((!archive&&!image)||!playing||open||flipped)return;
+    if((!archive&&!image)||!playing||open||flipped||!world.atHome)return;
     const timer=window.setInterval(()=>{
       if(!document.hidden)setActive(index=>sceneIndex(index+1,count));
     },4600);
     return ()=>window.clearInterval(timer);
-  },[archive,count,image,playing,open,flipped]);
+  },[archive,count,image,playing,open,flipped,world.atHome]);
 
   const step=useCallback((offset:number)=>{
     setPlaying(false);setFlipped(false);
     setActive(index=>sceneIndex(index+offset,count));
   },[count]);
-  useHorizontalWheel(step,!open&&!flipped,stage);
+  useHorizontalWheel(step,!open&&!flipped&&!opening&&world.atHome,archive?stage:undefined);
   useEffect(()=>{
-    if(open||flipped)return;
+    if(open||flipped||opening||!world.atHome)return;
     const navigate=(event:KeyboardEvent)=>{
       if(event.altKey||event.ctrlKey||event.metaKey||event.target instanceof Element&&event.target.closest('input,select,textarea'))return;
       if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
@@ -68,7 +71,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
     };
     window.addEventListener('keydown',navigate);
     return ()=>window.removeEventListener('keydown',navigate);
-  },[open,flipped,step]);
+  },[open,flipped,opening,step,world.atHome]);
   const chooseYear=(next:EditionYear)=>{
     details.current?.close();
     setFlipped(false);
@@ -87,7 +90,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
     onLogin(String(fields.get('handle')).trim(),String(fields.get('password')),register);
   };
 
-  return <main className="login-reel" data-year={year} data-opening={!!opening} style={{
+  return <div className={archive?undefined:"opening-chapters"}><main ref={home} className="login-reel" data-year={year} data-opening={!!opening} style={{
     '--scene-glow':edition.glow,'--scene-wash':edition.wash,'--scene-deep':edition.deep,
     '--scene-x':(active%3)*50+'%','--scene-y':Math.floor(active/3)*50+'%',
     ...(!archive&&image?{'--reel-image':'url('+image+')'}:{}),
@@ -222,5 +225,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
         <button className="primary" disabled={busy}>{busy?'Connecting…':register?'Register and enter':'Sign in'}</button>
       </form>
     </dialog>
-  </main>;
+    {!archive&&<button type="button" className="reel-world-link" onPointerEnter={world.preload} onFocus={world.preload}
+      onClick={()=>world.move(true)}>Dreamscape <ArrowDown size={14}/></button>}
+  </main>{!archive&&<DreamscapeWorld navigation={world}/>}</div>;
 }
