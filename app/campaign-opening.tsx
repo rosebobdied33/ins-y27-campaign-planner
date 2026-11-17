@@ -137,7 +137,9 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
   useEffect(()=>{
     if(!request)return;
     let current=true;
-    void preparePoster(index).then(src=>{
+    const cover=preparePoster(index);
+    if(index+1<editions.length)void preparePoster(index+1);
+    void cover.then(src=>{
       if(!current)return;
       setStills(stills=>({...stills,[index]:src}));
       setStart(request);
@@ -181,9 +183,9 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
   },[request,start]);
 
   useEffect(()=>{
-    if(status!=='expanded')return;
+    if(status!=='switching'&&status!=='expanded')return;
     if(index+1<editions.length)void preparePoster(index+1);
-    if(index>0)void preparePoster(index-1);
+    if(status==='expanded'&&index>0)void preparePoster(index-1);
   },[index,status]);
 
   function step(offset:number) {
