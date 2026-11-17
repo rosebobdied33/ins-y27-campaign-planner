@@ -34,7 +34,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
   const count=scenes.length;
   const edition=scenes[active];
   const archive=year===2026;
-  const world=useDreamscapeNavigation(home,open||flipped||!!opening,!archive);
+  const world=useDreamscapeNavigation(home,stage,open||flipped||!!opening,!archive);
   useEffect(()=>{
     try{if(localStorage.getItem(yearPreference)==='2026')setYear(2026);}catch{}
   },[]);
@@ -59,7 +59,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
     setPlaying(false);setFlipped(false);
     setActive(index=>sceneIndex(index+offset,count));
   },[count]);
-  useHorizontalWheel(step,!open&&!flipped&&!opening&&world.atHome,archive?stage:undefined);
+  useHorizontalWheel(step,!open&&!flipped&&!opening&&world.atHome,stage);
   useEffect(()=>{
     if(open||flipped||opening||!world.atHome)return;
     const navigate=(event:KeyboardEvent)=>{

@@ -10,7 +10,7 @@ import {finishSurface} from './dreamscape-surfaces';
 import {connectParkDestinations} from './dreamscape-paths';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {createBuildingDissolve} from './dreamscape-dissolve';
-import {dreamscapeModel} from './dreamscape-assets';
+import {dreamscapeEntryModel,dreamscapeModel} from './dreamscape-assets';
 import {createStoreCrystals} from './dreamscape-crystals';
 import {initialWorldView,worldCameraPose,type StoreAnchor,type WorldMode,type WorldView} from '../lib/world-navigation';
 
@@ -162,7 +162,7 @@ function refineFoliage(details:FoliageDetail[],camera:Vector3,mobile:boolean){
 }
 
 export async function mountDreamscape(
-  host:HTMLElement,buffer:ArrayBuffer,signal:AbortSignal,callbacks:SceneCallbacks,
+  host:HTMLElement,buffer:ArrayBuffer,entryAsset:string,signal:AbortSignal,callbacks:SceneCallbacks,
 ){
   const mobile=matchMedia('(max-width: 700px)').matches;
   const motion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -229,6 +229,10 @@ export async function mountDreamscape(
   const camera=new PerspectiveCamera(mobile?49:43,1,.6,1700);
   let frame=0,disposed=false,active=false,obscured=false,model:Group|undefined;
   const displays:ShaderMaterial[]=[];
+  let pendingDetail:Group|undefined;
+  let upgradeStarted=false;
+  let upgradeTimer=0;
+  const pickTargets:Mesh[]=[];
   let dissolve:ReturnType<typeof createBuildingDissolve>|undefined;
   let crystals:ReturnType<typeof createStoreCrystals>|undefined;
   let crystalProgress=0,crystalGoal=0;
@@ -267,7 +271,8 @@ export async function mountDreamscape(
   const onLoss=(event:Event)=>{event.preventDefault();callbacks.fallback();dispose();};
   function dispose(){
     if(disposed)return;
-    disposed=true;cancelAnimationFrame(frame);observer?.disconnect();listeners.abort();
+    disposed=true;clearTimeout(upgradeTimer);cancelAnimationFrame(frame);observer?.disconnect();listeners.abort();
+    if(pendingDetail)release(pendingDetail);
     release(scene);turf?.dispose();target.dispose();renderer.dispose();renderer.forceContextLoss();canvas.remove();
   }
   canvas.addEventListener('webglcontextlost',onLoss,{signal:listeners.signal});
@@ -286,22 +291,20 @@ export async function mountDreamscape(
     if(model)draw(performance.now(),true);
   }
   observer=new ResizeObserver(resize);observer.observe(host);resize();
-  try{
-    const turfLoading=new TextureLoader().loadAsync('./dreamscape/turf-detail.webp').catch(()=>undefined);
-    void turfLoading.then(texture=>{if(disposed)texture?.dispose();});
-    const gltf=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
-      .parseAsync(buffer,new URL(dreamscapeModel,location.href).href);
-    turf=await turfLoading;
-    if(disposed){release(gltf.scene);turf?.dispose();return;}
-    if(turf){turf.wrapS=RepeatWrapping;turf.wrapT=RepeatWrapping;turf.anisotropy=4;}
-    model=gltf.scene;
-    host.dataset.asset=dreamscapeModel;
+  const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  function installModel(next:Group,asset:string){
+    const buildingGroup=next.getObjectByName('NODE__Building')??next.children.find(node=>node.userData.runtime_group==='Building');
+    if(!buildingGroup)throw new Error('Building node missing');
+    const old=model;
+    dissolve?.dispose();
+    pickTargets.length=0;
+    displays.length=0;
+    model=next;
+    host.dataset.asset=asset;
     model.name='INS_WORLD';
     foliage=mountFoliage(model,mobile);
-    model.add(connectParkDestinations());
     scene.add(model);
     renderer.shadowMap.needsUpdate=true;
-    const building=model.getObjectByName('NODE__Building');
     const styled=new Set<Material>();
     const screenObject=model.getObjectByProperty('name','INS_media_display');
     model.traverse(object=>{
@@ -316,12 +319,11 @@ export async function mountDreamscape(
         displays.push(art);
       }else{
         if(region==='Entrance stairs'&&object.material instanceof MeshStandardMaterial){
-          const old=object.material;
-          const coat=new MeshPhysicalMaterial({name:old.name,color:old.color,metalness:.23,roughness:.28,
+          const original=object.material;
+          object.material=new MeshPhysicalMaterial({name:original.name,color:original.color,metalness:.23,roughness:.28,
             clearcoat:.72,clearcoatRoughness:.18,iridescence:.17,iridescenceIOR:1.37,
             iridescenceThicknessRange:[145,265]});
-          object.material=coat;
-          old.dispose();
+          original.dispose();
         }
         for(const material of Array.isArray(object.material)?object.material:[object.material]){
           if(!(material instanceof MeshStandardMaterial)||styled.has(material))continue;
@@ -333,14 +335,51 @@ export async function mountDreamscape(
           }
           if(name.includes('vermilion clay'))material.color.multiplyScalar(.70);
           if(name.includes('laminated glass'))material.roughness=Math.min(.26,material.roughness);
-          finishSurface(material,turf);
+          finishSurface(material,asset===dreamscapeModel?turf:undefined);
           styled.add(material);
         }
       }
     });
-    const buildingGroup=building??model.children.find(node=>node.userData.runtime_group==='Building');
-    if(!buildingGroup)throw new Error('Building node missing');
     dissolve=createBuildingDissolve(buildingGroup,scene);
+    for(const group of buildingGroup.children){
+      if(!['Facade','Back facade','Main entrance','Building base','Roof'].includes(group.userData.runtime_group))continue;
+      group.traverse(object=>{if(object instanceof Mesh)pickTargets.push(object);});
+    }
+    if(old){old.removeFromParent();release(old);}
+    lastFoliage.set(Infinity,0,0);
+  }
+
+  function queueDetail(){
+    if(upgradeStarted||entryAsset!==dreamscapeEntryModel)return;
+    clearTimeout(upgradeTimer);
+    upgradeTimer=window.setTimeout(()=>{
+      if(disposed||!active||upgradeStarted)return;
+      upgradeStarted=true;
+      void (async()=>{
+        try{
+          const response=await fetch(dreamscapeModel,{signal,priority:'low'});
+          if(!response.ok)throw new Error('Detail geometry unavailable');
+          const detail=await loader.parseAsync(await response.arrayBuffer(),new URL(dreamscapeModel,location.href).href);
+          if(disposed){release(detail.scene);return;}
+          pendingDetail=detail.scene;
+          wake();
+        }catch(error){
+          if(!disposed)console.warn('Dreamscape detail could not load',error);
+        }
+      })();
+    },140);
+  }
+
+  try{
+    const initial=await loader.parseAsync(buffer,new URL(entryAsset,location.href).href);
+    if(disposed){release(initial.scene);return;}
+    installModel(initial.scene,entryAsset);
+    scene.add(connectParkDestinations());
+    void new TextureLoader().loadAsync('./dreamscape/turf-detail.webp').then(texture=>{
+      if(disposed){texture.dispose();return;}
+      texture.wrapS=RepeatWrapping;texture.wrapT=RepeatWrapping;texture.anisotropy=4;
+      turf=texture;
+    }).catch(()=>{});
     crystals=createStoreCrystals(scene,wake,store=>{
       host.dataset.store=store?.id??'';
       callbacks.storeSelected?.(store);
@@ -348,11 +387,6 @@ export async function mountDreamscape(
     host.dataset.crystals=String(crystals.count);
     host.dataset.displays=String(displays.length);
     const ray=new Raycaster();const ndc=new Vector2();
-    const pickTargets:Mesh[]=[];
-    for(const group of buildingGroup.children){
-      if(!['Facade','Back facade','Main entrance','Building base','Roof'].includes(group.userData.runtime_group))continue;
-      group.traverse(object=>{if(object instanceof Mesh)pickTargets.push(object);});
-    }
     const input=new Map<number,{x:number;y:number}>();
     let movement=0,usedPinch=false,orbitX=0,orbitY=0;
     let lastTap:{x:number;y:number;at:number;building:boolean}|undefined;
@@ -490,6 +524,11 @@ export async function mountDreamscape(
     if(disposed)return;
     const moving=mode==='transitioning'||Math.abs(aim.azimuth-view.azimuth)>.002||
       Math.abs(aim.elevation-view.elevation)>.002||Math.abs(aim.zoom-view.zoom)>.001;
+    if(pendingDetail&&active&&mode==='building'&&!moving&&canvas.dataset.dragging!=='true'){
+      const detail=pendingDetail;
+      pendingDetail=undefined;
+      installModel(detail,dreamscapeModel);
+    }
     if(!force&&!motion.matches&&!moving&&now-lastPaint<32)return;
     lastPaint=now;
     const dt=Math.min(96,now-(previous||now-16));previous=now;
@@ -558,7 +597,8 @@ export async function mountDreamscape(
     frame=0;
     if(!active||disposed||document.hidden)return;
     draw(now);
-    if(!motion.matches&&(!obscured||mode==='transitioning'))wake();
+    if((!motion.matches&&(!obscured||mode==='transitioning'))||
+      (pendingDetail&&mode==='building'&&canvas.dataset.dragging!=='true'))wake();
   }
   function wake(){
     if(!frame&&active&&!disposed&&!document.hidden)frame=requestAnimationFrame(render);
@@ -573,7 +613,7 @@ export async function mountDreamscape(
     setActive(enable:boolean){
       if(active===enable)return;
       active=enable;
-      if(enable){previous=0;wake();}
+      if(enable){previous=0;wake();queueDetail();}
       else{cancelAnimationFrame(frame);frame=0;}
     },
     setObscured(value:boolean){obscured=value;if(!value)wake();},

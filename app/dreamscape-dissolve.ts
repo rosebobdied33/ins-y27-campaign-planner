@@ -102,6 +102,7 @@ export function createBuildingDissolve(building:Object3D,scene:Object3D){
   layer.add(points);
   scene.add(layer);
   return {
+    dispose(){layer.removeFromParent();geometry.dispose();material.dispose();},
     update(value:number,pixelRatio:number){
       const t=Math.max(0,Math.min(1,(value-.03)/.29));
       progress.value=t*t*(3-2*t);

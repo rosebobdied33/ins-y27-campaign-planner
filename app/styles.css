@@ -2373,6 +2373,8 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
   color:inherit;background:#171129cc;border:1px solid #e4d4ff52;border-radius:999px;
   font:500 11px/1.2 system-ui,sans-serif;cursor:pointer;
 }
+.dreamscape-zoom {display:flex;gap:4px;align-items:center}
+.dreamscape-zoom button {padding:7px}
 .dreamscape-touch {display:none}
 @media (pointer:coarse) {
   .dreamscape-touch {display:inline}

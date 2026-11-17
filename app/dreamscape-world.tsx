@@ -1,9 +1,9 @@
 'use client';
 
 import {useCallback,useEffect,useRef,useState,type RefObject} from 'react';
-import {ArrowUp,RotateCcw} from 'lucide-react';
+import {ArrowUp,Minus,Plus,RotateCcw} from 'lucide-react';
 import {advanceWorldWheel,type WorldMode} from '../lib/world-navigation';
-import {dreamscapeModel} from './dreamscape-assets';
+import {dreamscapeEntryModel,dreamscapeModel} from './dreamscape-assets';
 import {crystalVenues} from './dreamscape-venues';
 import type {DreamscapeControls} from './dreamscape-renderer';
 
@@ -11,7 +11,7 @@ type Phase='HOME'|'HOME_TO_WORLD'|'WORLD_EXPLORE'|'WORLD_ZOOM'|'WORLD_TO_HOME';
 const worldPhase=(phase:Phase)=>phase==='WORLD_EXPLORE'||phase==='WORLD_ZOOM';
 
 export function useDreamscapeNavigation(
-  home:RefObject<HTMLElement|null>,blocked:boolean,enabled:boolean,
+  home:RefObject<HTMLElement|null>,cards:RefObject<HTMLElement|null>,blocked:boolean,enabled:boolean,
 ){
   const section=useRef<HTMLElement>(null);
   const controls=useRef<DreamscapeControls|null>(null);
@@ -37,6 +37,13 @@ export function useDreamscapeNavigation(
 
   useEffect(()=>()=>clearTimeout(timer.current),[]);
   useEffect(()=>{
+    if(!enabled||blocked||requested)return;
+    const timer=window.setTimeout(()=>{
+      if(!document.hidden)setRequested(true);
+    },420);
+    return ()=>clearTimeout(timer);
+  },[blocked,enabled,requested]);
+  useEffect(()=>{
     if(!enabled||!section.current)return;
     const observer=new IntersectionObserver(([entry])=>{
       if(blocked)return;
@@ -61,7 +68,7 @@ export function useDreamscapeNavigation(
       const target=event.target;
       if(target instanceof Element&&target.closest('dialog,input,select,textarea,[contenteditable=true]'))return;
       const phase=current.current;
-      if(phase==='HOME'&&event.deltaY<0)return;
+      if(phase==='HOME'&&(event.deltaY<0||(target instanceof Node&&cards.current?.contains(target))))return;
       const delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?innerHeight:1);
       const nextDirection=Math.sign(delta);
       if(event.timeStamp-previous>165||nextDirection!==direction){
@@ -98,7 +105,7 @@ export function useDreamscapeNavigation(
     };
     window.addEventListener('wheel',wheel,{passive:false});
     return ()=>window.removeEventListener('wheel',wheel);
-  },[blocked,change,enabled,move]);
+  },[blocked,cards,change,enabled,move]);
 
   return {section,controls,requested,active:worldPhase(phase),atHome:phase==='HOME',move,
     preload:()=>setRequested(true)};
@@ -145,13 +152,18 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
     const node=host.current;
     const abort=new AbortController();
     const fallback=()=>{if(!abort.signal.aborted)setStatus('fallback');};
-    const geometry=fetch(dreamscapeModel,{signal:abort.signal}).then(response=>{
+    const load=async (asset:string)=>{
+      const response=await fetch(asset,{signal:abort.signal});
       if(!response.ok)throw new Error('Dreamscape geometry unavailable');
-      return response.arrayBuffer();
+      return {buffer:await response.arrayBuffer(),asset};
+    };
+    const geometry=load(dreamscapeEntryModel).catch(error=>{
+      if(abort.signal.aborted)throw error;
+      return load(dreamscapeModel);
     });
-    void Promise.all([import('./dreamscape-renderer'),geometry]).then(async ([{mountDreamscape},buffer])=>{
+    void Promise.all([import('./dreamscape-renderer'),geometry]).then(async ([{mountDreamscape},{buffer,asset}])=>{
       if(abort.signal.aborted)return;
-      const runtime=await mountDreamscape(node,buffer,abort.signal,{
+      const runtime=await mountDreamscape(node,buffer,asset,abort.signal,{
         ready:metrics=>{if(!abort.signal.aborted){setStats(metrics);setStatus('ready');}},
         fallback,
         modeChanged:next=>{if(!abort.signal.aborted)setMode(next);},
@@ -200,12 +212,16 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
       <button type="button" onClick={()=>move(false)}><ArrowUp size={15}/> Campaigns</button>
       {status==='ready'&&mode==='transitioning'&&<p role="status">重组中…</p>}
       {status==='ready'&&mode==='store-crystals'&&<p>拖拽旋转 · 点击选择水晶</p>}
-      {status==='ready'&&mode==='building'&&<p><span className="dreamscape-desktop">Drag to orbit · Scroll to zoom · Double-click the building or drag, then click to transform</span>
-        <span className="dreamscape-touch">Drag to orbit · Pinch to zoom · Double-tap the building or drag, then tap to transform</span></p>}
+      {status==='ready'&&mode==='building'&&<p><span className="dreamscape-desktop">左键拖转 · 滚轮推进／拉远 · 双击楼体晶化</span>
+        <span className="dreamscape-touch">拖动旋转 · 双指缩放 · 双击楼体晶化</span></p>}
       {status==='fallback'&&<p role="status">3D unavailable. Showing the scene preview.</p>}
       {status==='loading'&&requested&&<p role="status">Loading the 3D scene…</p>}
       {status==='ready'&&mode==='store-crystals'&&<button type="button" onClick={()=>controls.current?.restoreBuilding()}><RotateCcw size={15}/> 还原大楼</button>}
-      {status==='ready'&&mode==='building'&&<button type="button" onClick={()=>controls.current?.reset()}><RotateCcw size={15}/> Reset view</button>}
+      {status==='ready'&&mode==='building'&&<div className="dreamscape-zoom">
+        <button type="button" aria-label="拉远" onClick={()=>controls.current?.zoomBy(-.19)}><Minus size={15}/></button>
+        <button type="button" aria-label="推进" onClick={()=>controls.current?.zoomBy(.19)}><Plus size={15}/></button>
+        <button type="button" aria-label="Reset view" title="返回默认视角" onClick={()=>controls.current?.reset()}><RotateCcw size={15}/></button>
+      </div>}
     </div>
   </section>;
 }
