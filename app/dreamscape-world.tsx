@@ -140,8 +140,8 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
     </header>
     <div className="dreamscape-bar">
       <button type="button" onClick={()=>move(false)}><ArrowUp size={15}/> Campaigns</button>
-      {status==='ready'&&<p><span className="dreamscape-desktop">Drag to orbit · Scroll to zoom</span>
-        <span className="dreamscape-touch">Drag to orbit · Pinch to zoom</span></p>}
+      {status==='ready'&&<p><span className="dreamscape-desktop">Drag to orbit · Scroll to zoom · Double-click to reset</span>
+        <span className="dreamscape-touch">Drag to orbit · Pinch to zoom · Double-tap to reset</span></p>}
       {status==='fallback'&&<p role="status">3D unavailable. Showing the scene preview.</p>}
       {status==='loading'&&requested&&<p role="status">Loading the 3D scene…</p>}
       {status==='ready'&&<button type="button" onClick={()=>controls.current?.reset()}><RotateCcw size={15}/> Reset view</button>}

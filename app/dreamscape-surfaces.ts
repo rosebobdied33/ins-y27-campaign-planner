@@ -14,7 +14,7 @@ float surfaceNoise(vec2 p){
 }
 `;
 
-type Finish = 'paving'|'turf'|'bark'|'canopy'|'water'|'metal'|'ceramic';
+type Finish = 'paving'|'turf'|'bark'|'canopy'|'water'|'metal'|'ceramic'|'entrance';
 const finishes:Record<Finish,string>={
   paving:`
     vec2 tile=site*vec2(.63,.95);
@@ -63,6 +63,18 @@ const finishes:Record<Finish,string>={
     diffuseColor.rgb*=.82+.28*tone-.26*join;
     relief=(tone*.17-join*.38)*.008;
   `,
+  entrance:`
+    float blend=clamp((sitePoint.x+4.3)/8.6,0.0,1.0);
+    vec3 cool=mix(vec3(.067,.081,.195),vec3(.129,.063,.206),smoothstep(0.0,.65,blend));
+    vec3 iris=mix(cool,vec3(.208,.105,.185),smoothstep(.43,1.0,blend));
+    float grain=surfaceNoise(site*12.1);
+    float wash=surfaceNoise(site*.78);
+    float coverage=(1.0-smoothstep(4.15,9.5,abs(sitePoint.x)))
+       *(1.0-smoothstep(3.2,4.2,abs(sitePoint.z)))
+       *(1.0-smoothstep(.82,1.02,sitePoint.y));
+    diffuseColor.rgb=mix(diffuseColor.rgb,iris*(.74+.36*wash+.18*grain),coverage);
+    relief=(grain-.5)*coverage*.004;
+  `,
   metal:`
     vec2 layer=vec2(sitePoint.x+sitePoint.z*.71,sitePoint.y);
     float weather=surfaceNoise(layer*vec2(1.1,.39));
@@ -75,7 +87,8 @@ const finishes:Record<Finish,string>={
 export function finishSurface(material:MeshStandardMaterial,turf?:Texture){
   const name=material.name.toLowerCase();
   let finish:Finish|undefined;
-  if(/water|reflecting pool/.test(name))finish='water';
+  if(/iridescent polished stone|skp \| \*71$|skp \| altaqua$/.test(name))finish='entrance';
+  else if(/water|reflecting pool/.test(name))finish='water';
   else if(/paving|pavement|limestone|piazza|walkway|stone promenade|stone flags|dressed stone|ride plaza/.test(name))finish='paving';
   else if(/ground|turf|lawn|meadow|grass|landscaped terrain/.test(name))finish='turf';
   else if(/bark|scaffold.*wood/.test(name))finish='bark';

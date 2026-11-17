@@ -11,13 +11,13 @@
     "Amusement": 31372,
     "Lotus Pond": 12023,
     "Ground": 5040,
-    "Screens": 2,
+    "Screens": 4,
     "Back facade": 15228,
     "Vegetation": 127680,
     "Fountain": 74524,
-    "Entrance stairs": 228
+    "Entrance stairs": 244
   },
-  "materials": 116,
+  "materials": 117,
   "entrance_source_objects": {
     "Group #3": 1,
     "Group #4": 23,
@@ -139,8 +139,8 @@
       "copies": 70
     }
   },
-  "asset_bytes": 19360644,
-  "uncompressed_glb_bytes": 94260404,
-  "asset_name": "world-ccd1be9b76bf.glb",
-  "asset_sha256": "ccd1be9b76bffdf209b2e7b1fc5d1e3fc8d5ec5e5b669689b1cc2e7c494cc01f"
+  "asset_bytes": 20748352,
+  "uncompressed_glb_bytes": 91652680,
+  "asset_name": "world-c32b6bc78376.glb",
+  "asset_sha256": "c32b6bc78376e1134cd9bc09c1965bb7093e5f79ce5ff49ea04ac75759d57681"
 }

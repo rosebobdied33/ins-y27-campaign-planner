@@ -1,6 +1,6 @@
 import {
   ACESFilmicToneMapping, AmbientLight, BackSide, Color, DirectionalLight, FogExp2, Group,
-  HemisphereLight, InstancedMesh, Material, Matrix4, Mesh, MeshStandardMaterial, Object3D, PCFShadowMap, PerspectiveCamera, PlaneGeometry, PMREMGenerator,
+  HemisphereLight, InstancedMesh, Material, Matrix4, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Object3D, PCFShadowMap, PerspectiveCamera, PlaneGeometry, PMREMGenerator,
   PointLight, Raycaster, Scene, ShaderMaterial, SphereGeometry, SRGBColorSpace, RepeatWrapping, Texture, TextureLoader,
   Vector2, Vector3, WebGLRenderer,
 } from 'three';
@@ -16,7 +16,7 @@ type SceneCallbacks={
   fallback:()=>void;
   buildingPick?:(objectId:string)=>void;
 };
-const asset='./dreamscape/world-ccd1be9b76bf.glb';
+const asset='./dreamscape/world-c32b6bc78376.glb';
 
 function release(root:Object3D) {
   const geometries=new Set<Mesh['geometry']>();
@@ -77,20 +77,20 @@ function duskDome(){
   }));
 }
 
-function displayMaterial() {
+function displayMaterial(east:boolean) {
   return new ShaderMaterial({
-    uniforms:{time:{value:0}},
+    uniforms:{time:{value:0},aspectBias:{value:east?1.8:1},direction:{value:east?-.7:1}},
     vertexShader:`varying vec2 displayUv;void main(){displayUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
     fragmentShader:`
       varying vec2 displayUv;
-      uniform float time;
+      uniform float time,aspectBias,direction;
       void main(){
         vec2 p=displayUv;
-        float phase=p.y*25.0-p.x*14.0+2.4*sin(p.x*6.5+p.y*4.2+time*.19)+time*.45;
+        float phase=p.y*25.0-p.x*14.0*aspectBias+2.4*sin(p.x*6.5*aspectBias+p.y*4.2+time*.19)+time*.45*direction;
         float ridge=pow(.5+.5*sin(phase),5.0);
         float soft=pow(.5+.5*sin(phase*.63+1.6),3.0);
         vec3 shade=vec3(.029,.026,.115)+ridge*vec3(.48,.45,.98)+soft*vec3(.32,.085,.52);
-        shade*=.83+.17*sin(p.y*630.0);
+        shade*=.90+.10*sin(p.y*630.0)*(1.0-smoothstep(.28,1.25,fwidth(p.y*630.0)));
         gl_FragColor=vec4(shade,1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -106,6 +106,7 @@ function mountFoliage(model:Group,mobile:boolean){
   const inverse=basis.clone().invert();
   const templates:Mesh[]=[];
   const details:FoliageDetail[]=[];
+  const distant:InstancedMesh[]=[], close:InstancedMesh[]=[];
   model.traverse(object=>{
     if(object instanceof Mesh&&object.userData.foliage_instances)templates.push(object);
   });
@@ -115,21 +116,40 @@ function mountFoliage(model:Group,mobile:boolean){
       values=>basis.clone().multiply(new Matrix4().fromArray(values)).multiply(inverse).multiply(template.matrix),
     );
     const relief=template.userData.foliage_module==='relief';
-    const mesh=new InstancedMesh(template.geometry,template.material,relief?Math.min(mobile?5:12,matrices.length):matrices.length);
-    mesh.name=template.name;
-    mesh.userData.foliageRelief=relief;
     if(relief){
+      const mesh=new InstancedMesh(template.geometry,template.material,Math.min(mobile?5:12,matrices.length));
+      mesh.name=template.name;
+      mesh.userData.foliageRelief=true;
       mesh.count=0;
       mesh.frustumCulled=false;
+      template.parent?.add(mesh);
       details.push({mesh,matrices,positions:matrices.map(matrix=>new Vector3().setFromMatrixPosition(matrix))});
     }else{
-      matrices.forEach((matrix,index)=>mesh.setMatrixAt(index,matrix));
-      mesh.computeBoundingSphere();
+      // Keep real crown geometry, but let the camera cull whole park sections.
+      const complete=new InstancedMesh(template.geometry,template.material,matrices.length);
+      matrices.forEach((matrix,index)=>complete.setMatrixAt(index,matrix));
+      complete.computeBoundingSphere();
+      template.parent?.add(complete);
+      distant.push(complete);
+      const tiles=new Map<string,Matrix4[]>();
+      for(const matrix of matrices){
+        const key=Math.floor(matrix.elements[12]/55)+':'+Math.floor(matrix.elements[14]/55);
+        const tile=tiles.get(key);
+        if(tile)tile.push(matrix);
+        else tiles.set(key,[matrix]);
+      }
+      for(const tile of tiles.values()){
+        const mesh=new InstancedMesh(template.geometry,template.material,tile.length);
+        tile.forEach((matrix,index)=>mesh.setMatrixAt(index,matrix));
+        mesh.computeBoundingSphere();
+        mesh.visible=false;
+        close.push(mesh);
+        template.parent?.add(mesh);
+      }
     }
-    template.parent?.add(mesh);
     template.removeFromParent();
   }
-  return details;
+  return {details,distant,close};
 }
 
 function refineFoliage(details:FoliageDetail[],camera:Vector3,mobile:boolean){
@@ -149,7 +169,7 @@ export async function mountDreamscape(
   const mobile=matchMedia('(max-width: 700px)').matches;
   const motion=matchMedia('(prefers-reduced-motion: reduce)');
   let renderer:WebGLRenderer;
-  try {renderer=new WebGLRenderer({antialias:!mobile,powerPreference:'high-performance'});}
+  try {renderer=new WebGLRenderer({antialias:true,powerPreference:'high-performance'});}
   catch {callbacks.fallback();return;}
   const canvas=renderer.domElement;
   canvas.setAttribute('aria-label','INS LAND park and building, interactive three-dimensional scene');
@@ -160,7 +180,6 @@ export async function mountDreamscape(
   renderer.shadowMap.enabled=true;
   renderer.shadowMap.type=PCFShadowMap;
   renderer.shadowMap.autoUpdate=false;
-  renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.45));
   host.append(canvas);
   const scene=new Scene();
   scene.background=new Color('#19112c');
@@ -210,17 +229,19 @@ export async function mountDreamscape(
     const light=new PointLight(color,intensity,distance,1.8);light.position.set(x,y,z);scene.add(light);
   }
   const camera=new PerspectiveCamera(mobile?49:43,1,.6,1700);
-  let frame=0,disposed=false,active=false,model:Group|undefined,screen:ShaderMaterial|undefined;
+  let frame=0,disposed=false,active=false,model:Group|undefined;
+  const displays:ShaderMaterial[]=[];
   let observer:ResizeObserver|undefined;
   const view:WorldView={...initialWorldView},aim:WorldView={...initialWorldView};
-  let introAt=0,previous=0,lastPaint=0,lastRefine=-Infinity;
-  let foliage:FoliageDetail[]=[];
+  let introAt=0,previous=0,lastPaint=0,tapTimer=0;
+  const lastFoliage=new Vector3(Infinity,0,0), cameraTarget=new Vector3();
+  let foliage:ReturnType<typeof mountFoliage>|undefined,nearFoliage=false;
   let turf:Texture|undefined;
   const listeners=new AbortController();
   const onLoss=(event:Event)=>{event.preventDefault();callbacks.fallback();dispose();};
   function dispose(){
     if(disposed)return;
-    disposed=true;cancelAnimationFrame(frame);observer?.disconnect();listeners.abort();
+    disposed=true;clearTimeout(tapTimer);cancelAnimationFrame(frame);observer?.disconnect();listeners.abort();
     release(scene);turf?.dispose();target.dispose();renderer.dispose();renderer.forceContextLoss();canvas.remove();
   }
   canvas.addEventListener('webglcontextlost',onLoss,{signal:listeners.signal});
@@ -229,7 +250,10 @@ export async function mountDreamscape(
   function resize(){
     if(disposed)return;
     const width=Math.max(1,host.clientWidth),height=Math.max(1,host.clientHeight);
-    renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();
+    const pixelRatio=Math.min(devicePixelRatio,2,Math.sqrt(3400000/(width*height)));
+    renderer.setDrawingBufferSize(width,height,pixelRatio);
+    host.dataset.pixelRatio=pixelRatio.toFixed(2);
+    camera.aspect=width/height;camera.updateProjectionMatrix();
     if(model)draw(performance.now(),true);
   }
   observer=new ResizeObserver(resize);observer.observe(host);resize();
@@ -262,14 +286,23 @@ export async function mountDreamscape(
       object.castShadow=region!=='Park'&&region!=='Ground'&&!object.userData.foliageRelief;
       object.receiveShadow=!['Facade','Back facade','Roof','Building base','Folded cladding','Media framing'].includes(region);
       if(object.userData.screen_surface||object===screenObject||object.name.includes('INS_media_display')){
-        const previous=object.material;
-        for(const material of Array.isArray(previous)?previous:[previous])material.dispose();
-        screen=displayMaterial();object.material=screen;
+        const art=displayMaterial(object.userData.screen_surface==='east'||object.name.includes('East_media'));
+        object.material=art;
+        object.castShadow=false;
+        displays.push(art);
       }else{
+        if(region==='Entrance stairs'&&object.material instanceof MeshStandardMaterial){
+          const old=object.material;
+          const coat=new MeshPhysicalMaterial({name:old.name,color:old.color,metalness:.23,roughness:.28,
+            clearcoat:.72,clearcoatRoughness:.18,iridescence:.17,iridescenceIOR:1.37,
+            iridescenceThicknessRange:[145,265]});
+          object.material=coat;
+          old.dispose();
+        }
         for(const material of Array.isArray(object.material)?object.material:[object.material]){
           if(!(material instanceof MeshStandardMaterial)||styled.has(material))continue;
           const name=material.name.toLowerCase();
-          material.envMapIntensity=/glass|glaz|water|vitreous/.test(name)?1.08:.56;
+          material.envMapIntensity=/iridescent polished/.test(name)?1.23:/glass|glaz|water|vitreous/.test(name)?1.08:.56;
           if(name.includes('indigo broad terrain')){
             material.color.set('#292042');
             material.roughness=1;
@@ -283,17 +316,43 @@ export async function mountDreamscape(
     });
     const buildingGroup=building??model.children.find(node=>node.userData.runtime_group==='Building');
     if(!buildingGroup)throw new Error('Building node missing');
+    host.dataset.displays=String(displays.length);
     const ray=new Raycaster();const ndc=new Vector2();
+    const pickTargets:Mesh[]=[];
+    for(const group of buildingGroup.children){
+      if(!['Facade','Back facade','Main entrance','Building base','Roof'].includes(group.userData.runtime_group))continue;
+      group.traverse(object=>{if(object instanceof Mesh)pickTargets.push(object);});
+    }
     const input=new Map<number,{x:number;y:number}>();
-    let movement=0;
+    let movement=0,usedPinch=false;
+    let lastTap:{x:number;y:number;at:number}|undefined;
+    let nativeScale:number|undefined;
     function span(){
       const [a,b]=input.values();
       return a&&b?Math.hypot(a.x-b.x,a.y-b.y):0;
     }
+    function clearTap(){
+      window.clearTimeout(tapTimer);
+      lastTap=undefined;
+    }
+    function focusBuilding(x:number,y:number){
+      const rect=canvas.getBoundingClientRect();
+      ndc.set((x-rect.left)/rect.width*2-1,-(y-rect.top)/rect.height*2+1);
+      ray.setFromCamera(ndc,camera);
+      const match=ray.intersectObjects(pickTargets,false)[0];
+      if(!match)return;
+      canvas.dataset.picked=match.object.name;
+      callbacks.buildingPick?.(match.object.name);
+      aim.azimuth+=shortestAngle(aim.azimuth,initialWorldView.azimuth);
+      aim.elevation=initialWorldView.elevation;
+      aim.zoom=1;
+      wake();
+    }
     canvas.addEventListener('pointerdown',event=>{
-      if(event.pointerType==='mouse'&&event.button!==0)return;
-      if(!input.size)movement=0;
+      if(!active||(event.pointerType==='mouse'&&event.button!==0))return;
+      if(!input.size){movement=0;usedPinch=false;}
       input.set(event.pointerId,{x:event.clientX,y:event.clientY});
+      if(input.size>1){usedPinch=true;clearTap();}
       canvas.setPointerCapture(event.pointerId);
       canvas.dataset.dragging='true';
     },{signal:listeners.signal});
@@ -303,27 +362,59 @@ export async function mountDreamscape(
       if(!old)return;
       const before=span();
       const dx=event.clientX-old.x,dy=event.clientY-old.y;
-      input.set(event.pointerId,{x:event.clientX,y:event.clientY});
+      old.x=event.clientX;old.y=event.clientY;
       movement+=Math.hypot(dx,dy);
-      if(input.size>1&&before>0){zoomBy((span()-before)*.0026);return;}
-      aim.azimuth-=dx*.006;
-      aim.elevation=Math.min(.97,Math.max(.18,aim.elevation+dy*.0044));
+      if(movement>5&&lastTap)clearTap();
+      if(input.size>1&&before>0){zoomBy(Math.log(Math.max(1,span())/before)*.78);return;}
+      if(usedPinch)return;
+      const scale=Math.max(.53,1-aim.zoom*.44);
+      aim.azimuth-=dx*.0055*scale;
+      aim.elevation=Math.min(.97,Math.max(.18,aim.elevation+dy*.004*scale));
       wake();
     },{signal:listeners.signal});
     function endPointer(event:PointerEvent){
       if(!input.delete(event.pointerId))return;
       canvas.dataset.dragging=String(input.size>0);
-      if(event.type!=='pointerup'||movement>6||input.size)return;
-      const rect=canvas.getBoundingClientRect();
-      ndc.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
-      ray.setFromCamera(ndc,camera);
-      const match=ray.intersectObject(buildingGroup!,true)[0];
-      if(match){
-        canvas.dataset.picked=match.object.name;
-        callbacks.buildingPick?.(match.object.name);
+      if(event.type!=='pointerup'||movement>5||input.size||usedPinch)return;
+      const {clientX:x,clientY:y,timeStamp:at}=event;
+      if(lastTap&&at-lastTap.at<300&&Math.hypot(lastTap.x-x,lastTap.y-y)<36){
+        clearTap();
+        reset();
+        return;
       }
+      clearTap();
+      lastTap={x,y,at};
+      tapTimer=window.setTimeout(()=>{
+        lastTap=undefined;
+        if(active)focusBuilding(x,y);
+      },300);
     }
     for(const name of ['pointerup','pointercancel','lostpointercapture'] as const)canvas.addEventListener(name,endPointer,{signal:listeners.signal});
+    canvas.addEventListener('wheel',event=>{
+      if(!active||!event.ctrlKey)return;
+      event.preventDefault();
+      clearTap();
+      if(nativeScale===undefined)zoomBy(-event.deltaY*(event.deltaMode===1?16:1)*.005);
+    },{passive:false,signal:listeners.signal});
+    canvas.addEventListener('gesturestart',event=>{
+      if(!active)return;
+      event.preventDefault();
+      clearTap();
+      nativeScale=1;
+    },{passive:false,signal:listeners.signal});
+    canvas.addEventListener('gesturechange',event=>{
+      if(nativeScale===undefined||!active)return;
+      event.preventDefault();
+      const scale=(event as Event&{scale:number}).scale;
+      if(!(scale>0))return;
+      zoomBy(Math.log(scale/nativeScale)*.78);
+      nativeScale=scale;
+    },{passive:false,signal:listeners.signal});
+    canvas.addEventListener('gestureend',event=>{
+      if(nativeScale===undefined)return;
+      event.preventDefault();
+      nativeScale=undefined;
+    },{passive:false,signal:listeners.signal});
     canvas.addEventListener('keydown',event=>{
       if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
         event.preventDefault();aim.azimuth+=event.key==='ArrowLeft'?-.23:.23;wake();
@@ -339,15 +430,24 @@ export async function mountDreamscape(
     dispose();return;
   }
 
+  function shortestAngle(from:number,to:number){
+    return Math.atan2(Math.sin(to-from),Math.cos(to-from));
+  }
+  function reset(){
+    aim.azimuth+=shortestAngle(aim.azimuth,initialWorldView.azimuth);
+    aim.elevation=initialWorldView.elevation;
+    aim.zoom=0;
+    wake();
+  }
   function draw(now:number,force=false){
     if(disposed)return;
     const moving=Math.abs(aim.azimuth-view.azimuth)>.002||
       Math.abs(aim.elevation-view.elevation)>.002||Math.abs(aim.zoom-view.zoom)>.001||
       (introAt>0&&now-introAt<1450);
-    if(!force&&now-lastPaint<(mobile?32:moving?15:33))return;
+    if(!force&&!motion.matches&&!moving&&now-lastPaint<32)return;
     lastPaint=now;
-    const dt=Math.min(64,now-(previous||now-16));previous=now;
-    const ease=motion.matches?1:1-Math.exp(-dt/93);
+    const dt=Math.min(96,now-(previous||now-16));previous=now;
+    const ease=motion.matches?1:1-Math.exp(-dt/77);
     view.azimuth+=(aim.azimuth-view.azimuth)*ease;
     view.elevation+=(aim.elevation-view.elevation)*ease;
     view.zoom+=(aim.zoom-view.zoom)*ease;
@@ -360,12 +460,23 @@ export async function mountDreamscape(
       camera.fov=fov;
       camera.updateProjectionMatrix();
     }
-    if(active&&introAt)camera.position.lerp(new Vector3(...target),-.085*(1-intro)**2);
+    if(active&&introAt)camera.position.lerp(cameraTarget.set(...target),-.085*(1-intro)**2);
     camera.lookAt(...target);
-    if(force||now-lastRefine>190){refineFoliage(foliage,camera.position,mobile);lastRefine=now;}
+    if(foliage){
+      const useTiles=view.zoom>(nearFoliage?.51:.59);
+      if(useTiles!==nearFoliage){
+        for(const mesh of foliage.distant)mesh.visible=!useTiles;
+        for(const mesh of foliage.close)mesh.visible=useTiles;
+        nearFoliage=useTiles;
+      }
+      if(force||lastFoliage.distanceToSquared(camera.position)>100){
+        refineFoliage(foliage.details,camera.position,mobile);
+        lastFoliage.copy(camera.position);
+      }
+    }
     if(!motion.matches){
       dome.material.uniforms.time.value=now*.001;
-      if(screen)screen.uniforms.time.value=now*.001;
+      for(const display of displays)display.uniforms.time.value=now*.001;
     }
     renderer.render(scene,camera);
     host.classList.toggle('inspecting',view.zoom>.55);
@@ -397,10 +508,7 @@ export async function mountDreamscape(
     },
     zoomBy,
     zoom:()=>aim.zoom,
-    reset(){
-      Object.assign(aim,initialWorldView);
-      wake();
-    },
+    reset,
     dispose,
   };
 }

@@ -2,6 +2,7 @@
 import json
 import os
 from collections import Counter, defaultdict
+from math import floor
 from pathlib import Path
 
 import bpy
@@ -223,9 +224,9 @@ def trim_entrance_overlay(ob):
 def entrance_stairs():
     # Treads, outer cheeks and foundation share vertices and have no internal faces.
     xs=(-4.22,-4.055,4.055,4.22)
-    ys=(.81,1.13,1.55,1.97,2.47,3.145,3.46)
-    zs=(-.035,.145,.289,.444,.599,.8)
-    heights=((1,2,3,4,5,5),(0,2,3,4,4,0),(1,2,3,4,5,5))
+    ys=(.06,.81,1.13,1.55,1.97,2.47,3.145,3.46)
+    zs=(-.065,.163,.289,.444,.599,.8)
+    heights=((1,1,2,3,4,5,5),(1,1,2,3,4,4,0),(1,1,2,3,4,5,5))
     cells={(x,y,z) for x,row in enumerate(heights) for y,top in enumerate(row) for z in range(top)}
     vertices=[];faces=[];ids={}
     sides=(
@@ -252,7 +253,13 @@ def entrance_stairs():
     assert edges and all(count==2 for count in edges.values()), 'Entrance solid has an open or non-manifold edge'
     mesh=bpy.data.meshes.new('Closed stone stair and landing')
     mesh.from_pydata(vertices,[],faces);mesh.update()
-    stone=bpy.data.materials.get('V4 / shaded chiseled curbstone')
+    stone=bpy.data.materials.new('Entry / iridescent polished stone')
+    stone.diffuse_color=(.12,.087,.18,1)
+    stone.use_nodes=True
+    pbr=next(n for n in stone.node_tree.nodes if n.type=='BSDF_PRINCIPLED')
+    pbr.inputs['Base Color'].default_value=stone.diffuse_color
+    pbr.inputs['Metallic'].default_value=.26
+    pbr.inputs['Roughness'].default_value=.27
     mesh.materials.append(material(stone))
     ob=bpy.data.objects.new(mesh.name,mesh)
     dest.objects.link(ob)
@@ -286,7 +293,14 @@ def copy_object(ob, label, raw=False, independent=False):
         if ob.name.startswith('Media façade'):
             mesh['screen_surface'] = True
         return
-    batches[label].append(mesh)
+    if label=='Folded cladding':
+        # A close camera can cull the roof and opposite side panels as whole batches.
+        corners=[ob.matrix_world@vertex.co for vertex in (ob.data.vertices[0],ob.data.vertices[-1])]
+        x,y,z=(corners[0]+corners[1])*.5
+        batch=(label,floor((x+10)/18),floor((y+6)/22),floor(z/8))
+    else:
+        batch=(label,)
+    batches[batch].append(mesh)
 
 def classify(o):
     n = o.name
@@ -371,6 +385,20 @@ for o in active:
         continue
     copy_object(o,label,raw=bool(o.get('sketchup_group')),independent=label=='Screens' or o.name.startswith('Official main entrance'))
 
+# SKP Group #15 front glazing is at Y=-0.559, with the frame projecting to -0.589.
+# Inset the LED image just above the glazing and leave the front frame visible.
+pixels=bpy.data.meshes.new('East media glass / LED image')
+pixels.from_pydata([(12.71,-.562,15.275),(44.92,-.562,15.275),
+                    (44.92,-.562,19.375),(12.71,-.562,19.375)],[],[(0,1,2,3)])
+pixels.update()
+uv=pixels.uv_layers.new()
+for loop,coords in zip(uv.data,((0,0),(1,0),(1,1),(0,1))):loop.uv=coords
+display=bpy.data.objects.new('East media glass / LED image',pixels)
+dest.objects.link(display)
+display.parent=group('Screens')
+display['screen_surface']='east'
+stats['Screens']+=2
+
 entry_stair=entrance_stairs()
 entry_stair.data.calc_loop_triangles()
 stats['Entrance stairs']+=len(entry_stair.data.loop_triangles)
@@ -382,7 +410,7 @@ for key, bank in banks.items():
     bank['foliage_instances'] = json.dumps(instances[key],separators=(',',':'))
 
 # Join after evaluation to preserve authored bevels, normals, UVs and material indices.
-for label, objects in batches.items():
+for batch, objects in batches.items():
     bpy.ops.object.select_all(action='DESELECT')
     for obj in objects:
         obj.select_set(True)
@@ -390,7 +418,7 @@ for label, objects in batches.items():
     bpy.context.view_layer.objects.active = first
     if len(objects) > 1:
         bpy.ops.object.join()
-    first.name = label + ' / surfaces'
+    first.name = ' / '.join(map(str,batch)) + ' / surfaces'
 
 bpy.ops.object.select_all(action='DESELECT')
 for obj in dest.objects:
