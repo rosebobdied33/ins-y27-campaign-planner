@@ -287,8 +287,7 @@ export function CampaignOpening({index,image,request,stage,onIndex,onClose,onWor
     }}
     onClick={event=>{
       if(event.button!==0||performance.now()<=suppressClick.current||!(event.target instanceof Element)||event.target.closest('button'))return;
-      if(event.target.closest('.opening-back'))step(1);
-      else close();
+      close();
     }}
     onTouchStart={event=>{
       if(event.target instanceof Element&&event.target.closest('button,.opening-copy'))return;
