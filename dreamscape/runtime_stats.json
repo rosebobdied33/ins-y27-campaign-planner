@@ -1,0 +1,18 @@
+{
+  "triangles_with_instances": {
+    "Building": 56,
+    "Facade": 25883,
+    "Back facade": 35060,
+    "Roof": 3451,
+    "Main entrance": 554,
+    "Screens": 2,
+    "Park": 23678,
+    "Amusement": 6092,
+    "Lotus Pond": 2146,
+    "Fountain": 14548,
+    "Vegetation": 140440
+  },
+  "total": 251910,
+  "objects": 57,
+  "asset_bytes": 8321008
+}
