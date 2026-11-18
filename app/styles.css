@@ -2457,7 +2457,7 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
 .brand-card-depth{position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(120deg,#ffffff69,transparent 24% 66%,#ffffff4a),linear-gradient(0deg,#0000001c,transparent 20% 85%,#ffffff92)}
 .brand-card-artwork{position:absolute;inset:0;z-index:-2;pointer-events:none;
-  background: url('../public/dreamscape/card-engraved-frame.webp') center/100% 100%;
+  background:var(--card-artwork) center/100% 100%;
   filter:hue-rotate(var(--card-turn));opacity:.87;mix-blend-mode:multiply;
 }
 .brand-card-print{position:absolute;inset:13px;z-index:-1;opacity:.19;pointer-events:none;

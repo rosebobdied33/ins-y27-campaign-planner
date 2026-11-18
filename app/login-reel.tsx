@@ -7,6 +7,7 @@ import {ArchiveMotion,archiveMotion} from './archive-motion';
 import {CampaignOpening} from './campaign-opening';
 import {useHorizontalWheel} from './use-horizontal-wheel';
 import {DreamscapeWorld,useDreamscapeNavigation} from './dreamscape-world';
+import {publicAsset} from './dreamscape-assets';
 
 const cardDate=(date:string,year:EditionYear)=>date.startsWith(year+'-')?date.slice(5).replace('-','.'):date.replaceAll('-','.');
 const sceneIndex=(index:number,count:number)=>(index+count)%count;
@@ -15,7 +16,7 @@ const sparks=[[8,24,26],[16,43,15],[24,15,21],[34,31,13],[63,14,22],[76,35,15],[
 export function LoginReel({busy,error,onLogin,onResume}:{
   busy:boolean;error:string;onResume?:()=>void;onLogin:(name:string,password:string,register:boolean)=>void;
 }) {
-  const image='./campaign-opening/2027/print-atlas.webp';
+  const image=publicAsset('campaign-opening/2027/print-atlas.webp');
   const [year,setYear]=useState<EditionYear>(2027);
   const [active,setActive]=useState(0);
   const [playing,setPlaying]=useState(false);
@@ -89,7 +90,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
     '--scene-glow':edition.glow,'--scene-wash':edition.wash,'--scene-deep':edition.deep,
     '--scene-x':(active%3)*50+'%','--scene-y':Math.floor(active/3)*50+'%',
     ...(!archive&&image?{'--reel-image':'url('+image+')'}:{}),
-    ...(edition.poster?{'--scene-poster':'url('+edition.poster+')'}:{}),
+    ...(edition.poster?{'--scene-poster':'url('+publicAsset(edition.poster)+')'}:{}),
   } as CSSProperties} lang="en">
     <div className="reel-atmosphere" aria-hidden="true"/>
     <div className="reel-volume" aria-hidden="true"/>

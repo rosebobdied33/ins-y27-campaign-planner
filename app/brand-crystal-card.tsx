@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useRef,useState,type CSSProperties} from 'react';
 import {brandCardArt} from './brand-card-art';
+import {publicAsset} from './dreamscape-assets';
 import {ArrowLeft} from 'lucide-react';
 import type {crystalVenues} from './dreamscape-venues';
 import type {crystalThemes} from './crystal-themes';
@@ -24,7 +25,7 @@ export function BrandCrystalCard({brand,theme,onClose}:{brand:(typeof crystalVen
   void Promise.allSettled([logo?.decode(),frame.decode()]).then(()=>{if(current)node.showModal();});
   return ()=>{current=false;if(node.open)node.close();};
  },[brand.id]);
- return <dialog ref={dialog} className="brand-crystal-card" data-closing={closing} data-texture={art.texture} style={{'--brand-color':brand.color,'--card-ink':art.ink,'--card-paper':art.paper,'--card-metal':art.metal,'--card-turn':art.turn+'deg'} as CSSProperties}
+ return <dialog ref={dialog} className="brand-crystal-card" data-closing={closing} data-texture={art.texture} style={{'--card-artwork':'url("'+publicAsset('dreamscape/card-engraved-frame.webp')+'")','--brand-color':brand.color,'--card-ink':art.ink,'--card-paper':art.paper,'--card-metal':art.metal,'--card-turn':art.turn+'deg'} as CSSProperties}
  aria-label={theme.themeId+' 门店品牌卡片'} onCancel={event=>{event.preventDefault();close();}}>
   <div className="brand-card-depth" aria-hidden="true"/>
   <div className="brand-card-artwork" aria-hidden="true"/>

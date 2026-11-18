@@ -1,3 +1,4 @@
+export const publicAsset=(path:string)=>(process.env.NEXT_PUBLIC_PLANNER_BASE_PATH||'')+'/'+path.replace(/^\.\//,'');
 export const dreamscapeModel='./dreamscape/world-c32b6bc78376.glb';
 export const dreamscapeEntryModel='./dreamscape/world-entry.glb';
 
