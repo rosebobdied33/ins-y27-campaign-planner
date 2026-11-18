@@ -4,6 +4,7 @@ import {ArrowDown,ArrowLeft,ArrowRight,ArrowUpRight,Pause,Play,X} from 'lucide-r
 import {durationDays} from '../lib/planner';
 import {useLoginReel} from '../lib/storage';
 import {loginEditions,type EditionYear} from './login-editions';
+import {ArchiveMotion,archiveMotion} from './archive-motion';
 import {CampaignOpening} from './campaign-opening';
 import {useHorizontalWheel} from './use-horizontal-wheel';
 import {DreamscapeWorld,useDreamscapeNavigation} from './dreamscape-world';
@@ -22,6 +23,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
   const [open,setOpen]=useState(false);
   const [flipped,setFlipped]=useState(false);
   const [opening,setOpening]=useState<{origin:HTMLButtonElement}|null>(null);
+  const [motionOrigin,setMotionOrigin]=useState<HTMLButtonElement|null>(null);
   const [register,setRegister]=useState(false);
   const home=useRef<HTMLElement>(null);
   const stage=useRef<HTMLElement>(null);
@@ -143,10 +145,12 @@ export function LoginReel({busy,error,onLogin,onResume}:{
               if(relative===0){
                 setPlaying(false);
                 setFlipped(true);
-                if(archive)details.current?.showModal();
+                if(archive&&archiveMotion[item.code])setMotionOrigin(event.currentTarget);
+                else if(archive)details.current?.showModal();
                 else setOpening({origin:event.currentTarget});
               }else step(relative);
             }}>
+            {archive&&archiveMotion[item.code]&&<span className="reel-motion-badge">AIGC / PLAY</span>}
             <span className="reel-paper" aria-hidden="true">
               <span className="reel-paper-front">
                 {item.poster?<img className="reel-poster" src={item.poster} alt="" draggable={false} fetchPriority={relative===0?'high':'auto'} loading={Math.abs(relative)>1?'lazy':'eager'}/>:
@@ -163,6 +167,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
       </div>
     </section>
 
+    {motionOrigin&&<ArchiveMotion index={active} origin={motionOrigin} onClose={()=>{setMotionOrigin(null);setFlipped(false);}}/>}
     <CampaignOpening index={active} image={image} request={opening} stage={stage}
       onIndex={setActive} onClose={()=>{setOpening(null);setFlipped(false);}} onWorkshop={enter}/>
     <dialog ref={details} className="reel-edition-dialog" data-archive={archive} lang="zh-CN" aria-labelledby="reel-detail-title"
