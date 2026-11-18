@@ -5,5 +5,5 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 export default function Layout({children}:{children:React.ReactNode}) {
-  return <html lang="zh-CN"><body>{children}</body></html>;
+  return <html lang="zh-CN"><head><link rel="preload" as="fetch" href={(process.env.PLANNER_BASE_PATH||'')+'/dreamscape/world-c32b6bc78376.glb'} crossOrigin="anonymous"/></head><body>{children}</body></html>;
 }

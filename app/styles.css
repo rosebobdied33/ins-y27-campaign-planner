@@ -2435,3 +2435,12 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
 @media(max-width:700px){.archive-motion-panel{width:74vw;height:68vh}.archive-motion-panel[data-landscape=true]{width:91vw;height:auto}.archive-motion-tag{left:8px;max-width:calc(100% - 16px);padding:9px 12px}.archive-motion-tag small{font-size:9px}}
 
 .reel-motion-badge{position:absolute;z-index:3;bottom:12px;right:10px;padding:5px 8px;background:#241a3fe6;border:1px solid #e4d6ff8c;border-radius:5px 10px 5px 5px;color:#f9efff;font-size:9px;letter-spacing:.12em;pointer-events:none}
+
+.archive-motion-tag{top:0;bottom:auto;left:0;transform:none;border-radius:14px 0 22px 0;padding:15px 26px;background:linear-gradient(135deg,#46305ae8,#302447e8);border:0;border-right:1px solid #ecdef47a;border-bottom:1px solid #ecdef47a;max-width:calc(100% - 74px);pointer-events:none;box-shadow:0 4px 20px #1b102432}
+.archive-motion-tag span{font-size:10px;letter-spacing:.2em;color:#e9cfeb}
+.archive-motion-tag strong{font-family:"Bodoni Moda",Georgia,serif;font-size:23px;font-weight:400;letter-spacing:.04em;margin:5px 0}
+.archive-motion-tag small{font-size:10px;color:#e2d4e6}
+.archive-motion-panel{overflow:hidden;background:#171221;box-shadow:0 25px 90px #0f0a2499}
+.archive-motion-panel[data-landscape=true]{aspect-ratio:16/9}
+.archive-motion video{object-fit:contain;background:#171221}
+@media(max-width:700px){.archive-motion-tag{padding:10px 13px;max-width:calc(100% - 65px)}.archive-motion-tag strong{font-size:18px}.archive-motion-tag small{font-size:8px}.archive-motion-tag span{font-size:9px}}

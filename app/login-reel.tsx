@@ -35,7 +35,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
   const count=scenes.length;
   const edition=scenes[active];
   const archive=year===2026;
-  const world=useDreamscapeNavigation(home,stage,open||flipped||!!opening,!archive);
+  const world=useDreamscapeNavigation(home,stage,open||flipped||!!opening,true);
   useEffect(()=>{
     const preference=window.matchMedia('(prefers-reduced-motion: reduce)');
     setPlaying(!preference.matches);
@@ -86,7 +86,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
     onLogin(String(fields.get('handle')).trim(),String(fields.get('password')),register);
   };
 
-  return <div className={archive?undefined:"opening-chapters"}><main ref={home} className="login-reel" data-year={year} data-opening={!!opening} style={{
+  return <div className="opening-chapters"><main ref={home} className="login-reel" data-year={year} data-opening={!!opening} style={{
     '--scene-glow':edition.glow,'--scene-wash':edition.wash,'--scene-deep':edition.deep,
     '--scene-x':(active%3)*50+'%','--scene-y':Math.floor(active/3)*50+'%',
     ...(!archive&&image?{'--reel-image':'url('+image+')'}:{}),
@@ -224,7 +224,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
         <button className="primary" disabled={busy}>{busy?'Connecting…':register?'Register and enter':'Sign in'}</button>
       </form>
     </dialog>
-    {!archive&&<button type="button" className="reel-world-link" onPointerEnter={world.preload} onFocus={world.preload}
+    {<button type="button" className="reel-world-link" onPointerEnter={world.preload} onFocus={world.preload}
       onClick={()=>world.move(true)}>Dreamscape <ArrowDown size={14}/></button>}
-  </main>{!archive&&<DreamscapeWorld navigation={world}/>}</div>;
+  </main><DreamscapeWorld navigation={world}/></div>;
 }

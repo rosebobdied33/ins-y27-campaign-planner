@@ -3,7 +3,7 @@
 import {useCallback,useEffect,useRef,useState,type RefObject} from 'react';
 import {ArrowUp,Minus,Plus,RotateCcw} from 'lucide-react';
 import {advanceWorldWheel,type WorldMode} from '../lib/world-navigation';
-import {dreamscapeEntryModel,dreamscapeModel} from './dreamscape-assets';
+import {dreamscapeModel} from './dreamscape-assets';
 import {crystalVenues} from './dreamscape-venues';
 import type {DreamscapeControls} from './dreamscape-renderer';
 
@@ -157,10 +157,7 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
       if(!response.ok)throw new Error('Dreamscape geometry unavailable');
       return {buffer:await response.arrayBuffer(),asset};
     };
-    const geometry=load(dreamscapeEntryModel).catch(error=>{
-      if(abort.signal.aborted)throw error;
-      return load(dreamscapeModel);
-    });
+    const geometry=load(dreamscapeModel);
     void Promise.all([import('./dreamscape-renderer'),geometry]).then(async ([{mountDreamscape},{buffer,asset}])=>{
       if(abort.signal.aborted)return;
       const runtime=await mountDreamscape(node,buffer,asset,abort.signal,{

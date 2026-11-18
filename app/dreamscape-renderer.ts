@@ -284,6 +284,7 @@ export async function mountDreamscape(
   function dispose(){
     if(disposed)return;
     disposed=true;clearTimeout(upgradeTimer);cancelAnimationFrame(frame);observer?.disconnect();listeners.abort();
+    MeshoptDecoder.useWorkers(0);
     if(pendingDetail)release(pendingDetail);
     release(scene);turf?.dispose();target.dispose();renderer.dispose();renderer.forceContextLoss();canvas.remove();
   }
@@ -303,6 +304,7 @@ export async function mountDreamscape(
     if(model)draw(performance.now(),true);
   }
   observer=new ResizeObserver(resize);observer.observe(host);resize();
+  MeshoptDecoder.useWorkers(1);
   const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   function installModel(next:Group,asset:string){
     const buildingGroup=next.getObjectByName('NODE__Building')??next.children.find(node=>node.userData.runtime_group==='Building');
@@ -385,13 +387,11 @@ export async function mountDreamscape(
   try{
     const initial=await loader.parseAsync(buffer,new URL(entryAsset,location.href).href);
     if(disposed){release(initial.scene);return;}
+    turf=await new TextureLoader().loadAsync('./dreamscape/turf-detail.webp').catch(()=>undefined);
+    if(disposed){release(initial.scene);turf?.dispose();return;}
+    if(turf){turf.wrapS=RepeatWrapping;turf.wrapT=RepeatWrapping;turf.anisotropy=4;}
     installModel(initial.scene,entryAsset);
     scene.add(connectParkDestinations());
-    void new TextureLoader().loadAsync('./dreamscape/turf-detail.webp').then(texture=>{
-      if(disposed){texture.dispose();return;}
-      texture.wrapS=RepeatWrapping;texture.wrapT=RepeatWrapping;texture.anisotropy=4;
-      turf=texture;
-    }).catch(()=>{});
     crystals=createStoreCrystals(scene,wake,store=>{
       host.dataset.store=store?.id??'';
       callbacks.storeSelected?.(store);
