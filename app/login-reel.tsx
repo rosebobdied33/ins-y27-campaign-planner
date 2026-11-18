@@ -2,7 +2,6 @@
 import {useCallback,useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react';
 import {ArrowDown,ArrowLeft,ArrowRight,ArrowUpRight,Pause,Play,X} from 'lucide-react';
 import {durationDays} from '../lib/planner';
-import {useLoginReel} from '../lib/storage';
 import {loginEditions,type EditionYear} from './login-editions';
 import {ArchiveMotion,archiveMotion} from './archive-motion';
 import {CampaignOpening} from './campaign-opening';
@@ -16,7 +15,7 @@ const sparks=[[8,24,26],[16,43,15],[24,15,21],[34,31,13],[63,14,22],[76,35,15],[
 export function LoginReel({busy,error,onLogin,onResume}:{
   busy:boolean;error:string;onResume?:()=>void;onLogin:(name:string,password:string,register:boolean)=>void;
 }) {
-  const image=useLoginReel();
+  const image='./campaign-opening/2027/print-atlas.webp';
   const [year,setYear]=useState<EditionYear>(2027);
   const [active,setActive]=useState(0);
   const [playing,setPlaying]=useState(false);
@@ -86,7 +85,7 @@ export function LoginReel({busy,error,onLogin,onResume}:{
     onLogin(String(fields.get('handle')).trim(),String(fields.get('password')),register);
   };
 
-  return <div className="opening-chapters"><main ref={home} className="login-reel" data-year={year} data-opening={!!opening} style={{
+  return <div className="opening-chapters"><main ref={home} className="login-reel" data-year={year} data-suspended={!world.atHome||open||flipped||!!opening} data-opening={!!opening} style={{
     '--scene-glow':edition.glow,'--scene-wash':edition.wash,'--scene-deep':edition.deep,
     '--scene-x':(active%3)*50+'%','--scene-y':Math.floor(active/3)*50+'%',
     ...(!archive&&image?{'--reel-image':'url('+image+')'}:{}),

@@ -2444,3 +2444,96 @@ body:has(.project-edit-dialog[open]){overflow:hidden}
 .archive-motion-panel[data-landscape=true]{aspect-ratio:16/9}
 .archive-motion video{object-fit:contain;background:#171221}
 @media(max-width:700px){.archive-motion-tag{padding:10px 13px;max-width:calc(100% - 65px)}.archive-motion-tag strong{font-size:18px}.archive-motion-tag small{font-size:8px}.archive-motion-tag span{font-size:9px}}
+
+/* A shared set of collectible card materials keeps the original logo lockups intact. */
+.brand-crystal-card{
+  position:fixed;inset:0;margin:auto;width:min(86vw,140vh);height:auto;aspect-ratio:16/9;
+  max-width:none;max-height:87vh;padding:0;overflow:hidden;isolation:isolate;
+  color:var(--card-ink);border:1px solid var(--card-metal);border-radius:18px;
+  background:var(--card-paper);box-shadow:0 3px 0 var(--card-metal),0 8px 0 color-mix(in srgb,var(--card-ink),#000 30%),0 25px 100px #110c26ba;
+  animation:brand-arrival .34s cubic-bezier(.2,.7,.2,1);
+}
+.brand-crystal-card::backdrop{background:#141024ad;backdrop-filter:blur(11px)}
+.brand-card-depth{position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(120deg,#ffffff69,transparent 24% 66%,#ffffff4a),linear-gradient(0deg,#0000001c,transparent 20% 85%,#ffffff92)}
+.brand-card-artwork{position:absolute;inset:0;z-index:-2;pointer-events:none;
+  background: url('../public/dreamscape/card-engraved-frame.webp') center/100% 100%;
+  filter:hue-rotate(var(--card-turn));opacity:.87;mix-blend-mode:multiply;
+}
+.brand-card-print{position:absolute;inset:13px;z-index:-1;opacity:.19;pointer-events:none;
+  background:repeating-radial-gradient(ellipse at 50% 50%,transparent 0 14px,var(--card-metal) 15px,transparent 16px 24px);
+  mask-image:radial-gradient(ellipse at center,transparent 25%,#000 80%);
+}
+.brand-crystal-card[data-texture=diamonds] .brand-card-print{background:repeating-conic-gradient(from 45deg,var(--card-metal) 0 25%,transparent 0 50%) 0 0/52px 52px;opacity:.12}
+.brand-crystal-card[data-texture=waves] .brand-card-print{background:repeating-radial-gradient(ellipse at 15% 20%,transparent 0 12px,var(--card-ink) 13px,transparent 14px 22px);opacity:.15}
+.brand-crystal-card[data-texture=stars] .brand-card-print{background:radial-gradient(ellipse,var(--card-ink) 1px,transparent 2px) 0 0/29px 31px,radial-gradient(ellipse,var(--card-metal) 2px,transparent 3px) 12px 12px/57px 59px;opacity:.35}
+.brand-crystal-card[data-texture=moire] .brand-card-print{background:repeating-linear-gradient(118deg,transparent 0 7px,var(--card-metal) 8px,transparent 9px 17px),repeating-linear-gradient(62deg,transparent 0 9px,var(--card-ink) 10px,transparent 11px 20px);opacity:.13}
+.brand-card-rim{position:absolute;inset:15px;border:1px solid color-mix(in srgb,var(--card-ink),transparent 48%);border-radius:11px;pointer-events:none;z-index:1;box-shadow:inset 0 1px 0 #fff9,0 1px 0 #ffffff80}
+.brand-card-rim::before{content:"";position:absolute;inset:5px;border:1px solid color-mix(in srgb,var(--card-ink),transparent 70%);border-radius:7px}
+.brand-card-crest{position:absolute;top:8%;left:50%;translate:-50% 0;width:74px;height:38px;z-index:1;display:grid;place-items:center;pointer-events:none}
+.brand-card-crest::before,.brand-card-crest::after{content:"";position:absolute;width:46px;height:17px;border:1px solid var(--card-ink);border-radius:50%;top:9px;opacity:.75}
+.brand-card-crest::before{right:50%;transform:rotate(15deg)}
+.brand-card-crest::after{left:50%;transform:rotate(-15deg)}
+.brand-card-crest i{z-index:1;width:19px;height:29px;clip-path:polygon(50% 0,100% 35%,80% 75%,50% 100%,20% 75%,0 35%);background:linear-gradient(115deg,#fff 0 28%,var(--card-metal) 30% 52%,var(--card-ink) 53% 67%,#fff 70%);filter:drop-shadow(0 3px 3px #0005)}
+.brand-card-star{position:absolute;width:17px;height:33px;background:var(--card-ink);clip-path:polygon(50% 0,61% 38%,100% 50%,61% 62%,50% 100%,39% 62%,0 50%,39% 38%);opacity:.6;pointer-events:none}
+.brand-card-star-a{left:12%;top:46%;transform:rotate(-12deg)}
+.brand-card-star-b{right:12%;top:46%;transform:rotate(12deg)}
+.brand-crystal-back{position:absolute;z-index:3;top:5%;left:4%;display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--card-ink),transparent 45%);border-radius:20px;color:var(--card-ink);background:color-mix(in srgb,var(--card-paper),transparent 20%);font-size:12px;cursor:pointer;box-shadow:inset 0 1px 0 #ffffff9c}
+.brand-crystal-back:hover{background:var(--card-paper);box-shadow:0 0 15px #fff8}
+.brand-crystal-back:focus-visible{outline:2px solid var(--card-ink);outline-offset:3px}
+.brand-crystal-logo{position:absolute;inset:29% 23% 30%;display:grid;place-items:center;z-index:2;mix-blend-mode:multiply}
+.brand-crystal-logo img{width:100%;height:100%;min-width:0;min-height:0;object-fit:contain;filter:none}
+.brand-card-fallback{font:italic 400 clamp(24px,5vw,70px)/1 "Bodoni Moda",serif;text-align:center}
+.brand-crystal-card footer{border:0;padding:0;margin:0;width:auto;background:none;position:absolute;bottom:9%;left:25%;right:25%;display:flex;align-items:center;justify-content:center;gap:12px;z-index:2;text-align:center;color:var(--card-ink)}
+.brand-crystal-card footer span{margin:0;font-size:11px;letter-spacing:.14em;white-space:nowrap}
+.brand-crystal-card footer i{width:24px;height:1px;background:var(--card-ink);opacity:.5;flex:none}
+.brand-crystal-card[data-closing=true]{animation:brand-return .18s ease-in forwards;pointer-events:none}
+@keyframes brand-arrival{from{opacity:0;transform:translateY(14px) rotateX(5deg) scale(.96)}to{opacity:1;transform:none}}
+@keyframes brand-return{to{opacity:0;transform:translateY(8px) scale(.97)}}
+
+/* Seven facets sit on a refractive rail; only the selected facet receives a charging sweep. */
+.crystal-timeline{position:absolute;z-index:2;bottom:75px;left:50%;transform:translateX(-50%);display:flex;align-items:start;justify-content:space-around;width:min(960px,94%);padding:12px 14px 7px;user-select:none;touch-action:none;background:none;border:0;isolation:isolate}
+.crystal-timeline::before{content:"";position:absolute;z-index:-2;left:5%;right:5%;top:35px;height:21px;border:1px solid #d7d2f363;border-radius:12px;background:linear-gradient(180deg,#eee4ff44,transparent 28%,#18122b99 47%,#aca0d955 56%,#f4e7ff57 62%,#19132899);box-shadow:inset 0 3px 5px #ffffff24,0 8px 15px #0a061b80,0 1px 0 #fff4}
+.crystal-timeline::after{content:"";position:absolute;z-index:-1;left:7.14%;width:calc(85.72% * var(--charge));top:44px;height:2px;background:linear-gradient(90deg,#a6bcfa,var(--timeline-color),#fff4fc);box-shadow:0 0 8px 2px color-mix(in srgb,var(--timeline-color),transparent 45%);transition:width .25s ease,background .4s ease;pointer-events:none}
+.timeline-terminal{position:absolute;top:33px;width:18px;height:26px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:linear-gradient(135deg,#e3d5f4,#594667 35%,#ede2f8 49%,#44314d 51%,#d6c5e0);filter:drop-shadow(0 3px 3px #10091b);pointer-events:none}
+.timeline-terminal-left{left:3.2%}.timeline-terminal-right{right:3.2%}
+.crystal-timeline button{position:relative;display:flex;flex:1;min-width:0;align-items:center;flex-direction:column;gap:5px;padding:0;background:none;border:0;color:#d1c4df;cursor:pointer;font:10px system-ui;letter-spacing:.08em}
+.crystal-timeline button:focus-visible{outline:1px solid #ead4ff;outline-offset:5px;border-radius:8px}
+.crystal-timeline button:disabled{cursor:default;opacity:.6}
+.crystal-timeline i{position:relative;display:block;width:34px;height:59px;clip-path:polygon(50% 0,96% 30%,84% 75%,50% 100%,16% 75%,4% 30%);background:linear-gradient(105deg,#d8c4ec 0 29%,#9582b7 30% 50%,#c4abd9 51% 66%,#655980 67% 84%,#c8b9e2 85%);filter:drop-shadow(0 0 6px #b9a9dd60);transform:rotate(8deg);transition:transform .25s ease,filter .25s ease}
+.crystal-timeline i::before{content:"";position:absolute;inset:0;background:conic-gradient(from 182deg at 50% 29%,#fff9 0deg 59deg,transparent 60deg 180deg,#ffffff08 181deg 244deg,#fff5 245deg 305deg,transparent 306deg);clip-path:polygon(50% 0,96% 30%,50% 44%,4% 30%)}
+.crystal-timeline i::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 20%,#fff9 47%,transparent 65%);opacity:.15;transform:translateX(-65%)}
+.crystal-timeline i b{position:absolute;inset:0;background:#e5c3ed50;clip-path:polygon(50% 44%,84% 75%,50% 100%,16% 75%)}
+.crystal-timeline i em{position:absolute;left:49%;top:28%;width:1px;height:64%;background:#ffffff70;transform:rotate(-2deg)}
+.crystal-timeline strong{font-size:12px;line-height:1.4;font-weight:400;letter-spacing:.02em;white-space:nowrap;text-shadow:0 2px 6px #100920}
+.crystal-timeline button[aria-pressed=true]{color:#fff4fd}
+.crystal-timeline button[aria-pressed=true] i{transform:translateY(-6px) rotate(0deg) scale(1.12);filter:drop-shadow(0 0 9px var(--timeline-color));background:linear-gradient(105deg,#f2ddff 0 29%,var(--timeline-color) 30% 50%,#f9e7ff 51% 66%,#a094d9 67% 84%,#fff3fc 85%)}
+.crystal-timeline button[aria-pressed=true] i::after{animation:crystal-charge .7s ease-out forwards}
+.crystal-timeline button:hover i{transform:translateY(-4px) rotate(0deg)}
+@keyframes crystal-charge{0%{opacity:0;transform:translateX(-80%)}40%{opacity:1}100%{opacity:.25;transform:translateX(60%)}}
+@media(max-width:700px){
+ .brand-crystal-card{width:94vw;aspect-ratio:4/3;max-height:80vh;border-radius:12px}
+ .brand-card-artwork{background-size:100% 100%;opacity:.68}
+ .brand-card-rim{inset:8px;border-radius:7px}.brand-card-rim::before{inset:3px}
+ .brand-crystal-back{top:5%;left:5%;padding:8px 11px;font-size:10px}
+ .brand-crystal-back svg{width:14px;height:14px}
+ .brand-card-crest{top:13%;scale:.7}
+ .brand-crystal-logo{inset:32% 20% 32%}
+ .brand-crystal-card footer{bottom:9%;left:13%;right:13%;gap:8px}
+ .brand-crystal-card footer span{font-size:9px;letter-spacing:.06em}.brand-crystal-card footer i{width:13px}
+ .brand-card-star{width:11px;height:23px}.brand-card-star-a{left:10%}.brand-card-star-b{right:10%}
+ .crystal-timeline{width:97%;padding:8px 4px 3px;bottom:89px}
+ .crystal-timeline::before{top:27px;height:17px;left:3%;right:3%}.crystal-timeline::after{top:35px}
+ .timeline-terminal{top:27px;width:12px;height:20px}.timeline-terminal-left{left:1%}.timeline-terminal-right{right:1%}
+ .crystal-timeline i{width:25px;height:46px}
+ .crystal-timeline button{font-size:9px;gap:4px;letter-spacing:.02em}
+ .crystal-timeline strong{font-size:10px;white-space:normal;text-wrap:balance;max-width:48px}
+}
+@media(prefers-reduced-motion:reduce){
+ .brand-crystal-card,.brand-crystal-card[data-closing=true],.crystal-timeline button[aria-pressed=true] i::after{animation:none}
+ .crystal-timeline::after,.crystal-timeline i{transition:none}
+}
+
+/* Offscreen decoration must not compete with the interactive world. */
+.login-reel[data-suspended=true] .reel-sparks i{animation-play-state:paused}
+.login-reel[data-suspended=true] .reel-atmosphere,.login-reel[data-suspended=true] .reel-volume{visibility:hidden}

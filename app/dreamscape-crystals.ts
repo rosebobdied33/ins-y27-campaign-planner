@@ -3,6 +3,7 @@ import {
   Object3D, Raycaster, TextureLoader, Vector3,
 } from 'three';
 import type {StoreAnchor} from '../lib/world-navigation';
+import {createCrystalShatter} from './crystal-shatter';
 import {crystalVenues} from './dreamscape-venues';
 
 function ease(value:number,from:number,to:number){
@@ -47,7 +48,7 @@ function crystalGeometry(index:number){
   return geometry;
 }
 
-export function createStoreCrystals(scene:Object3D,onReliefReady:()=>void,onSelect:(store:StoreAnchor|null)=>void){
+export function createStoreCrystals(scene:Object3D,onReliefReady:()=>void,onSelect:(store:StoreAnchor|null)=>void,onShattering:()=>void){
   const root=new Group();
   root.name='STORE_ANCHORS';
   root.visible=false;
@@ -91,36 +92,52 @@ export function createStoreCrystals(scene:Object3D,onReliefReady:()=>void,onSele
     body.name=anchor.objectId!;
     body.userData.store=anchor;
     root.add(body);
-    return {body,position,anchor,row,column};
+    return {body,position,anchor,row,column,pigment};
   });
+  const shatter=createCrystalShatter(scene,matchMedia('(max-width:700px)').matches);
+  let emission=new Color('#e3caff'),pulse=0;
   const hitObjects=crystals.map(({body})=>body);
   let selected=-1;
   function select(index:number){
+    if(index<0){selected=-1;shatter.reset();onSelect(null);return;}
+    if(shatter.selected)return;
+    const crystal=crystals[index];if(!crystal)return;
     selected=index;
-    onSelect(crystals[index]?.anchor??null);
+    if(shatter.begin(crystal.body,crystal.body.material[0].color,()=>onSelect(crystal.anchor)))onShattering();
   }
 
   return {
-    update(progress:number,time:number|null){
+    prepare:shatter.prepare,
+    update(progress:number,time:number|null,dt=0,reduce=false){
       root.visible=progress>0;
       if(!root.visible){
         if(selected>=0)select(-1);
         return;
       }
-      crystals.forEach(({body,position,row,column},index)=>{
+      crystals.forEach(({body,position,row,column,pigment},index)=>{
         const delay=column*.015+row*.023;
         const travel=ease(progress,.39+delay,.96+delay*.3);
-        body.visible=travel>0;
+        body.visible=travel>0&&!(shatter.selected===body&&!shatter.busy);
         body.position.copy(position);
         const float=time===null?0:Math.sin(time*.94+index*1.27)*.36*travel;
         const spin=time===null?0:Math.sin(time*.61+index*.88)*.27*travel;
         body.position.y+=float-5.7*(1-travel);
         body.position.z+=9*(1-travel);
         body.rotation.set(-.055*travel,(index%5-2)*.076+(.42+index%3*.12)*(1-travel)+spin,Math.sin(index*2)*.06*travel);
-        const scale=Math.max(.001,travel)*(selected===index?1.045:1);
+        const scale=Math.max(.001,travel)*(1+.04*pulse);
+        const materials=body.material;
+        for(const material of materials){
+          material.emissive.copy(pigment).lerp(emission,.42);
+          material.emissiveIntensity=.18+pulse*.28+(shatter.selected===body&&shatter.busy?.5:0);
+        }
         body.scale.set(scale,scale*(.94+(index%4)*.025),scale*(.95+(index%3)*.08));
       });
+      shatter.update(dt,reduce);
     },
+    restore(){const result=shatter.restore();selected=-1;return result;},
+    setTheme(color:Color,value:number){emission.copy(color);pulse=value;},
+    get busy(){return shatter.busy;},
+    dispose(){shatter.dispose();},
     pick(ray:Raycaster){
       const hit=ray.intersectObjects(hitObjects,false)[0];
       if(!hit)return false;

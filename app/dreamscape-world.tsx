@@ -1,9 +1,12 @@
 'use client';
 
 import {useCallback,useEffect,useRef,useState,type RefObject} from 'react';
+import {BrandCrystalCard} from './brand-crystal-card';
+import {CampaignTimeline} from './campaign-timeline';
+import {crystalThemes} from './crystal-themes';
 import {ArrowUp,Minus,Plus,RotateCcw} from 'lucide-react';
 import {advanceWorldWheel,type WorldMode} from '../lib/world-navigation';
-import {dreamscapeModel} from './dreamscape-assets';
+import {dreamscapeModel,loadDreamscapeGeometry} from './dreamscape-assets';
 import {crystalVenues} from './dreamscape-venues';
 import type {DreamscapeControls} from './dreamscape-renderer';
 
@@ -38,10 +41,14 @@ export function useDreamscapeNavigation(
   useEffect(()=>()=>clearTimeout(timer.current),[]);
   useEffect(()=>{
     if(!enabled||blocked||requested)return;
-    const timer=window.setTimeout(()=>{
-      if(!document.hidden)setRequested(true);
-    },420);
-    return ()=>clearTimeout(timer);
+    let cancelled=false, timer=0;
+    const artwork=new Image();
+    artwork.src='./campaign-opening/2027/print-atlas.webp';
+    void artwork.decode().catch(()=>{}).then(()=>{
+      if(cancelled)return;
+      timer=window.setTimeout(()=>{if(!cancelled&&!document.hidden)setRequested(true);},1600);
+    });
+    return ()=>{cancelled=true;clearTimeout(timer);};
   },[blocked,enabled,requested]);
   useEffect(()=>{
     if(!enabled||!section.current)return;
@@ -117,9 +124,11 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
   const host=useRef<HTMLDivElement>(null);
   const [status,setStatus]=useState<'loading'|'ready'|'fallback'>('loading');
   const [mode,setMode]=useState<WorldMode>('building');
+  const [activeTheme,setActiveTheme]=useState(0);
+  useEffect(()=>{controls.current?.setTheme(activeTheme);},[activeTheme,controls,status,mode]);
   const [storeId,setStoreId]=useState<string|null>(null);
   const store=crystalVenues.find(venue=>venue.id===storeId);
-  const details=useRef<HTMLDialogElement>(null);
+  const [isShattering,setShattering]=useState(false);
   const closeStore=useCallback(()=>{
     const url=new URL(window.location.href);
     if(url.searchParams.has('store')){
@@ -127,45 +136,41 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
       history.replaceState(history.state,'',url);
     }
     setStoreId(null);
-  },[]);
+    setShattering(false);
+    controls.current?.restoreCrystal();
+  },[controls]);
   useEffect(()=>{
-    const read=()=>setStoreId(new URLSearchParams(window.location.search).get('store'));
+    const read=()=>{
+      const id=new URLSearchParams(window.location.search).get('store');
+      setStoreId(id);
+      if(!id)controls.current?.restoreCrystal();
+    };
     read();
     window.addEventListener('popstate',read);
     return ()=>window.removeEventListener('popstate',read);
   },[]);
   useEffect(()=>{
-    const dialog=details.current;
-    if(!store||!dialog)return;
-    if(!active){
-      move(true);
-      return;
-    }
-    if(status!=='loading'&&!dialog.open)dialog.showModal();
-  },[active,move,status,store]);
-  useEffect(()=>{
-    if(store&&active&&status==='ready')controls.current?.enterCrystals();
-  },[active,controls,status,store]);
+    if(!store)return;
+    if(!active){move(true);return;}
+    if(status==='ready')controls.current?.enterCrystals();
+  },[active,controls,move,status,store]);
   const [stats,setStats]=useState<{triangles:number;drawCalls:number}>();
   useEffect(()=>{
     if(!requested||!host.current)return;
     const node=host.current;
     const abort=new AbortController();
     const fallback=()=>{if(!abort.signal.aborted)setStatus('fallback');};
-    const load=async (asset:string)=>{
-      const response=await fetch(asset,{signal:abort.signal});
-      if(!response.ok)throw new Error('Dreamscape geometry unavailable');
-      return {buffer:await response.arrayBuffer(),asset};
-    };
-    const geometry=load(dreamscapeModel);
+    const geometry=loadDreamscapeGeometry(abort.signal).then(buffer=>({buffer,asset:dreamscapeModel}));
     void Promise.all([import('./dreamscape-renderer'),geometry]).then(async ([{mountDreamscape},{buffer,asset}])=>{
       if(abort.signal.aborted)return;
       const runtime=await mountDreamscape(node,buffer,asset,abort.signal,{
         ready:metrics=>{if(!abort.signal.aborted){setStats(metrics);setStatus('ready');}},
         fallback,
         modeChanged:next=>{if(!abort.signal.aborted)setMode(next);},
+        shattering:()=>{if(!abort.signal.aborted)setShattering(true);},
         storeSelected:store=>{
           if(abort.signal.aborted)return;
+          setShattering(false);
           if(!store)return;
           const url=new URL(window.location.href);
           if(url.searchParams.get('store')!==store.id){
@@ -188,7 +193,7 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
   useEffect(()=>{controls.current?.setObscured(Boolean(store));},[status,store,controls]);
 
   return <section ref={section} className="dreamscape" id="dreamscape" aria-labelledby="dreamscape-title"
-    data-status={requested?status:'idle'} data-mode={mode}
+    data-status={requested?status:'idle'} data-mode={mode} data-shattering={isShattering}
     data-triangles={stats?.triangles} data-draw-calls={stats?.drawCalls} inert={!active}>
     <div className="dreamscape-poster" aria-hidden="true"/>
     <div ref={host} className="dreamscape-canvas"/>
@@ -197,14 +202,8 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
       <h2 id="dreamscape-title" tabIndex={-1}>{mode==='store-crystals'?'Brand crystals':'Dreamscape'}</h2>
       <img className="dreamscape-subtitle" src="./dreamscape/slogan-white.png" width={945} height={227} alt="为你造一座游乐园 · Into Nothing Serious."/>
     </header>
-    {store&&<dialog ref={details} className="dreamscape-store-detail" aria-labelledby="dreamscape-store-name"
-      onCancel={event=>{event.preventDefault();closeStore();}}>
-      <div className="dreamscape-store-mark">
-        <img src={'./dreamscape/engravings/'+store.id+'.png'} alt=""/>
-      </div>
-      <h3 id="dreamscape-store-name">{store.name}</h3>
-      <button type="button" onClick={closeStore}>返回水晶阵列</button>
-    </dialog>}
+    {store&&<BrandCrystalCard brand={store} theme={crystalThemes[activeTheme]} onClose={closeStore}/>}
+    {mode==='store-crystals'&&<CampaignTimeline active={activeTheme} onChange={setActiveTheme} disabled={isShattering||!!store}/>}
     <div className="dreamscape-bar">
       <button type="button" className="dreamscape-return" onClick={()=>move(false)}><ArrowUp size={17}/> Campaigns</button>
       {status==='ready'&&mode==='transitioning'&&<p role="status">重组中…</p>}
