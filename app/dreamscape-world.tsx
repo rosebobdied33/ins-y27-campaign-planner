@@ -125,6 +125,14 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
   const [status,setStatus]=useState<'loading'|'ready'|'fallback'>('loading');
   const [mode,setMode]=useState<WorldMode>('building');
   const [activeTheme,setActiveTheme]=useState(0);
+  useEffect(()=>{
+    if(mode==='building')return;
+    // These official logo lockups total about 200 KB; warm them during assembly.
+    for(const src of ['./dreamscape/card-engraved-frame.webp',...crystalVenues.map(venue=>'./dreamscape/engravings/'+venue.id+'.png')]){
+      const image=new Image();image.decoding='async';image.fetchPriority='low';image.src=src;
+      void image.decode().catch(()=>{});
+    }
+  },[mode]);
   useEffect(()=>{controls.current?.setTheme(activeTheme);},[activeTheme,controls,status,mode]);
   const [storeId,setStoreId]=useState<string|null>(null);
   const store=crystalVenues.find(venue=>venue.id===storeId);

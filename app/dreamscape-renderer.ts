@@ -539,13 +539,14 @@ export async function mountDreamscape(
     performance.mark('ins-world:compiled');
     if(disposed)return;
     draw(performance.now(),true);
+    const metrics={triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls};
     performance.mark('ins-world:drawn');
     await yieldUI();
     if(disposed)return;
     await crystals.prepare(renderer,camera);
     performance.mark('ins-world:prepared');
     if(disposed)return;
-    callbacks.ready({triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls});
+    callbacks.ready(metrics);
   }catch(error){
     if(!signal.aborted){console.warn('Dreamscape could not load',error);callbacks.fallback();}
     dispose();return;

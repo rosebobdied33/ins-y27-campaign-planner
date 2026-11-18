@@ -17,7 +17,13 @@ export function BrandCrystalCard({brand,theme,onClose}:{brand:(typeof crystalVen
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   closeTimer.current=setTimeout(onClose,reduce?0:180);
  };
- useEffect(()=>{const node=dialog.current!;node.showModal();return ()=>node.close();},[]);
+ useEffect(()=>{
+  const node=dialog.current!;let current=true;
+  const logo=node.querySelector('img');
+  const frame=new Image();frame.src='./dreamscape/card-engraved-frame.webp';
+  void Promise.allSettled([logo?.decode(),frame.decode()]).then(()=>{if(current)node.showModal();});
+  return ()=>{current=false;if(node.open)node.close();};
+ },[brand.id]);
  return <dialog ref={dialog} className="brand-crystal-card" data-closing={closing} data-texture={art.texture} style={{'--brand-color':brand.color,'--card-ink':art.ink,'--card-paper':art.paper,'--card-metal':art.metal,'--card-turn':art.turn+'deg'} as CSSProperties}
  aria-label={theme.themeId+' 门店品牌卡片'} onCancel={event=>{event.preventDefault();close();}}>
   <div className="brand-card-depth" aria-hidden="true"/>
