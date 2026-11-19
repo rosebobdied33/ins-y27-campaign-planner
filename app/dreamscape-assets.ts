@@ -6,12 +6,12 @@ export const dreamscapeEntryModel='./dreamscape/world-entry.glb';
 export async function loadDreamscapeGeometry(signal:AbortSignal){
   if(typeof DecompressionStream!=='undefined'){
     try{
-      const response=await fetch(dreamscapeModel+'.gz',{signal,priority:'low'});
+      const response=await fetch(dreamscapeModel+'.gz',{signal,priority:'auto'});
       if(!response.ok||!response.body)throw new Error('Compressed geometry unavailable');
       return await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
     }catch(error){if(signal.aborted)throw error;}
   }
-  const response=await fetch(dreamscapeModel,{signal,priority:'low'});
+  const response=await fetch(dreamscapeModel,{signal,priority:'auto'});
   if(!response.ok)throw new Error('Dreamscape geometry unavailable');
   return response.arrayBuffer();
 }

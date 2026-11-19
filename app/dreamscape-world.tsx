@@ -1,6 +1,7 @@
 'use client';
 
 import {useCallback,useEffect,useRef,useState,type RefObject} from 'react';
+import {desktopScenePreview,mobileScenePreview} from './dreamscape-preview';
 import {BrandCrystalCard} from './brand-crystal-card';
 import {CampaignTimeline} from './campaign-timeline';
 import {crystalThemes} from './crystal-themes';
@@ -198,7 +199,10 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
   return <section ref={section} className="dreamscape" id="dreamscape" aria-labelledby="dreamscape-title"
     data-status={requested?status:'idle'} data-mode={mode} data-shattering={isShattering}
     data-triangles={stats?.triangles} data-draw-calls={stats?.drawCalls} inert={!active}>
-    <div className="dreamscape-poster" aria-hidden="true"/>
+    <picture className="dreamscape-poster" aria-hidden="true">
+      <source media="(max-width: 700px)" srcSet={mobileScenePreview}/>
+      <img src={desktopScenePreview} width={1440} height={900} alt="" decoding="sync" loading="eager"/>
+    </picture>
     <div ref={host} className="dreamscape-canvas"/>
     <header className="dreamscape-heading">
       <p>INS LAND / THE WORLD</p>
