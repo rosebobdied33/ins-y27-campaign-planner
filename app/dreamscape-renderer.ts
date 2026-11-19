@@ -541,6 +541,7 @@ export async function mountDreamscape(
     draw(performance.now(),true);
     const metrics={triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls};
     performance.mark('ins-world:drawn');
+    host.dataset.frame='ready';
     await yieldUI();
     if(disposed)return;
     await crystals.prepare(renderer,camera);

@@ -6,7 +6,7 @@ import {CampaignTimeline} from './campaign-timeline';
 import {crystalThemes} from './crystal-themes';
 import {ArrowUp,Minus,Plus,RotateCcw} from 'lucide-react';
 import {advanceWorldWheel,type WorldMode} from '../lib/world-navigation';
-import {dreamscapeModel,loadDreamscapeGeometry} from './dreamscape-assets';
+import {dreamscapeModel,loadDreamscapeGeometry,publicAsset} from './dreamscape-assets';
 import {crystalVenues} from './dreamscape-venues';
 import type {DreamscapeControls} from './dreamscape-renderer';
 
@@ -43,10 +43,10 @@ export function useDreamscapeNavigation(
     if(!enabled||blocked||requested)return;
     let cancelled=false, timer=0;
     const artwork=new Image();
-    artwork.src='./campaign-opening/2027/print-atlas.webp';
+    artwork.src=publicAsset('campaign-opening/2027/print-atlas.webp');
     void artwork.decode().catch(()=>{}).then(()=>{
       if(cancelled)return;
-      timer=window.setTimeout(()=>{if(!cancelled&&!document.hidden)setRequested(true);},1600);
+      timer=window.setTimeout(()=>{if(!cancelled&&!document.hidden)setRequested(true);},0);
     });
     return ()=>{cancelled=true;clearTimeout(timer);};
   },[blocked,enabled,requested]);
@@ -149,9 +149,9 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
   },[controls]);
   useEffect(()=>{
     const read=()=>{
-      const id=new URLSearchParams(window.location.search).get('store');
-      setStoreId(id);
-      if(!id)controls.current?.restoreCrystal();
+      const url=new URL(window.location.href);
+      if(url.searchParams.has('store')){url.searchParams.delete('store');history.replaceState(history.state,'',url);}
+      setStoreId(null);
     };
     read();
     window.addEventListener('popstate',read);
@@ -180,13 +180,8 @@ export function DreamscapeWorld({navigation}:{navigation:Navigation}){
           if(abort.signal.aborted)return;
           setShattering(false);
           if(!store)return;
-          const url=new URL(window.location.href);
-          if(url.searchParams.get('store')!==store.id){
-            url.searchParams.set('store',store.id);
-            history.pushState(history.state,'',url);
-          }
-          setStoreId(store.id);
-          node.dispatchEvent(new CustomEvent('ins-world:store-select',{detail:store,bubbles:true}));
+          controls.current?.restoreCrystal();
+          node.dispatchEvent(new CustomEvent('ins-world:crystal-restore',{detail:store,bubbles:true}));
         },
         buildingPick:objectId=>node.dispatchEvent(new CustomEvent('ins-world:building-pick',{
           detail:{mode:'building',objectId},bubbles:true,
