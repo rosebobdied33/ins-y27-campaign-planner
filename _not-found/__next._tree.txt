@@ -1,5 +1,5 @@
 :HL["/ins-y27-campaign-planner/_next/static/chunks/3jed0ovc54gzd.css","style"]
-:HL["/ins-y27-campaign-planner/campaign-opening/2027/print-atlas.webp","image",{"fetchPriority":"high"}]
+:HL["/ins-y27-campaign-planner/campaign-opening/2027/print-atlas.webp?v=s01-lucky-town-1","image",{"fetchPriority":"high"}]
 2:[["children",{"s":"__PAGE__","h":160}]]
 1:[["children",{"s":"/_not-found","h":96,"c":"$Q2"}]]
-0:{"b":"mAb1HojvZH3ThgBVTI0bN","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"T2wZ5KO9xoG89g4VEF3Jt","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
