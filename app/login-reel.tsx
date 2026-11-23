@@ -16,7 +16,7 @@ const sparks=[[8,24,26],[16,43,15],[24,15,21],[34,31,13],[63,14,22],[76,35,15],[
 export function LoginReel({busy,error,onLogin,onResume}:{
   busy:boolean;error:string;onResume?:()=>void;onLogin:(name:string,password:string,register:boolean)=>void;
 }) {
-  const image=publicAsset('campaign-opening/2027/print-atlas.webp');
+  const image=publicAsset('campaign-opening/2027/print-atlas.webp?v=s01-lucky-town-1');
   const [year,setYear]=useState<EditionYear>(2027);
   const [active,setActive]=useState(0);
   const [playing,setPlaying]=useState(false);

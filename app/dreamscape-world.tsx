@@ -44,7 +44,7 @@ export function useDreamscapeNavigation(
     if(!enabled||blocked||requested)return;
     let cancelled=false, timer=0;
     const artwork=new Image();
-    artwork.src=publicAsset('campaign-opening/2027/print-atlas.webp');
+    artwork.src=publicAsset('campaign-opening/2027/print-atlas.webp?v=s01-lucky-town-1');
     void artwork.decode().catch(()=>{}).then(()=>{
       if(cancelled)return;
       timer=window.setTimeout(()=>{if(!cancelled&&!document.hidden)setRequested(true);},0);

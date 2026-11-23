@@ -5,5 +5,5 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 export default function Layout({children}:{children:React.ReactNode}) {
-  return <html lang="zh-CN"><head><link rel="preload" as="image" href={(process.env.PLANNER_BASE_PATH||'')+'/campaign-opening/2027/print-atlas.webp'} fetchPriority="high"/></head><body>{children}</body></html>;
+  return <html lang="zh-CN"><head><link rel="preload" as="image" href={(process.env.PLANNER_BASE_PATH||'')+'/campaign-opening/2027/print-atlas.webp?v=s01-lucky-town-1'} fetchPriority="high"/></head><body>{children}</body></html>;
 }

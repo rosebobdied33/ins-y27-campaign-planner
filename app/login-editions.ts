@@ -6,7 +6,7 @@ type ReelEdition={id:string;code:string;name:string;title:string;start:string;en
 const codes=['S01','S02','S03','S04','S05','S06','S07'] as const;
 // Public opening cards use the dates and named nodes from the supplied planning table.
 const planning:Record<typeof codes[number],{name:string;start:string;end:string;nodes:string[]}>={
-  S01:{name:'小羊牧场',start:'2027-01-22',end:'2027-03-15',nodes:['02.06 春节','02.14 情人节','02.20 元宵','03.08 女神月']},
+  S01:{name:'好事灯场',start:'2027-01-22',end:'2027-03-15',nodes:['02.06 春节','02.14 情人节','02.20 元宵','03.08 女神月']},
   S02:{name:'春日市场',start:'2027-03-26',end:'2027-05-24',nodes:['05.01 五一','05.20 520']},
   S03:{name:'游戏世界4',start:'2027-06-04',end:'2027-07-26',nodes:['06.09 端午']},
   S04:{name:'夏夜泳池',start:'2027-07-30',end:'2027-08-30',nodes:['08.08 七夕']},

@@ -14,11 +14,11 @@ export type PlanningBrief=z.infer<typeof planningBriefSchema>;
 
 const suggestions:Readonly<Partial<Record<string,PlanningBrief>>>={
   S01:{
-    positioning:'走进一座可以互动的奇想牧场。',
-    direction:'场景营造 × 轻量互动',
-    difference:'从静态拍照场景，升级为可参与的牧场世界。',
-    keywords:['牧场地标','角色互动','周中延展'],
-    storeTitle:'全楼开运计划',storeDirection:'各门店打造专属开年好运俱乐部，共创新春庆祝体验。',
+    positioning:'走进一座好事不断发生的奇想唐人街。',
+    direction:'华埠街景 × 灯光互动',
+    difference:'从单点新春装饰，升级为可探索、可参与的全楼好运街区。',
+    keywords:['华埠街区','好运灯场','羊年奇遇'],
+    storeTitle:'全楼开运计划',storeDirection:'各门店化身 INS TOWN 的好运据点，结合品牌特色打造灯光场景与羊年限定体验。',
   },
   S02:{
     positioning:'把春天做成一座会生长的市集。',

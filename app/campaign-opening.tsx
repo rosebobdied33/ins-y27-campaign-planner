@@ -22,7 +22,7 @@ function preparePoster(index:number) {
   const width=mobile?window.innerWidth*.8:Math.min(window.innerWidth-48,(window.innerHeight-48)*16/9)*.8;
   const pixels=width*Math.min(window.devicePixelRatio||1,2);
   const size=pixels<=1024?1024:pixels<=1600?1600:2560;
-  const src=original.replace(/cover\.webp$/, `cover-${size}.webp`);
+  const src=original.replace(/cover\.webp(?=\?|$)/, `cover-${size}.webp`);
   const cached=decodedPosters.get(src);
   if(cached)return cached;
   const img=new Image();

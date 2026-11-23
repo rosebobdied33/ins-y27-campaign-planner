@@ -116,13 +116,13 @@ test('a final settlement replaces legacy actuals and belongs to the month it was
 
 test('optional planning briefs survive backup and keep saved copy ahead of suggestions', () => {
   const item=seed()[0];
-  assert.ok(campaignBrief({...item,id:'S01'})?.positioning.includes('牧场'));
+  assert.ok(campaignBrief({...item,id:'S01'})?.positioning.includes('奇想唐人街'));
   const planningBrief={positioning:'自定义定位',direction:'',difference:'差异',keywords:['关键词']};
   const [saved]=readBackup(backup([{...item,id:'S01',planningBrief}]));
   assert.deepEqual(campaignBrief(saved),{
     ...planningBrief,
     storeTitle:'全楼开运计划',
-    storeDirection:'各门店打造专属开年好运俱乐部，共创新春庆祝体验。',
+    storeDirection:'各门店化身 INS TOWN 的好运据点，结合品牌特色打造灯光场景与羊年限定体验。',
   });
   assert.throws(()=>validateProjects([{...item,planningBrief:{...planningBrief,keywords:['一','二','三','四']}}]));
 });

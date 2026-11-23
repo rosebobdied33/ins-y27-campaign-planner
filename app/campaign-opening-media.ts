@@ -8,7 +8,7 @@ export type CampaignOpeningMedia = {
 };
 
 export const openingMedia: Readonly<Partial<Record<string, CampaignOpeningMedia>>> = {
-  S01: {stillImage:"./campaign-opening/2027/S01/cover.webp",videoEnabled:false,shade:'#351c35'},
+  S01: {stillImage:"./campaign-opening/2027/S01/cover.webp?v=s01-lucky-town-1",videoEnabled:false,shade:'#351c35'},
   S02: {stillImage:"./campaign-opening/2027/S02/cover.webp",videoEnabled:false},
   S03: {stillImage:"./campaign-opening/2027/S03/cover.webp",videoEnabled:false},
   S04: {stillImage:"./campaign-opening/2027/S04/cover.webp",videoEnabled:false},
